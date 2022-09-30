@@ -1,0 +1,94 @@
+<div class="component-box">
+    <div class="action-box">
+        <div>
+            <div style="display: inline-block;">
+                <button class="card card-small" (click)="fileInput.click()" tabindex="0">
+                    <input #fileInput type="file" class="file-upload" (change)="onFileSelected($event)"
+                        style="display:none;">
+                    <span>Upload OCEL</span>
+                </button>
+            </div>
+            <div>
+                <button [disabled]="!configValid" class="card card-small" (click)="onConfirm()" tabindex="0">
+                    <span>Confirm</span>
+                </button>
+            </div>
+           <div>
+            <div style="margin-left: 8px; float: left; max-width: 200px" *ngIf="filename">
+                File: <br>
+                {{filename}}
+            </div>  
+           </div>
+           <div>
+            <div style="margin-left: 8px; float: left; max-width: 200px;" *ngIf="leadingGroupsInfo">
+                {{leadingGroupsInfo}}
+            </div>  
+           </div>
+
+        </div>
+    </div>
+    <div class="log-config-box" style="width: 400px;">
+        <h4 style="margin-bottom: 20px;">Types per Activity</h4>
+        <div class="scroll-box">
+            <div class="leading-type-selection" [ngClass]="!actConfigValid(act) ? 'act-filtered-out-box' : ''"
+                *ngFor="let act of acts">
+                <label>{{act}}</label>
+                <ng-select [(ngModel)]="ocelInfo.activity_selected_types[act]" [multiple]="true"
+                    (change)="onChangeSelectedOtypes()">
+                    <ng-option *ngFor="let otype of ocelInfo.activity_allowed_types[act]" [value]="otype">{{otype}}
+                    </ng-option>
+                </ng-select>
+            </div>
+        </div>
+    </div>
+    <div class="log-config-box" style="width: 300px;">
+        <h4 style="margin-bottom: 20px;">Leading Types</h4>
+        <div class="scroll-box">
+            <div class="leading-type-selection" [ngClass]="!actConfigValid(act) ? 'act-filtered-out-box' : ''"
+                *ngFor="let act of acts">
+                <label>{{act}}</label>
+                <ng-select [(ngModel)]="ocelInfo.activity_leading_type_selections[act]"
+                    (change)="onChangeSelectedOtypes()" (click)="onChangeSelectedOtypes()">
+                    <ng-option *ngFor="let otype of ocelInfo.activity_leading_type_candidates_filtered[act]"
+                        [value]="otype">
+                        {{otype}}
+                    </ng-option>
+                </ng-select>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="otype-graph-box" [style]="graphBoxStyle">
+            <div>
+                <h4 style="margin: 8px 8px; height: 9%; border-radius: 5px;">Object Type Graph</h4>
+            </div>
+            <div class="chart-container">
+                <ngx-graph [showMiniMap]="false" [panningEnabled]="true" [links]="type_links" [nodes]="type_nodes"
+                    [autoCenter]="true" [autoZoom]="true">
+                    <ng-template #defsTemplate>
+                        <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4"
+                            orient="auto">
+                            <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+                        </svg:marker>
+                    </ng-template>
+                    <ng-template #nodeTemplate let-node>
+                        <svg:g class="node">
+                            <svg:rect [attr.width]="node.dimension.width > 30? node.dimension.width : 30"
+                                [attr.height]="30" [attr.fill]="node.color" />
+                            <svg:text alignment-baseline="central" [attr.x]="10" [attr.y]="20">
+                                {{ node.label }}
+                            </svg:text>
+                        </svg:g>
+                    </ng-template>
+                    <ng-template #linkTemplate let-link>
+                        <svg:g class="edge">
+                            <svg:path class="line" stroke-width="2" marker-end="url(#arrow)">
+                            </svg:path>
+                        </svg:g>
+                    </ng-template>
+                </ngx-graph>
+            </div>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,81 @@
+<div class="component-box">
+    <div class="action-box">
+        <div>
+            <div style="display: inline-block;">
+                <button class="card card-small" [disabled]="!configValid" (click)="onClickStart()" tabindex="0">
+                    <span>Start</span>
+                </button>
+            </div>
+            <div>
+                <button [disabled]="!responseValid" class="card card-small" (click)="onClickConfirm()" tabindex="0">
+                    <span>Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="generator-config-box">
+        <h4>Initial Seed</h4>
+        <div class="object-model-form-field">
+            <label>Object Type</label>
+            <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.selectedSeedType" [multiple]="false"
+                style="min-width: 240px;" (click)="onChangeSelectedSeedType()">
+                <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
+                </ng-option>
+            </ng-select>
+        </div>
+        <div class="object-model-form-field">
+            <label>Number of Objects</label><br>
+            <div style="margin-top: 20px">
+                <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.numberOfObjects">
+            </div>
+        </div>
+        <div class="object-model-form-field">
+            <label>Non-Emitting Types</label>
+            <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.nonEmittingTypes" [multiple]="true"
+                style="min-width: 240px;" (click)="onChangeNonEmittingTypes()">
+                <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
+                </ng-option>
+            </ng-select>
+        </div>
+        <div *ngIf="omgResponse">
+            <h4>Number of Generated Objects:</h4>
+            <div *ngFor="let otype of objectModelInfo.otypes">
+                <br>
+                {{otype}}: {{getNumberOfGeneratedObjects(otype)}}
+            </div>
+        </div>
+    </div>
+    <div class="" >
+        <h4>Object Model Statistics</h4>     
+        <div style="display: flex;">
+            <div class="object-model-form-field">
+                <label>Type of Statistics</label>
+                <ng-select class="custom-ng-select" 
+                    [(ngModel)]="selectedStatsType" [multiple]="false"
+                    style="width: 240px;" (click)="onChangeStatsInput()">
+                    <ng-option *ngFor="let statsType of statsTypes" [value]="statsType">{{statsType}}
+                    </ng-option>
+                </ng-select>
+            </div>
+            <div class="object-model-form-field">
+                <label>Object Type</label>
+                <ng-select class="custom-ng-select" 
+                    [(ngModel)]="selectedPlotType" [multiple]="false"
+                    style="width: 240px;" (click)="onChangeStatsInput()">
+                    <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
+                    </ng-option>
+                </ng-select>
+            </div>
+        </div>   
+        <div class="stats-plot-box" *ngIf="selectedPlotType">
+            <div *ngFor="let otype of getOtherTypes(selectedPlotType)" 
+            style="width: 45%; height: 185px; display: inline-block; padding: 2.4%; margin-bottom: 40px;">
+                <h5>{{getPlotCaption(otype)}}</h5>
+                <canvas baseChart [datasets]="barChartData[otype]" [labels]="mbarChartLabels[otype]" [options]="barChartOptions"
+                    [legend]="true">
+                </canvas>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,118 @@
+<div class="component-box">
+
+    <div class="simulation-action-box">
+        <div class="simulation-controls" style="margin-bottom: 15px;">
+            <div style="display: inline-block; margin-bottom: -15px;">
+                <button class="card card-normal" [disabled]="initialized" (click)="onClickInitialize()" tabindex="0">
+                    <span>Initialize Model</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="simulation-controls">
+            <div style="display: inline-block;">
+                <button class="card card-normal" [disabled]="!initialized && false" (click)="onClickStartSimulation(1)"
+                    tabindex="0">
+                    <span>Execute Single Step</span>
+                </button>
+                <div class="step-size">
+                    <label>Number of Steps</label><br>
+                    <div style="margin-top: 20px">
+                        <input [disabled]="!initialized" type="number" placeholder="10" [(ngModel)]="numberOfSteps">
+                    </div>
+                </div>
+                <button class="card card-normal" [disabled]="!initialized"
+                    (click)="onClickStartSimulation(numberOfSteps)" tabindex="0">
+                    <span>Execute Steps</span>
+                </button>
+                <button class="card card-normal" style="margin-bottom: 0px;" [disabled]="!initialized"
+                    (click)="onClickStartSimulation(-1)" tabindex="0">
+                    <span>Run Exhaustively</span>
+                </button>
+            </div>
+        </div>
+        <div class="simulation-controls" style="margin-top: 15px;">
+            <div style="display: inline-block;">
+                <button class="card card-normal" [disabled]="!initialized" (click)="onClickAbort()" tabindex="0">
+                    <span>Abort</span>
+                </button>
+                <button class="card card-normal" style="margin-bottom: 0px;" [disabled]="!initialized"
+                    (click)="onClickOCELExport()" tabindex="0">
+                    <span>Get OCEL Export</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="simulation-graph-box">
+            <div>
+                <h4 style="margin: 8px 8px; height: 9%; border-radius: 5px; float: left;">Object-Centric Simulation
+                    Model
+                </h4>
+                <h4 style="margin: 8px 8px; height: 9%; border-radius: 5px; float: right;">
+                    Simulation Clock: {{getClock()}} Steps: {{getSteps()}}
+                </h4>
+            </div>
+
+            <div class="chart-container">
+                <ngx-graph [showMiniMap]="false" [curve]="curve" [panningEnabled]="true" [nodes]="nodes" [links]="links"
+                    [draggingEnabled]="false">
+
+                    <ng-template ngFor let-otype [ngForOf]="otypes">
+                        <svg:marker [id]="getMarkerEndId(otype)" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4"
+                            markerHeight="4" orient="auto" [attr.fill]="getColor(otype)">
+                            <svg:path d="M0,-5L10,0L0,5" class="arrow-head" [attr.stroke]="getColor(otype)" />
+                        </svg:marker>
+                    </ng-template>
+
+                    <ng-template #nodeTemplate let-node>
+                        <svg:g class="node" [attr.transform]="node.type=='PLACE' ? 'translate(20 10)'
+                                        : 'translate(0 0)'">
+                            <ng-container [ngSwitch]="node.type">
+                                <svg:rect *ngSwitchCase="'TRANSITION'"
+                                    [attr.width]="node.dimension.width > 30? node.dimension.width : 30"
+                                    [attr.height]="30" [attr.fill]="node.color"
+                                    [attr.stroke]="getTransitionBorderColor(node)" 
+                                    [attr.stroke-width]="getTransitionBorderWidth(node)"/>
+                                <svg:circle *ngSwitchCase="'PLACE'" cx="0" cy="0" r="15" stroke="black" stroke-width="0"
+                                    [attr.fill]="node.color" />
+                            </ng-container>
+                            <ng-container *ngIf="hasTokens(node)">
+                                <svg:circle cx="0" cy="0" r="7.5" stroke="black" stroke-width="0"
+                                fill="#000000">
+                                    <title>{{placeTooltips[node.id]}}</title>
+                                </svg:circle>
+                            </ng-container>                            
+                            <ng-container *ngIf="node.type=='TRANSITION' && 
+                                node.transitionType == 'FINAL'">
+                                <svg:rect [attr.width]="15" [attr.height]="15" stroke="black" stroke-width="0"
+                                    fill="#0000000" transform="translate(7.5 7.5)" fill="rgba(0, 0, 0, 0.382)">
+                                </svg:rect>/
+                            </ng-container>
+                            <ng-container *ngIf="node.type=='TRANSITION' && 
+                                node.transitionType == 'INITIAL'">
+                                <svg:polygon points="7.5,5 25,15, 7.5,25" fill="rgba(0, 0, 0, 0.582)">
+                                </svg:polygon>/
+                            </ng-container>
+                            <svg:text alignment-baseline="central" [attr.x]="getNodeLabelX(node)" [attr.y]="getNodeLabelY(node)">
+                                {{getNodeLabel(node)}}
+                            </svg:text>
+                        </svg:g>
+                    </ng-template>
+
+                    <ng-template #linkTemplate let-link>
+                        <svg:g class="edge">
+                            <svg:line></svg:line>
+                            <svg:path class="line" [attr.stroke-width]="link.isVariableArc ? 4 : 2"
+                                [attr.stroke]="link.color" [attr.marker-end]="getMarkerUrl(link)">
+                            </svg:path>
+                        </svg:g>
+                    </ng-template>
+                </ngx-graph>
+            </div>
+        </div>
+        <div class="box-footer">
+            {{getFooter()}}
+        </div>
+    </div>
+</div>

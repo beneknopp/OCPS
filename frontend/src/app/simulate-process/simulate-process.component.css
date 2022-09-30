@@ -1,0 +1,48 @@
+.simulation-graph-box {
+    width: 1000px;
+    height: 500px;
+    border-style: solid;
+    border-color: rgba(95, 158, 160, 0.315);
+    border-width: 0.1cm;
+    border-radius: 5px;
+    padding: 5px;
+    align-items: stretch;
+    
+}
+
+.chart-container {
+    width: 100%;
+    height: 92%;
+}
+
+.step-size {
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.simulation-action-box {
+    width: fit-content;
+    margin-right: 15px
+}
+
+.simulation-controls {
+    border-style: solid;   
+    border-color: rgba(95, 158, 160, 0.315);
+    border-width: 0.1cm;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.box-footer {
+    width: 1000px;
+    margin-left: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: normal;
+}
+
+.box-footer:hover {
+    overflow-x: scroll;
+  }
+
