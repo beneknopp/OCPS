@@ -12,7 +12,7 @@ from ocpn_discovery.net_utils import Transition, TransitionType
 from simulation.ocel_maker import OcelMaker
 from simulation.sim_utils import Token, Predictors, SimulationStateExport, NextActivityCandidate
 from simulation.simulation_net import SimulationNet
-from simulation.simulation_object_instance import SimulationObjectInstance
+from simulation.simulation_object_instance import SimulationObjectInstance, ScheduledActivity
 from utils.cumulative_distribution import CumulativeDistribution
 
 
@@ -50,8 +50,7 @@ class Simulator:
         self.__load_ocel_maker()
         self.__load_features()
         self.__load_predictors()
-        self.scheduledLeadSteps = {}
-        self.failedLeadSteps = {}
+        self.__initialize_predictions()
 
     def run_steps(self, steps):
         step_count = 0
@@ -64,12 +63,41 @@ class Simulator:
                 break
 
     def __initialize_predictions(self):
-        simulation_objects = self.simulationNet.get_all_active_simulation_objects():
+        simulation_objects = list(self.simulationNet.get_all_simulation_objects().values())
+        simulation_objects.sort(key=lambda so: so.time)
         simulation_object: SimulationObjectInstance
         for simulation_object in simulation_objects:
             self.__predict_leading_activity(simulation_object)
 
     def __predict_leading_activity(self, simulation_object: SimulationObjectInstance):
+        predicted_transition : Transition = self.__make_feature_based_leading_prediction(simulation_object)
+        if predicted_transition is None:
+            simulation_object.active = False
+            simulation_object.nextActivity = None
+            return
+            # the prediction is feature-based and does not respect the marking
+            # now, if the marking allows to realize the prediction, then schedule
+            # is this correct? TODO
+        execution_objects = [simulation_object]
+        direct_om = simulation_object.directObjectModel
+        for any_otype in self.processConfig.otypes:
+            execution_objects += direct_om[any_otype] if any_otype in direct_om else []
+        any_sim_obj: SimulationObjectInstance
+        paths = dict()
+        for any_sim_obj in execution_objects:
+            obj_instance: ObjectInstance = any_sim_obj.objectInstance
+            path_from_obj = self.simulationNet.compute_path(obj_instance, predicted_transition.label)
+            if path_from_obj is None:
+                simulation_object.active = False
+                simulation_object.nextActivity = None
+                return
+            paths[obj_instance] = path_from_obj
+        execution_time = max(map(lambda obj : obj.time, execution_objects))
+        scheduled_activity = ScheduledActivity(predicted_transition, paths, execution_time)
+        simulation_object.nextActivity = scheduled_activity
+        simulation_object.active = True
+
+    def __make_feature_based_leading_prediction(self, simulation_object: SimulationObjectInstance):
         oid = simulation_object.oid
         otype = simulation_object.otype
         features_by_object = self.objectFeatures[otype][oid]
@@ -79,104 +107,40 @@ class Simulator:
             predictions = next_act_predictor[object_features]
             if predictions:
                 cum_dist = CumulativeDistribution(predictions)
-                prediction = cum_dist.sample()
+                prediction: str = cum_dist.sample()
                 transition = self.__get_transition(prediction)
                 if transition.transitionType == TransitionType.FINAL or \
                         self.processConfig.activityLeadingTypes[transition.label] == otype:
+                            return transition
+        return None
 
-        self.scheduledLeadSteps[oid] = None
-
-    def predict(self):
+    def schedule_next_activity(self):
         active_simulation_objects = self.simulationNet.get_all_active_simulation_objects()
+        if len(active_simulation_objects) == 0:
+            return False
         active_simulation_objects.sort(key=lambda so: so.nextActivity.time)
-
-
-    def predict2(self):
-        running_tokens = self.simulationNet.get_all_running_emitting_tokens()
-        running_tokens.sort(key=lambda t: t.time)
-        token: Token
-        prediction = None
-        objects_by_id = self.simulationNet.objects.objectsById
-        for token in running_tokens:
-            oid = token.oid
-            obj = objects_by_id[oid]
-            if oid not in self.scheduledLeadSteps:
-                self.__schedule_lead_step(obj)
-            if self.scheduledLeadSteps[oid] is None:
-                continue
-            scheduled_transition = self.scheduledLeadSteps[oid]
-            scheduled_activity = scheduled_transition.label
-            if scheduled_transition.transitionType == TransitionType.FINAL:
-                leading_obj = obj
-                path = self.simulationNet.compute_path(obj, scheduled_activity)
-                paths_by_objs = {obj: path} if path is not None else None
-            else:
-                leading_obj, paths_by_objs = self.__get_all_paths(obj, scheduled_activity)
-            if paths_by_objs is not None:
-                prediction = NextActivityCandidate(scheduled_transition, leading_obj, paths_by_objs)
-                do_predict = self.__decide_prediction(prediction)
-                if do_predict:
-                    break
-                else:
-                    prediction = None
-        if prediction is None:
-            return False
-        prediction: NextActivityCandidate
-        if prediction.transition.transitionType == TransitionType.FINAL:
-            self.simulationNet.terminatingObjects.add(prediction.leadingObject.oid)
-        self.__update_enabled_transitions(prediction.paths)
+        simulation_object: SimulationObjectInstance = active_simulation_objects[0]
+        next_activity = simulation_object.nextActivity
+        predicted_transition = next_activity.transition
+        if predicted_transition.transitionType == TransitionType.FINAL:
+            self.simulationNet.terminatingObjects.add(simulation_object.objectInstance)
+        self.__update_enabled_transitions(next_activity.paths)
         return True
 
-    def __decide_prediction(self, prediction: NextActivityCandidate):
-        p = 0
-        n = 0
-        zeros = 0
-        act = prediction.transition.label
-        objs = prediction.paths.keys()
-        for obj in objs:
-            if obj == prediction.leadingObject or obj.otype in self.processConfig.nonEmittingTypes:
-                continue
-            n = n + 1
-            otype = obj.otype
-            if otype in self.processConfig.nonEmittingTypes:
-                continue
-            features_by_object = self.objectFeatures[otype][obj.oid]
-            object_features = tuple(
-                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
-            next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if object_features in next_act_predictor \
-                    and act in next_act_predictor[object_features]:
-                p_obj = next_act_predictor[object_features][act]
-            else:
-                p_obj = 0
-            p = p + p_obj
-            if p_obj == 0:
-                zeros += 1
-        p = p / n if n > 0 else 1
-        if zeros * 2 > n:
-            return False
-        rnd = random.random()
-        if rnd > p:
-            return False
-        return True
-
-    def __schedule_lead_step(self, obj):
-        oid = obj.oid
-        otype = obj.otype
-        features_by_object = self.objectFeatures[otype][oid]
-        object_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
-        next_act_predictor = self.predictors.next_activity_predictors[otype]
-        if object_features in next_act_predictor:
-            predictions = next_act_predictor[object_features]
-            if predictions:
-                cum_dist = CumulativeDistribution(predictions)
-                prediction = cum_dist.sample()
-                transition = self.__get_transition(prediction)
-                if transition.transitionType == TransitionType.FINAL or \
-                        self.processConfig.activityLeadingTypes[transition.label] == otype:
-                    self.scheduledLeadSteps[oid] = transition
-                    return
-        self.scheduledLeadSteps[oid] = None
+    def __update_predictions(self, objects):
+        obj_instance: ObjectInstance
+        rescheduled_objects = set()
+        for obj_instance in objects:
+            sim_obj = self.simulationNet.simulationObjects[obj_instance.oid]
+            total_om = []
+            for otype in self.processConfig.otypes:
+                total_om += list(obj_instance.total_local_model[otype])
+            for any_obj in total_om:
+                sim_obj = self.simulationNet.simulationObjects[any_obj.oid]
+                rescheduled_objects.add(sim_obj)
+        self.__try_to_not_bother_me_with_that_shit()
+        for any_obj in rescheduled_objects:
+            self.__predict_leading_activity(any_obj)
 
     def __get_execution_probability(self, candidate: NextActivityCandidate):
         candidate_activity = candidate.transition.label
@@ -199,6 +163,9 @@ class Simulator:
             else:
                 p = 0
         return p
+
+    def __try_to_not_bother_me_with_that_shit(self):
+        pass
 
     def __get_weighted_alt_probability_from_neighborhood(self, features, next_act_predictor, next_act):
         projected_features = [e for e in features if not type(e) == str]
@@ -264,12 +231,12 @@ class Simulator:
             logging.info("Simulation finished. All objects have terminated.")
             return True
         if transition_id in self.processConfig.acts or transition_id[:4] == "END_":
+            self.__update_predictions(objects)
             obj_ids_str = ", ".join([str(i) for i in object_ids])
             date_str = datetime.utcfromtimestamp(timestamp).strftime("%d/%m/%Y, %H:%M:%S")
             logging.info(f"Executed {transition_id} with {obj_ids_str} at {date_str}")
             self.__update_features(transition_id, object_ids)
-            self.__clear_lead_steps_scheduling(object_ids)
-            do_next = self.predict()
+            do_next = self.schedule_next_activity()
             if not do_next:
                 logging.info("Activity could not be predicted. Terminating simulation...")
                 return True
@@ -277,11 +244,6 @@ class Simulator:
                 self.__update_ocel(transition_id, object_ids, timestamp)
         # put next transition to be executed in front
         self.__sort_bindings()
-
-    def __clear_lead_steps_scheduling(self, object_ids):
-        for object_id in object_ids:
-            if object_id in self.scheduledLeadSteps:
-                del self.scheduledLeadSteps[object_id]
 
     def __fire(self, transition_id, objects):
         if transition_id in self.processConfig.acts:

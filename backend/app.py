@@ -209,7 +209,7 @@ def initialize_simulation():
     del simulation_initializer
     simulator = Simulator(session_path)
     simulator.initialize()
-    simulator.predict()
+    simulator.schedule_next_activity()
     state = simulator.export_current_state()
     simulator.save()
     return Response.get(state)

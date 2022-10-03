@@ -36,8 +36,8 @@ class SimulationInitializer:
         self.__make_initial_marking()
         self.__make_simulation_net()
         self.__make_initial_features()
-        self.__load_training_object_model()
-        self.__load_training_data()
+        #self.__load_training_object_model()
+        #self.__load_training_data()
         self.__make_predictors()
         self.__initialize_ocel()
 
@@ -110,7 +110,10 @@ class SimulationInitializer:
                 for any_otype in self.otypes:
                     for any_obj in obj.direct_object_model[any_otype]:
                         any_sim_obj = simulation_objects[any_obj.oid]
-                        sim_obj.directObjectModel.append(any_sim_obj)
+                        any_otype = any_sim_obj.otype
+                        if any_otype not in sim_obj.directObjectModel:
+                            sim_obj.directObjectModel[any_otype] = []
+                        sim_obj.directObjectModel[any_otype].append(any_sim_obj)
         self.simulationObjects = simulation_objects
 
     def __make_simulation_net(self):
