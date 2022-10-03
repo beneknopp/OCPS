@@ -12,6 +12,7 @@ from ocpn_discovery.net_utils import Transition, TransitionType
 from simulation.ocel_maker import OcelMaker
 from simulation.sim_utils import Token, Predictors, SimulationStateExport, NextActivityCandidate
 from simulation.simulation_net import SimulationNet
+from simulation.simulation_object_instance import SimulationObjectInstance
 from utils.cumulative_distribution import CumulativeDistribution
 
 
@@ -62,7 +63,35 @@ class Simulator:
                 self.__write_ocel()
                 break
 
+    def __initialize_predictions(self):
+        simulation_objects = self.simulationNet.get_all_active_simulation_objects():
+        simulation_object: SimulationObjectInstance
+        for simulation_object in simulation_objects:
+            self.__predict_leading_activity(simulation_object)
+
+    def __predict_leading_activity(self, simulation_object: SimulationObjectInstance):
+        oid = simulation_object.oid
+        otype = simulation_object.otype
+        features_by_object = self.objectFeatures[otype][oid]
+        object_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
+        next_act_predictor = self.predictors.next_activity_predictors[otype]
+        if object_features in next_act_predictor:
+            predictions = next_act_predictor[object_features]
+            if predictions:
+                cum_dist = CumulativeDistribution(predictions)
+                prediction = cum_dist.sample()
+                transition = self.__get_transition(prediction)
+                if transition.transitionType == TransitionType.FINAL or \
+                        self.processConfig.activityLeadingTypes[transition.label] == otype:
+
+        self.scheduledLeadSteps[oid] = None
+
     def predict(self):
+        active_simulation_objects = self.simulationNet.get_all_active_simulation_objects()
+        active_simulation_objects.sort(key=lambda so: so.nextActivity.time)
+
+
+    def predict2(self):
         running_tokens = self.simulationNet.get_all_running_emitting_tokens()
         running_tokens.sort(key=lambda t: t.time)
         token: Token

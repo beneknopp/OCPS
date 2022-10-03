@@ -14,6 +14,7 @@ from ocpn_discovery.net_utils import Place, NetProjections
 from .ocel_maker import OcelMaker
 from .sim_utils import Marking, Token, Predictors
 from .simulation_net import SimulationNet
+from .simulation_object_instance import SimulationObjectInstance
 
 
 class SimulationInitializer:
@@ -88,6 +89,7 @@ class SimulationInitializer:
         self.tokens = []
         p: Place
         all_places = []
+        simulation_objects = dict()
         for otype in self.otypes:
             places = self.netProjections.get_otype_projection(otype).places
             all_places += places
@@ -97,11 +99,22 @@ class SimulationInitializer:
             p = initial_places[0]
             for obj in self.objectModel.objectsByType[otype].keys():
                 token = Token(obj.oid, otype, obj.time, p)
+                simulation_object = SimulationObjectInstance(obj, [token])
+                simulation_objects[obj.oid] = simulation_object
                 self.tokens.append(token)
         self.marking = Marking(all_places, self.otypes, self.tokens)
+        for otype in self.otypes:
+            for obj in self.objectModel.objectsByType[otype].keys():
+                oid = obj.oid
+                sim_obj = simulation_objects[oid]
+                for any_otype in self.otypes:
+                    for any_obj in obj.direct_object_model[any_otype]:
+                        any_sim_obj = simulation_objects[any_obj.oid]
+                        sim_obj.directObjectModel.append(any_sim_obj)
+        self.simulationObjects = simulation_objects
 
     def __make_simulation_net(self):
-        self.simulationNet = SimulationNet(self.sessionPath, self.netProjections, self.marking)
+        self.simulationNet = SimulationNet(self.sessionPath, self.netProjections, self.marking, self.simulationObjects)
 
     def __load_training_object_model(self):
         self.trainingModelPreprocessor = TrainingModelPreprocessor.load(self.sessionPath)

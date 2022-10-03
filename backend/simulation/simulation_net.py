@@ -6,6 +6,7 @@ from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_model import ObjectModel
 from ocpn_discovery.net_utils import Place, NetProjections
 from .sim_utils import Token, Marking
+from .simulation_object_instance import SimulationObjectInstance
 from .state_space_computer import StateSpaceComputer
 
 
@@ -23,10 +24,11 @@ class SimulationNet:
     terminatingObjects: set
     processConfig: ProcessConfig
 
-    def __init__(self, session_path, net_projections, marking):
+    def __init__(self, session_path, net_projections, marking, simulation_objects):
         self.processConfig = ProcessConfig.load(session_path)
         self.netProjections = net_projections
         self.marking = marking
+        self.simulationObjects = simulation_objects
         self.objects = ObjectModel.load(session_path)
         self.stateSpaceComputer = StateSpaceComputer(self.processConfig, net_projections)
         self.sessionPath = session_path
@@ -112,6 +114,12 @@ class SimulationNet:
                                    and token.otype not in self.processConfig.nonEmittingTypes]
         return all_running_tokens
 
+    def get_all_simulation_objects(self):
+        return self.simulationObjects
+
+    def get_all_active_simulation_objects(self):
+        return list(filter(lambda sim_obj: sim_obj.active, self.simulationObjects))
+
     # TODO: refactor
     def getAllTransitions(self):
         all_transitions = []
@@ -124,3 +132,7 @@ class SimulationNet:
 
     def compute_path(self, model_obj, next_activity):
         return self.stateSpaceComputer.compute_path(self.marking, next_activity, model_obj)
+
+    def initialize_simulation_objects(self):
+
+        pass
