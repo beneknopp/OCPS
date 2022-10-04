@@ -36,8 +36,10 @@ class SimulationInitializer:
         self.__make_initial_marking()
         self.__make_simulation_net()
         self.__make_initial_features()
-        #self.__load_training_object_model()
-        #self.__load_training_data()
+        # comment out after first initialization for speed up #
+        self.__load_training_object_model()
+        self.__load_training_data()
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         self.__make_predictors()
         self.__initialize_ocel()
 

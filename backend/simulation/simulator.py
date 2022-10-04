@@ -79,9 +79,10 @@ class Simulator:
             # now, if the marking allows to realize the prediction, then schedule
             # is this correct? TODO
         execution_objects = [simulation_object]
-        direct_om = simulation_object.directObjectModel
-        for any_otype in self.processConfig.otypes:
-            execution_objects += direct_om[any_otype] if any_otype in direct_om else []
+        if predicted_transition.transitionType != TransitionType.FINAL:
+            direct_om = simulation_object.directObjectModel
+            for any_otype in self.processConfig.otypes:
+                execution_objects += direct_om[any_otype] if any_otype in direct_om else []
         any_sim_obj: SimulationObjectInstance
         paths = dict()
         for any_sim_obj in execution_objects:
@@ -97,22 +98,60 @@ class Simulator:
         simulation_object.nextActivity = scheduled_activity
         simulation_object.active = True
 
+    def __get_execution_probability(self, candidate_activity, bound_objects):
+        obj: ObjectInstance
+        p = 0
+        n = 0
+        for obj in bound_objects:
+            otype = obj.otype
+            if otype in self.processConfig.nonEmittingTypes:
+                continue
+            n = n + 1
+            features_by_object = self.objectFeatures[otype][obj.oid]
+            object_features = tuple(
+                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
+            next_act_predictor = self.predictors.next_activity_predictors[otype]
+            if object_features in next_act_predictor and candidate_activity in next_act_predictor[object_features]:
+                probability = next_act_predictor[object_features][candidate_activity]
+                #p = min(probability, p)
+                p += probability
+                continue
+            #else:
+             #   p = 0
+        return p/n
+
     def __make_feature_based_leading_prediction(self, simulation_object: SimulationObjectInstance):
         oid = simulation_object.oid
         otype = simulation_object.otype
+        obj = simulation_object.objectInstance
         features_by_object = self.objectFeatures[otype][oid]
         object_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
         next_act_predictor = self.predictors.next_activity_predictors[otype]
         if object_features in next_act_predictor:
             predictions = next_act_predictor[object_features]
+            execution_probabilities = dict()
             if predictions:
-                cum_dist = CumulativeDistribution(predictions)
-                prediction: str = cum_dist.sample()
-                transition = self.__get_transition(prediction)
-                if transition.transitionType == TransitionType.FINAL or \
-                        self.processConfig.activityLeadingTypes[transition.label] == otype:
-                            return transition
-        return None
+                max_prob = 0
+                activity_leading_types = self.processConfig.activityLeadingTypes
+                for candidate_activity, p in predictions.items():
+                    if candidate_activity[:4] == "END_":
+                        execution_probabilities[candidate_activity] = p
+                        max_prob = max(p, max_prob)
+                    else:
+                        leading_type = activity_leading_types[candidate_activity]
+                        leading_obj = obj if leading_type == otype else \
+                            list(obj.reverse_object_model[leading_type])[0]
+                        execution_model = [leading_obj]
+                        execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
+                        execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
+                        execution_probabilities[candidate_activity] = execution_probability
+                        max_prob = max(max_prob, execution_probability)
+                if max_prob > 0:
+                    cum_dist = CumulativeDistribution(execution_probabilities)
+                    prediction: str = cum_dist.sample()
+                    transition = self.__get_transition(prediction)
+                    if transition.transitionType == TransitionType.FINAL or activity_leading_types[prediction] == otype:
+                                return transition
 
     def schedule_next_activity(self):
         active_simulation_objects = self.simulationNet.get_all_active_simulation_objects()
@@ -132,6 +171,7 @@ class Simulator:
         rescheduled_objects = set()
         for obj_instance in objects:
             sim_obj = self.simulationNet.simulationObjects[obj_instance.oid]
+            rescheduled_objects.add(sim_obj)
             total_om = []
             for otype in self.processConfig.otypes:
                 total_om += list(obj_instance.total_local_model[otype])
@@ -141,28 +181,6 @@ class Simulator:
         self.__try_to_not_bother_me_with_that_shit()
         for any_obj in rescheduled_objects:
             self.__predict_leading_activity(any_obj)
-
-    def __get_execution_probability(self, candidate: NextActivityCandidate):
-        candidate_activity = candidate.transition.label
-        leading_type = candidate.leadingObject.otype
-        bound_objects = candidate.paths.keys()
-        obj: ObjectInstance
-        p = 1
-        for obj in bound_objects:
-            otype = obj.otype
-            if otype in self.processConfig.nonEmittingTypes:
-                continue
-            features_by_object = self.objectFeatures[otype][obj.oid]
-            object_features = tuple(
-                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
-            next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if object_features in next_act_predictor and candidate_activity in next_act_predictor[object_features]:
-                probability = next_act_predictor[object_features][candidate_activity]
-                p = min(probability, p)
-                continue
-            else:
-                p = 0
-        return p
 
     def __try_to_not_bother_me_with_that_shit(self):
         pass
@@ -231,11 +249,11 @@ class Simulator:
             logging.info("Simulation finished. All objects have terminated.")
             return True
         if transition_id in self.processConfig.acts or transition_id[:4] == "END_":
+            self.__update_features(transition_id, object_ids)
             self.__update_predictions(objects)
             obj_ids_str = ", ".join([str(i) for i in object_ids])
             date_str = datetime.utcfromtimestamp(timestamp).strftime("%d/%m/%Y, %H:%M:%S")
             logging.info(f"Executed {transition_id} with {obj_ids_str} at {date_str}")
-            self.__update_features(transition_id, object_ids)
             do_next = self.schedule_next_activity()
             if not do_next:
                 logging.info("Activity could not be predicted. Terminating simulation...")
