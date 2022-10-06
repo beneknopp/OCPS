@@ -32,7 +32,6 @@ app.config['RUNTIME_RESOURCE_FOLDER'] = RUNTIME_RESOURCE_FOLDER
 def hello_world():  # put application's code here
     return {"ping": "Hello World!"}
 
-
 @app.route('/upload-ocel', methods=['GET', 'POST'])
 @cross_origin()
 def upload_ocel():
@@ -68,6 +67,7 @@ def ocel_config():
     if not request.method == 'POST':
         return Response.get(True)
     session_path = get_session_path(request)
+    start_logging(session_path)
     config_bytes = request.files["ocelInfo"].read()
     config_dto = json.loads(config_bytes)
     process_config = ProcessConfig(config_dto, session_path)
@@ -82,7 +82,9 @@ def ocel_config():
 def generate_object_model():
     if not request.method == 'POST':
         return True
+    args = request.args
     session_path = get_session_path(request)
+    start_logging(session_path)
     file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
     ocel = pm4py.read_ocel(file_path)
     ProcessConfig.update_non_emitting_types(session_path, request.form['nonEmittingTypes'])
@@ -104,6 +106,7 @@ def discover_ocpn():
     if not request.method == 'POST':
         return True
     session_path = get_session_path(request)
+    start_logging(session_path)
     form = request.form
     ocpn_discoverer = OCPN_Discoverer(session_path)
     activity_selected_types = RequestParamsParser.parse_activity_selected_types(form)
@@ -123,6 +126,7 @@ def simulation_state():
 @cross_origin()
 def object_model_stats():
     session_path = get_session_path(request)
+    start_logging(session_path)
     args = request.args
     otype = args["otype"]
     process_config = ProcessConfig.load(session_path)
@@ -153,6 +157,7 @@ def object_model_stats():
 @cross_origin()
 def arrival_stats():
     session_path = get_session_path(request)
+    start_logging(session_path)
     args = request.args
     otype = args["otype"]
     process_config = ProcessConfig.load(session_path)
@@ -202,6 +207,7 @@ def initialize_simulation():
     args = request.args
     session_key = args["sessionKey"]
     session_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
+    start_logging(session_path)
     simulation_initializer = SimulationInitializer(session_path)
     simulation_initializer.load()
     simulation_initializer.initialize()
@@ -240,10 +246,12 @@ def make_session():
     except FileNotFoundError:
         os.mkdir(app.config['RUNTIME_RESOURCE_FOLDER'])
         os.mkdir(session_path)
-    logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
-                        encoding='utf-8', level=logging.DEBUG)
+    start_logging(session_path)
     return session_key, session_path
 
+def start_logging(session_path):
+    logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
+                        encoding='utf-8', level=logging.DEBUG)
 
 def get_session_path(request):
     args = request.args

@@ -39,8 +39,12 @@ class ObjectTypeGraph(Graph):
                 "children": list(map(lambda node: node.name, self.get_children(otype)))
             }
 
-    def get_neighbor_otypes(self, otype):
+    def get_parent_and_child_otypes(self, otype):
         return self.neighborOtypes[otype]
+
+    def get_neighbor_otypes(self, otype):
+        neighbors = self.neighborOtypes[otype]
+        return neighbors["parents"] + neighbors["children"]
 
     def __make_shortest_paths(self):
         shortest_paths = {}

@@ -8,10 +8,12 @@ class ObjectModelParameters:
     numberOfObjects: int
     activitySelectedTypes: {}
     activityLeadingTypes: {}
+    executionModelsDepth: int
 
     def __init__(self, omp_dto):
         self.seedType = omp_dto['seedType']
         otypes_str = omp_dto['otypes']
+        self.executionModelDepth = int(omp_dto["executionModelDepth"])
         self.otypes = otypes_str.split(",") if len(otypes_str) > 0 else []
         non_emitting_types_str = omp_dto['nonEmittingTypes']
         self.nonEmittingTypes = non_emitting_types_str.split(",") if len(non_emitting_types_str) > 0 else []

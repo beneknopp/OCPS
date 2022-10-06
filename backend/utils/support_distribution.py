@@ -9,31 +9,26 @@ class SupportDistribution:
     __pdf: any
     cdf_steps: dict
 
-    def __init__(self, source_otype, target_otype, otypes, otype_schemata):
+    def __init__(self, path, otype_schemata):
         self.__initialized = False
-        self.source_otype = source_otype
-        self.target_otype = target_otype
-        self.otypes = otypes
-        self.other_types = [ot for ot in otypes if ot != source_otype and ot != target_otype]
+        self.path = path
         self.otype_schemata = otype_schemata
         self.__make_prior_distribution()
         self.__initialized = True
 
     def __make_prior_distribution(self):
-        projected_schemata = [(k[self.otypes.index(self.target_otype)], v) for k, v in self.otype_schemata.items()]
-        schemata = [k[self.otypes.index(self.target_otype)] for k, v in self.otype_schemata.items()]
-        schema_frequencies = pd.DataFrame(projected_schemata, columns=["schema", "frequency"]) \
-            .groupby("schema", as_index=False).sum()
-        total = sum(schema_frequencies["frequency"])
-        mean = sum(schema_frequencies["schema"] * schema_frequencies["frequency"]) / total
-        schema_frequencies["p"] = schema_frequencies["frequency"] / total
-        variance = sum((schema_frequencies["schema"] - mean).pow(2) * schema_frequencies["p"])
+        items = [(card, freq) for card, freq in self.otype_schemata.items()]
+        card_frequencies = pd.DataFrame(items, columns=["cardinality", "frequency"])
+        total = sum(card_frequencies["frequency"])
+        mean = sum(card_frequencies["cardinality"] * card_frequencies["frequency"]) / total
+        card_frequencies["p"] = card_frequencies["frequency"] / total
+        variance = sum((card_frequencies["cardinality"] - mean).pow(2) * card_frequencies["p"])
         stdev = math.sqrt(variance)
         self.variance = variance
         if variance < 0.1:
             self.support_steps = self.__make_support_steps_for_single_value(mean)
             return
-        self.support_steps = self.__make_support_steps_by_schema_frequencies(schema_frequencies)
+        self.support_steps = self.__make_support_steps_by_schema_frequencies(card_frequencies)
         # pdf = self.__get_pdf(mean, variance)
         # self.support_steps = self.__make_support_steps(pdf, mean, stdev, schema_frequencies)
 
@@ -69,13 +64,13 @@ class SupportDistribution:
 
     def __make_support_steps_by_schema_frequencies(self, schema_frequencies):
         # index 0: the support of having 0 objects is 1
-        schemata = schema_frequencies["schema"].values
+        schemata = schema_frequencies["cardinality"].values
         ps = [0.0] * (max(schemata) + 1)
         support_steps = [1.0] + [0] * (max(schemata) + 1)
         support_product = 1
         xs = []
         for i in [i for i in range(len(ps))]:
-            x = schema_frequencies[schema_frequencies["schema"] == i]
+            x = schema_frequencies[schema_frequencies["cardinality"] == i]
             if len(x) == 0:
                 pi = 0
             else:

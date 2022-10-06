@@ -118,6 +118,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     formData.append("seedType", this.objectModelInfo.selectedSeedType);
     formData.append("numberOfObjects", "" + this.objectModelInfo.numberOfObjects);
     formData.append("otypes", "" + this.objectModelInfo.otypes);
+    formData.append("executionModelDepth", "2");
     formData.append("nonEmittingTypes", "" + this.objectModelInfo.nonEmittingTypes);
     Object.keys(this.objectModelInfo.activitySelectedTypes).forEach(act => {
       let leading_type = this.objectModelInfo.activityLeadingTypes[act]

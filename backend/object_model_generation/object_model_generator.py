@@ -81,17 +81,11 @@ class ObjectModelGenerator:
         object_model.save()
 
     def __initialize_object_instance_class(self):
-        global_schemata = {
-            otype: {
-                schema: list(oid_to_schema.values()).count(schema)
-                for schema in set(oid_to_schema.values())
-            }
-            for otype, oid_to_schema in self.trainingModelPreprocessor.flatGlobalSchemata.items()
-        }
         ObjectInstance.set_(
-            execution_model_paths=self.objectTypeGraph.shortest_paths,
             otypes=self.otypes,
-            global_schemata=global_schemata
+            execution_model_paths=self.trainingModelPreprocessor.executionModelPaths,
+            execution_model_depth=self.trainingModelPreprocessor.executionModelDepth,
+            global_schemata=self.trainingModelPreprocessor.schemaDistributions
         )
 
     def __run_generation(self):
@@ -116,7 +110,7 @@ class ObjectModelGenerator:
             current_obj = buffer[0]
             buffer = buffer[1:]
             current_otype = current_obj.otype
-            neighbor_types = object_type_graph.get_neighbor_otypes(current_otype)
+            neighbor_types = object_type_graph.get_parent_and_child_otypes(current_otype)
             if current_otype not in self.nonEmittingTypes:
                 prediction: ObjectLinkPrediction = self.__predict_neighbor(
                     current_obj, neighbor_types, open_objects, oid)
@@ -124,10 +118,11 @@ class ObjectModelGenerator:
                     selected_neighbor = prediction.selected_neighbor
                     predicted_type = prediction.predicted_type
                     reverse = prediction.reverse
+                    merge_map = prediction.mergeMap
                     if not reverse:
-                        ObjectInstance.merge(current_obj, selected_neighbor)
+                        ObjectInstance.merge(current_obj, selected_neighbor, merge_map)
                     else:
-                        ObjectInstance.merge(selected_neighbor, current_obj)
+                        ObjectInstance.merge(selected_neighbor, current_obj, merge_map)
                     if selected_neighbor not in total_objects[predicted_type]:
                         total_objects[predicted_type].append(selected_neighbor)
                     if selected_neighbor not in buffer:
@@ -316,10 +311,10 @@ class ObjectModelGenerator:
             new_obj = ObjectInstance(neighbor_otype, oid.get())
             # choice: decide action based on direct support
             direct_support = self.__compute_pairwise_support(obj, new_obj)
-            local_support = self.__compute_global_support(obj, new_obj)
+            local_support, merge_map = self.__compute_global_support(obj, new_obj)
             max_support = local_support
             new_objs.append(new_obj)
-            supported_objs[neighbor_otype].append((new_obj, local_support))
+            supported_objs[neighbor_otype].append((new_obj, local_support, merge_map))
             open_neighbors = open_objects[neighbor_otype]
             # avoid bias towards specific objects
             random.shuffle(open_objects[neighbor_otype])
@@ -331,8 +326,8 @@ class ObjectModelGenerator:
                                          ))
             open_neighbor: ObjectInstance
             for open_neighbor in open_neighbors:
-                global_support = self.__compute_global_support(obj, open_neighbor)
-                supported_objs[neighbor_otype].append((open_neighbor, global_support))
+                global_support, merge_map = self.__compute_global_support(obj, open_neighbor)
+                supported_objs[neighbor_otype].append((open_neighbor, global_support, merge_map))
                 if global_support > max_support:
                     max_support = global_support
             rnd = random.random()
@@ -343,14 +338,18 @@ class ObjectModelGenerator:
             if not sum(list(map(lambda x: x[1], supported_objs[neighbor_otype]))) > 0:
                 if direct_support > 0.99:
                     # enforce (contradicting supports, so prioritize local support)
-                    supported_objs[neighbor_otype] = [(obj, 1) for (obj, x) in supported_objs[neighbor_otype]]
+                    supported_objs[neighbor_otype] = [(obj, 1, merge_map) for (obj, x, merge_map) in supported_objs[neighbor_otype]]
                     self.enforcements = self.enforcements + 1
                 else:
                     obj.close_type(neighbor_otype)
                     continue
-            probs = {o: p for (o, p) in supported_objs[neighbor_otype]}
+            merge_maps = {
+                o: mm for (o, p, mm) in supported_objs[neighbor_otype]
+            }
+            probs = {o: p for (o, p, mm) in supported_objs[neighbor_otype]}
             cum_dist = CumulativeDistribution(probs)
             selected_neighbor = cum_dist.sample()
+            merge_map = merge_maps[selected_neighbor]
             predicted_otype = selected_neighbor.otype
             mode = PredictionMode.NEW if selected_neighbor in new_objs else PredictionMode.APPEND
             reverse = True if predicted_otype in parent_types else False
@@ -358,7 +357,7 @@ class ObjectModelGenerator:
                 oid.inc()
                 open_objects[predicted_otype].append(selected_neighbor)
             prediction = ObjectLinkPrediction(predict=True, predicted_type=predicted_otype, mode=mode, reverse=reverse,
-                                              selected_neighbor=selected_neighbor)
+                                              selected_neighbor=selected_neighbor, merge_map=merge_map)
             # logging.info(f"{obj.otype} {str(obj.oid)}: {str(prediction.pretty_print()}"))
             return prediction
         return ObjectLinkPrediction(predict=False)
@@ -366,61 +365,129 @@ class ObjectModelGenerator:
     def __compute_global_support(self, left_object: ObjectInstance, right_object: ObjectInstance):
         left_otype = left_object.otype
         right_otype = right_object.otype
-        (left_side, right_side) = self.objectTypeGraph.get_component_split(left_otype, right_otype)
-        execution_model_object: ObjectInstance
-        left_global_model = [left_object]
-        right_global_model = [right_object]
-        for otype in left_side:
-            global_model_of_type = [left_object.global_model[otype]]
-            left_global_model += [el for sl in global_model_of_type for el in sl]
-        for otype in right_side:
-            global_model_of_type = [right_object.global_model[otype]]
-            right_global_model += [el for sl in global_model_of_type for el in sl]
+        paths = {}
+        level_objs = {}
+        level = 1
+        path = tuple([left_otype, right_otype])
+        level_objs[level] = dict()
+        level_objs[level][path] = [[left_object], [right_object]]
+        cut_index = 1
+        # supports for objects on left margin to be evaluated: yes, right side: yes
+        paths[level] = [(path, True, True, cut_index)]
+        left_border_object: ObjectInstance
+        right_border_object: ObjectInstance
         global_support = 1.0
-        for left_model_object in left_global_model:
-            if left_model_object.otype in self.nonEmittingTypes:
-                continue
-            support = self.__compute_element_support(left_model_object, right_global_model)
-            if support < global_support:
-                global_support = support
-        for right_model_object in right_global_model:
-            if right_model_object.otype in self.nonEmittingTypes:
-                continue
-            support = self.__compute_element_support(right_model_object, left_global_model)
-            if support < global_support:
-                global_support = support
-        return global_support
+        merge_map = dict()
+        while True:
+            # evaluate current level supports
+            for path, eval_left, eval_right, cut_index in paths[level]:
+                path_objects = level_objs[level][path]
+                if eval_left:
+                    left_border_objects = path_objects[0]
+                else:
+                    left_border_objects = []
+                if eval_right:
+                    right_border_objects = path_objects[-1]
+                else:
+                    right_border_objects = []
+                # path objects are ordered according to the path
+                reverse_path = list(path[:])
+                reverse_path.reverse()
+                reverse_path = tuple(reverse_path)
+                reversed_path_objects = path_objects[:]
+                reversed_path_objects.reverse()
+                for left_border_object in left_border_objects:
+                    support = self.__compute_element_support(left_border_object, path_objects, path, cut_index)
+                    if support < global_support:
+                        global_support = support
+                    self.__update_merge_map(merge_map, left_border_object, path_objects, path, cut_index)
+                for right_border_object in right_border_objects:
+                    support = self.__compute_element_support(
+                        right_border_object, reversed_path_objects, reverse_path, level + 1 - cut_index)
+                    if support < global_support:
+                        global_support = support
+                    self.__update_merge_map(merge_map, right_border_object, reversed_path_objects, reverse_path, level + 1 - cut_index)
+            if level == ObjectInstance.executionModelDepth:
+                break
+            # new step
+            new_paths = []
+            level_objs[level + 1] = dict()
+            for path, eval_left, eval_right, cut_index in paths.get(level):
+                path_objects = level_objs[level][path]
+                left_border_type = path[0]
+                right_border_type = path[-1]
+                left_border_objects = path_objects[0]
+                right_border_objects = path_objects[-1]
+                if left_border_objects:
+                    left_extensions = self.objectTypeGraph.get_neighbor_otypes(left_border_type)
+                    for left_extension_type in left_extensions:
+                        new_path = tuple([left_extension_type] + list(path))
+                        new_paths.append((new_path, True, False, cut_index + 1))
+                        left_margin_path = tuple([left_border_type, left_extension_type])
+                        new_objs = []
+                        for left_obj in left_border_objects:
+                            new_objs += left_obj.global_model[1][left_margin_path]
+                        level_objs[level + 1][new_path] = [new_objs] + path_objects
+                if right_border_objects:
+                    right_extensions = self.objectTypeGraph.get_neighbor_otypes(right_border_type)
+                    for right_extension_type in right_extensions:
+                        new_path = tuple(list(path) + [right_extension_type])
+                        new_paths.append((new_path, False, True, cut_index))
+                        right_margin_path = tuple([right_border_type, right_extension_type])
+                        new_objs = []
+                        for right_obj in path_objects[-1]:
+                            new_objs += right_obj.global_model[1][right_margin_path]
+                        level_objs[level + 1][new_path] = path_objects + [new_objs]
+            level = level + 1
+            paths[level] = new_paths
+        return global_support, merge_map
 
-    def __compute_element_support(self, obj: ObjectInstance, object_model):
+    def __compute_element_support(self, obj: ObjectInstance, path_objects, path, cut_index):
+        otype = obj.otype
+        if otype in self.nonEmittingTypes:
+            return 1.0
         element_support = 1
-        ot = obj.otype
-        for otype in self.otypes:
-            current_number_at_obj = len(obj.global_model[otype])
-            additions = len([any_obj for any_obj in object_model
-                             if any_obj.otype == otype
-                             and any_obj not in obj.global_model[otype]])
-            for i in range(additions):
-                support = obj.support_distributions[otype].get_support(current_number_at_obj + i + 1)
-                element_support = support * element_support
+        for depth in range(cut_index, len(path)):
+            subpath = tuple(path[:depth + 1])
+            current_objs = path_objects[depth]
+            current_number_at_obj = len(obj.global_model[depth][subpath])
+            additions = len([any_obj for any_obj in current_objs
+                             if any_obj not in obj.global_model[depth][subpath]])
+            for j in range(additions):
+                support = obj.supportDistributions[otype][subpath].get_support(current_number_at_obj + j + 1)
+                element_support = min(support, element_support)
         return element_support
+
+    def __update_merge_map(self, merge_map, obj: ObjectInstance, path_objects, path, cut_index):
+        for depth in range(cut_index, len(path)):
+            subpath = path[:depth + 1]
+            current_objs = path_objects[depth]
+            additions = [any_obj for any_obj in current_objs
+                         if any_obj not in obj.global_model[depth][subpath]]
+            if obj not in merge_map:
+                merge_map[obj] = dict()
+            merge_map[obj][subpath] = additions
 
     def __compute_pairwise_support(self, obj1: ObjectInstance, obj2: ObjectInstance):
         ot1 = obj1.otype
         ot2 = obj2.otype
-        if obj1 in obj2.global_model[ot1]:
-            if obj2 not in obj1.global_model[ot2]:
+        depth = 1
+        if obj1 in obj2.global_model[depth][tuple([ot2, ot1])]:
+            if obj2 not in obj1.global_model[depth][tuple([ot1, ot2])]:
                 raise ValueError("How can it be?")
             return 1.0
         if ot1 in self.nonEmittingTypes:
             support_for_obj2_at_obj1 = 1.0
         else:
-            nof_ot2_at_obj1 = len(obj1.global_model[ot2])
-            support_for_obj2_at_obj1 = obj1.support_distributions[ot2].get_support(nof_ot2_at_obj1 + 1)
+            nof_ot2_at_obj1 = len(obj1.global_model[depth][tuple([ot1, ot2])])
+            support_for_obj2_at_obj1 = ObjectInstance.supportDistributions[ot1][tuple([ot1, ot2])].get_support(
+                nof_ot2_at_obj1 + 1)
         if ot2 in self.nonEmittingTypes:
             support_for_obj1_at_obj2 = 1.0
         else:
-            nof_ot1_at_obj2 = len(obj2.global_model[ot1])
-            support_for_obj1_at_obj2 = obj2.support_distributions[ot1].get_support(nof_ot1_at_obj2 + 1)
+            nof_ot1_at_obj2 = len(obj2.global_model[depth][tuple([ot2, ot1])])
+            support_for_obj1_at_obj2 = ObjectInstance.supportDistributions[ot2][tuple([ot2, ot1])].get_support(
+                nof_ot1_at_obj2 + 1)
         # return support_for_obj1_at_obj2*support_for_obj2_at_obj1
         return (min(support_for_obj1_at_obj2, support_for_obj2_at_obj1))
 

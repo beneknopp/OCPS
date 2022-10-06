@@ -24,6 +24,7 @@ class TrainingModelPreprocessor:
         self.activityLeadingTypes = object_model_parameters.activityLeadingTypes
         self.activitySelectedTypes = object_model_parameters.activitySelectedTypes
         self.seedType = object_model_parameters.seedType
+        self.executionModelDepth = object_model_parameters.executionModelDepth
         df = ocel.get_extended_table()
         acts = self.activityLeadingTypes.keys()
         df = df[df["ocel:activity"].isin(acts)]
@@ -31,28 +32,24 @@ class TrainingModelPreprocessor:
 
     def build(self):
         self.__make_object_type_graph()
-        self.__make_leading_type_process_executions()
+        self.__make_process_executions()
         self.__make_schema_distributions()
 
     def save(self):
-        for otype, obj_schemata in self.flatGlobalSchemata.items():
-            for i, any_otype in enumerate(self.otypes):
-                otype_relations = dict()
-                for obj, schema in obj_schemata.items():
-                    card = list(schema)[i]
-                    if card not in otype_relations:
-                        otype_relations[card] = 0
-                    otype_relations[card] = otype_relations[card] + 1
-                min_card = min(list(otype_relations.keys()))
-                max_card = max(list(otype_relations.keys()))
-                x_axis = range(min_card, max_card + 1)
-                total = sum(otype_relations.values())
-                log_based_schema_dist = list(map(lambda card: float(otype_relations[card]) / total
-                if card in otype_relations else 0, x_axis))
-                stats = {"log_based": log_based_schema_dist, "x_axis": x_axis}
-                dist_path = os.path.join(self.sessionPath, otype + "_to_" + any_otype + "_schema_dist.pkl")
-                with open(dist_path, "wb") as wf:
-                    pickle.dump(stats, wf)
+        for otype, obj_schemata in self.schemaDistributions.items():
+            for paths_with_cardinality_distributions in obj_schemata.values():
+                for path, cardinality_distribution in paths_with_cardinality_distributions.items():
+                    min_card = min(cardinality_distribution)
+                    max_card = max(cardinality_distribution)
+                    x_axis = range(min_card, max_card + 1)
+                    total = sum(cardinality_distribution.values())
+                    log_based_schema_dist = list(map(lambda card: float(cardinality_distribution[card]) / total
+                                                     if card in cardinality_distribution else 0, x_axis))
+                    stats = {"log_based": log_based_schema_dist, "x_axis": x_axis}
+                    dist_path = os.path.join(self.sessionPath, str(path) + "_schema_dist.pkl")
+                    with open(dist_path, "wb") as wf:
+                        pickle.dump(stats, wf)
+
         with open(os.path.join(self.sessionPath, "training_model_preprocessor.pkl"), "wb") as wf:
             pickle.dump(self, wf)
 
@@ -72,19 +69,19 @@ class TrainingModelPreprocessor:
         object_type_graph.make_info()
         self.objectTypeGraph = object_type_graph
 
-    def __make_leading_type_process_executions(self):
+    def __make_process_executions(self):
         self.__make_object_model()
         object_model = self.totalObjectModel
         otypes = self.otypes
-        leading_type_process_executions = {
+        process_executions = {
             otype: dict()
             for otype in otypes
         }
-        leading_type_global_schemata = {
+        global_schemata = {
             otype: dict()
             for otype in otypes
         }
-        leading_type_local_schemata = {
+        local_schemata = {
             otype: dict()
             for otype in otypes
         }
@@ -93,26 +90,58 @@ class TrainingModelPreprocessor:
             for otype in otypes
         }
         total_object_model = self.totalObjectModel
-        for otype in otypes:
-            any_otypes = [
-                any_otype
-                for any_otype in otypes
-                if not any_otype == otype
-            ]
-            for obj in object_model[otype]:
-                execution, schema = self.__make_global_schema(otype, obj, any_otypes)
-                leading_type_process_executions[otype][obj] = execution
-                leading_type_global_schemata[otype][obj] = schema
-                leading_type_local_schemata[otype][obj] = {
+        for otype, obj_models in object_model.items():
+            for obj, obj_model in obj_models.items():
+                execution, schema = self.__make_global_schema(otype, obj)
+                process_executions[otype][obj] = execution
+                global_schemata[otype][obj] = schema
+                local_schemata[otype][obj] = {
                     any_otype: len(total_object_model[otype][obj][any_otype])
                     for any_otype in self.otypes
                 }
-        self.globalObjectModel = leading_type_process_executions
-        self.globalSchemata = leading_type_global_schemata
-        self.localSchemata = leading_type_local_schemata
+        self.globalObjectModel = process_executions
+        self.globalSchemata = global_schemata
+        self.localSchemata = local_schemata
+        execution_model_paths = dict()
+        for otype in self.otypes:
+            any_obj_id = list(global_schemata[otype].keys())[0]
+            execution_model_paths[otype] = {
+                depth: list(global_schemata[otype][any_obj_id][depth].keys())
+                        if len(global_schemata[otype][any_obj_id][depth]) > 0 else []
+                for depth in range(self.executionModelDepth + 1)
+            }
+        self.executionModelPaths = execution_model_paths
+
+    def __make_global_schema(self, otype, obj):
+        total_object_model = self.totalObjectModel
+        # execution: depth -> otype-path -> set of objects
+        execution = dict()
+        schema = dict()
+        current_model = total_object_model[otype][obj]
+        current_depth = 0
+        execution[current_depth] = {tuple([otype]): [obj]}
+        schema[current_depth] = {tuple([otype]): 1}
+        while current_depth < self.executionModelDepth:
+            current_model = execution[current_depth]
+            current_depth = current_depth + 1
+            execution[current_depth] = dict()
+            schema[current_depth] = dict()
+            for path, model_objs in current_model.items():
+                last_otype = path[-1]
+                next_otypes = self.objectTypeGraph.get_neighbor_otypes(last_otype)
+                for next_otype in next_otypes:
+                    new_execution_model = [total_object_model[last_otype][model_obj][next_otype]
+                                          for model_obj in model_objs]
+                    new_execution_model = [model_obj for sl in new_execution_model
+                                          for model_obj in sl]
+                    new_execution_model = list(set(new_execution_model))
+                    new_path = tuple(list(path) + [next_otype])
+                    execution[current_depth][new_path] = new_execution_model
+                    schema[current_depth][new_path] = len(new_execution_model)
+        return execution, schema
 
     def __make_schema_distributions(self):
-        self.flat_local_schemata = {
+        self.flatLocalSchemata = {
             otype: {
                 obj: tuple(
                     list(map(lambda any_otype: schema[any_otype] if any_otype in schema else 0, self.otypes))
@@ -121,31 +150,33 @@ class TrainingModelPreprocessor:
             }
             for otype, obj_schemata in self.localSchemata.items()
         }
-        self.flatGlobalSchemata = {
-            otype: {
-                obj: tuple(
-                    list(map(lambda any_otype: schema[any_otype] if any_otype in schema else 0, self.otypes))
-                )
-                for obj, schema in obj_schemata.items()
-            }
-            for otype, obj_schemata in self.globalSchemata.items()
-        }
-        self.schemaDistributions = {
-            otype: {
-                schema: len([v for v in (obj_flat_schemata.values()) if v == schema])
-                for schema in set(obj_flat_schemata.values())
-            }
-            for otype, obj_flat_schemata in self.flatGlobalSchemata.items()
-        }
+        # otype -> level -> path -> cardinality
+        schema_distributions = { otype: dict() for otype in self.otypes }
+        # otype -> oid -> level -> path -> cardinality -> frequency
+        for otype, obj_schemata in self.globalSchemata.items():
+            schema_distributions[otype] = dict()
+            for obj, model_schemata in obj_schemata.items():
+                for level, paths in model_schemata.items():
+                    if level not in schema_distributions[otype]:
+                        schema_distributions[otype][level] = dict()
+                    for path, cardinality in paths.items():
+                        if path not in schema_distributions[otype][level]:
+                            schema_distributions[otype][level][path] = dict()
+                        if cardinality not in schema_distributions[otype][level][path]:
+                            schema_distributions[otype][level][path][cardinality] = 0
+                        schema_distributions[otype][level][path][cardinality] = \
+                            schema_distributions[otype][level][path][cardinality] + 1
+        self.schemaDistributions = schema_distributions
 
     def __make_object_model(self):
         otypes = self.otypes
         direct_object_model = {otype: dict() for otype in otypes}
         reverse_object_model = {otype: dict() for otype in otypes}
         total_object_model = {otype: dict() for otype in otypes}
-        self.df.apply(lambda row: self.__update_object_model(
-            row, direct_object_model, reverse_object_model, total_object_model, otypes
-        ), axis=1)
+        self.df.apply(
+            lambda row: self.__update_object_model(
+                row, direct_object_model, reverse_object_model, total_object_model, otypes
+            ), axis=1)
         self.directObjectModel = direct_object_model
         self.reverseObjectModel = reverse_object_model
         self.totalObjectModel = total_object_model
@@ -201,49 +232,3 @@ class TrainingModelPreprocessor:
                 }
             reverse_object_model[otype][event_object][leading_type].add(leading_object)
             total_object_model[otype][event_object][leading_type].add(leading_object)
-
-    def __make_global_schema(self, otype, obj, any_otypes):
-        object_model = self.totalObjectModel
-        execution = {
-            any_otype: set()
-            for any_otype in self.otypes
-        }
-        current_model = object_model[otype][obj]
-        min_path_lengths = {
-            otype: 0
-        }
-        level = 1
-        buffer = [
-            (any_obj, any_otype, level)
-            for any_otype in any_otypes
-            for any_obj in current_model[any_otype]
-        ]
-        min_path_lengths.update({
-            any_otype: level
-            for (any_obj, any_otype, level) in buffer
-        })
-        while len(buffer) > 0:
-            (any_obj, any_otype, lvl) = buffer[-1]
-            buffer = buffer[:-1]
-            execution[any_otype].add(any_obj)
-            any_model = object_model[any_otype][any_obj]
-            buffer_delta = []
-            for any_next_otype in any_model:
-                if any_next_otype == otype or len(any_model[any_next_otype]) == 0:
-                    continue
-                if any_next_otype not in min_path_lengths:
-                    min_path_lengths[any_next_otype] = lvl + 1
-                if min_path_lengths[any_next_otype] != lvl + 1:
-                    continue
-                for any_next_obj in any_model[any_next_otype]:
-                    if any_next_obj not in execution[any_next_otype] \
-                            and (any_next_obj, any_next_otype, lvl + 1) not in buffer:
-                        buffer_delta.append((any_next_obj, any_next_otype, lvl + 1))
-            buffer += buffer_delta
-        schema = {
-            any_otype: len(execution[any_otype])
-            for any_otype in any_otypes
-        }
-        # TODO
-        self.globalModelDepths[otype] = min_path_lengths
-        return execution, schema
