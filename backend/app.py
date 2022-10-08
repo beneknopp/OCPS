@@ -14,6 +14,7 @@ from input_ocel_processing.preprocessor import InputOCELPreprocessor
 from input_ocel_processing.process_config import ProcessConfig
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
+from object_model_generation.object_type_graph import ObjectTypeGraph
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
@@ -31,6 +32,7 @@ app.config['RUNTIME_RESOURCE_FOLDER'] = RUNTIME_RESOURCE_FOLDER
 @cross_origin()
 def hello_world():  # put application's code here
     return {"ping": "Hello World!"}
+
 
 @app.route('/upload-ocel', methods=['GET', 'POST'])
 @cross_origin()
@@ -73,7 +75,7 @@ def ocel_config():
     process_config = ProcessConfig(config_dto, session_path)
     process_config.save()
     postprocessor = InputOCELPostprocessor(session_path, process_config)
-    postprocessor.postprocess()
+    postprocessed_ocel = postprocessor.postprocess()
     return Response.get(True)
 
 
@@ -129,27 +131,29 @@ def object_model_stats():
     start_logging(session_path)
     args = request.args
     otype = args["otype"]
-    process_config = ProcessConfig.load(session_path)
     resp = dict()
-    for any_otype in process_config.otypes:
-        log_based = pickle.load(open(os.path.join(
-            session_path, otype + "_to_" + any_otype + "_schema_dist.pkl"), "rb"))
-        simulated = pickle.load(open(os.path.join(
-            session_path, otype + "_to_" + any_otype + "_schema_dist_simulated.pkl"), "rb"))
-        total_min = min(min(log_based["x_axis"]), min(simulated["x_axis"]))
-        total_max = max(max(log_based["x_axis"]), max(simulated["x_axis"]))
-        x_axis = [str(i) for i in range(total_min, total_max + 1)]
-        log_based = [0] * (min(log_based["x_axis"]) - total_min) \
+    for (dirpath, dirnames, filenames) in os.walk(session_path):
+        log_based_stats_filenames = [filename for filename in filenames if
+                           filename.startswith("('" + otype) and filename.endswith("dist.pkl")]
+        for log_based_stats_filename in log_based_stats_filenames:
+            path = log_based_stats_filename.split("_schema_dist.pkl")[0]
+            simulated_stats_filename = path + "_schema_dist_simulated.pkl"
+            log_based = pickle.load(open(os.path.join(session_path, log_based_stats_filename), "rb"))
+            simulated = pickle.load(open(os.path.join(session_path, simulated_stats_filename), "rb"))
+            total_min = min(min(log_based["x_axis"]), min(simulated["x_axis"]))
+            total_max = max(max(log_based["x_axis"]), max(simulated["x_axis"]))
+            x_axis = [str(i) for i in range(total_min, total_max + 1)]
+            log_based = [0] * (min(log_based["x_axis"]) - total_min) \
                     + log_based["log_based"] \
                     + [0] * (total_max - max(log_based["x_axis"]))
-        simulated = [0] * (min(simulated["x_axis"]) - total_min) \
+            simulated = [0] * (min(simulated["x_axis"]) - total_min) \
                     + simulated["simulated"] \
                     + [0] * (total_max - max(simulated["x_axis"]))
-        resp[any_otype] = {
-            "x_axis": x_axis,
-            "log_based": log_based,
-            "simulated": simulated
-        }
+            resp[path] = {
+                "x_axis": x_axis,
+                "log_based": log_based,
+                "simulated": simulated
+            }
     return Response.get(resp)
 
 
@@ -249,9 +253,11 @@ def make_session():
     start_logging(session_path)
     return session_key, session_path
 
+
 def start_logging(session_path):
     logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
                         encoding='utf-8', level=logging.DEBUG)
+
 
 def get_session_path(request):
     args = request.args

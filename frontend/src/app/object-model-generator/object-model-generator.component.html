@@ -68,10 +68,10 @@
             </div>
         </div>   
         <div class="stats-plot-box" *ngIf="selectedPlotType">
-            <div *ngFor="let otype of getOtherTypes(selectedPlotType)" 
+            <div *ngFor="let chart_label of chartLabels" 
             style="width: 45%; height: 185px; display: inline-block; padding: 2.4%; margin-bottom: 40px;">
-                <h5>{{getPlotCaption(otype)}}</h5>
-                <canvas baseChart [datasets]="barChartData[otype]" [labels]="mbarChartLabels[otype]" [options]="barChartOptions"
+                <h5>{{getPlotCaption(chart_label)}}</h5>
+                <canvas baseChart [datasets]="barChartData[chart_label]" [labels]="mbarChartLabels[chart_label]" [options]="barChartOptions"
                     [legend]="true">
                 </canvas>
             </div>

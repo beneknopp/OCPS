@@ -10,17 +10,17 @@ class ObjectInstance:
     supportDistributions: dict
 
     @classmethod
-    def set_(cls, otypes, execution_model_paths, execution_model_depth, global_schemata):
+    def set_(cls, otypes, execution_model_paths, execution_model_depth, schema_distributions):
         cls.otypes = otypes
         cls.executionModelPaths = execution_model_paths
         cls.executionModelDepth = execution_model_depth
-        cls.supportDistributions = cls.__make_support_distributions(otypes, global_schemata)
+        cls.supportDistributions = cls.__make_support_distributions(otypes, schema_distributions)
 
     @classmethod
-    def __make_support_distributions(cls, otypes, global_schemata):
+    def __make_support_distributions(cls, otypes, schema_distributions):
         support_distributions = dict()
         for otype in otypes:
-            otype_schemata = global_schemata[otype]
+            otype_schemata = schema_distributions[otype]
             otype_support_distributions = dict()
             for paths_with_distributions in otype_schemata.values():
                 for path, distribution in paths_with_distributions.items():
@@ -39,7 +39,7 @@ class ObjectInstance:
         self.locally_closed_types = {any_otype: False for any_otype in self.otypes}
         self.locally_closed = False
         self.globally_closed = False
-        self.support_distributions = self.supportDistributions[otype]
+        self.supportDistributions = self.supportDistributions[otype]
         self.__initialize_global_model()
 
     def __initialize_global_model(self):

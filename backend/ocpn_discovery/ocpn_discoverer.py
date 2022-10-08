@@ -6,6 +6,11 @@ from pm4py.objects.ocel.obj import OCEL
 
 from .net_utils import Place, Transition, TransitionType, Arc, NetProjections
 
+from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
+from ocpa.algo.discovery.ocpn import algorithm as ocpn_discovery_factory
+from ocpa.visualization.oc_petri_net import factory as ocpn_vis_factory
+
+
 
 class OCPN_DTO:
 
@@ -18,21 +23,23 @@ class OCPN_Discoverer:
 
     def __init__(self, session_path):
         self.sessionPath = session_path
-        file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
-        self.ocel = pm4py.read_ocel(file_path)
+        self.file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
+        self.ocel = pm4py.read_ocel(self.file_path)
 
     def discover(self, activity_selected_types):
         ocel = self.ocel
         otypes = list(set([otype for otype_list in activity_selected_types.values() for otype in otype_list]))
         self.otypes = otypes
         types_selected_activity = {
-            otype: [act for act in activity_selected_types if otype in activity_selected_types[act]]
+            otype: [act for act in activity_selected_types if otype in activity_selected_types[act]] + ["END_" + otype]
             for otype in otypes
         }
-        ocel = pm4py.filter_ocel_object_types_allowed_activities(ocel, types_selected_activity)
-        ocpn_dict = pm4py.discover_oc_petri_net(ocel)
-        self.ocpn_dict = ocpn_dict
-        self.__extract_net(ocpn_dict)
+        #ocel = pm4py.filter_ocel_object_types_allowed_activities(ocel, types_selected_activity)
+        ocel = ocel_import_factory.apply(file_path=self.file_path)
+        ocpn = ocpn_discovery_factory.apply(ocel, parameters={"debug": False})
+        #ocpn_dict = pm4py.discover_oc_petri_net(ocel)
+        self.ocpn_dict = ocpn
+        self.__extract_net(ocpn)
         self.__identify_variable_arcs()
         self.__extend_with_start_and_end()
         self.__make_projections()
@@ -48,14 +55,14 @@ class OCPN_Discoverer:
         self.arcs = dict()
         arc_id = 1
         for i, otype in enumerate(self.otypes):
-            net = ocpn_dict["petri_nets"][otype][0]
+            net = ocpn_dict.nets[otype][0]
             places_ = net.places
             transitions_ = net.transitions
             arcs_ = net.arcs
             for place_ in places_:
                 name = place_.name + "_" + str(i)
-                is_initial = place_.name == "source"
-                is_final = place_.name == "sink"
+                is_initial = len(place_.in_arcs) == 0
+                is_final = len(place_.out_arcs) == 0
                 place = Place(name, otype, is_initial, is_final)
                 self.places[name] = place
             for transition_ in transitions_:

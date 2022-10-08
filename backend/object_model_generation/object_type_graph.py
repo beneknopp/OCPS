@@ -1,7 +1,15 @@
+import os
+import pickle
+
 from utils.graph import Graph, DirectedEdge
 
 
 class ObjectTypeGraph(Graph):
+
+    @classmethod
+    def load(cls, session_path):
+        otg_path = os.path.join(session_path, "object_type_graph.pkl")
+        return pickle.load(open(otg_path, "rb"))
 
     def __init__(self, otypes):
         self.otypes = otypes

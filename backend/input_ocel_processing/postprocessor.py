@@ -23,3 +23,4 @@ class InputOCELPostprocessor:
             for otype in otypes
         })
         pm4py.write_ocel(postprocessed_ocel, postprocessed_ocel_path)
+        return postprocessed_ocel

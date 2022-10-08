@@ -1,6 +1,8 @@
 import os
 import pickle
 
+from object_model_generation.object_instance import ObjectInstance
+
 
 class ObjectModel:
 
@@ -28,3 +30,12 @@ class ObjectModel:
         object_model_path = os.path.join(self.sessionPath, "objects.pkl")
         with open(object_model_path, "wb") as write_file:
             pickle.dump(self, write_file)
+
+
+    # TODO: tried with copy.deepcopy so to not change this object, but failed due to memory shortage
+    def save_without_global_model(self):
+        #copied = copy.deepcopy(self)
+        obj: ObjectInstance
+        for oid, obj in self.objectsById.items():
+            obj.global_model = None
+        self.save()

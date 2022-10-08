@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from datetime import datetime
 
 import pm4py
@@ -59,6 +60,12 @@ class InputOCELPreprocessor:
         ocel["ocel:objects"] = {}
         self.ocel = ocel
         df.apply(lambda row: self.__pad_event(row), axis=1)
+
+    def __pad_df(self, row):
+        act = row["ocel:activity"]
+        padding_type_name = "LEAD_" + act
+        row["ocel:type" + padding_type_name] = [padding_type_name + str(self.runningId.get_and_inc())]
+
 
     def __pad_event(self, row):
         events = self.ocel["ocel:events"]

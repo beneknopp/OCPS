@@ -56,6 +56,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     }
   ];
   omgResponse: ObjectModelGenerationResponse | undefined;
+  chartLabels: string[] = [];
 
 
   constructor(
@@ -118,7 +119,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     formData.append("seedType", this.objectModelInfo.selectedSeedType);
     formData.append("numberOfObjects", "" + this.objectModelInfo.numberOfObjects);
     formData.append("otypes", "" + this.objectModelInfo.otypes);
-    formData.append("executionModelDepth", "2");
+    formData.append("executionModelDepth", "3");
     formData.append("nonEmittingTypes", "" + this.objectModelInfo.nonEmittingTypes);
     Object.keys(this.objectModelInfo.activitySelectedTypes).forEach(act => {
       let leading_type = this.objectModelInfo.activityLeadingTypes[act]
@@ -167,16 +168,19 @@ export class ObjectModelGeneratorComponent implements OnInit {
       this.appService.getArrivalTimesStats(session_key, this.selectedPlotType)
     request$.subscribe((om_stats: {
       "err": any,
-      "resp": { [otype: string]: ObjectModelStats }
+      "resp": { [chart_label: string]: ObjectModelStats }
     }) => {
+      debugger
       let resp = om_stats["resp"]
       this.barChartData = {}
-      Object.keys(resp).forEach(ot => {
-        this.barChartData[ot] = [
-          { data: resp[ot].log_based, label: 'Log-Based' },
-          { data: resp[ot].simulated, label: 'Simulated' }
+      this.chartLabels = []
+      Object.keys(resp).forEach(chart_label => {
+        this.chartLabels = this.chartLabels.concat(chart_label) 
+        this.barChartData[chart_label] = [
+          { data: resp[chart_label].log_based, label: 'Log-Based' },
+          { data: resp[chart_label].simulated, label: 'Simulated' }
         ]
-        this.mbarChartLabels[ot] = resp[ot].x_axis
+        this.mbarChartLabels[chart_label] = resp[chart_label].x_axis
       })
     })
   }
@@ -201,13 +205,17 @@ getOtherTypes(otype: string) {
   return this.objectModelInfo.otypes.filter(ot => ot != otype)
 }
 
-getPlotCaption(otype: string) {
+getChartLabels() {
+  return this.chartLabels
+}
+
+getPlotCaption(chart_label: string) {
   let selected_plot_type = this.selectedPlotType
   let selected_stats_type = this.selectedStatsType
   if (selected_stats_type == "Cardinalities") {
-    return otype + " per " + selected_plot_type
+    return chart_label
   }
-  return "Related " + otype + " arriving relative to " + selected_plot_type
+  return "Related " + chart_label + " arriving relative to " + selected_plot_type
 }
 
 }
