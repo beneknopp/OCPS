@@ -87,8 +87,10 @@ export class AppService {
       )
   }
 
-  initializeSimulation(session_key: string) {
-    return this.http.get<any>(this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key).pipe(
+  initializeSimulation(session_key: string, useOriginalMarking: boolean) {
+    let useOriginalMarking_str = String(useOriginalMarking)
+    let url = this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key + "&useOriginalMarking=" + useOriginalMarking_str
+    return this.http.get<any>(url).pipe(
       tap(_ => this.log('simulation initiated')),
       catchError(this.handleError<String>('startSimulation', ""))
     )  }
@@ -98,6 +100,14 @@ export class AppService {
       tap(_ => this.log('simulation ran')),
       catchError(this.handleError<String>('startSimulation', ""))
     )
+  }
+
+  public exportOCEL(session_key: string) {
+    return this.http.get(this.backendUrl + 'ocel-export?&sessionKey=' + session_key,
+      {
+        observe: "response", 
+        responseType: "blob"
+      })
   }
 
   private log(message: string) {

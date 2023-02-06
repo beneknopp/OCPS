@@ -7,15 +7,21 @@ export class OcpnInfo {
     places: Place[]
     transitions: Transition[]
     arcs: Arc[]
+    precision: number | undefined
+    fitness: number | undefined
 
     constructor(
         places?: Place[],
         transitions?: Transition[],
-        arcs?: Arc[]
+        arcs?: Arc[],
+        precision?: number | undefined,
+        fitness?: number | undefined
     ) {
         this.places = places ? places : []
         this.transitions = transitions ? transitions : []
         this.arcs = arcs ? arcs : []
+        this.precision = precision
+        this.fitness = fitness
     }
 
 

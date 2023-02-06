@@ -7,13 +7,15 @@ class ObjectInstance:
     otypes: list
     executionModelPaths: dict
     executionModelDepth: int
+    executionModelEvaluationDepth: int
     supportDistributions: dict
 
     @classmethod
-    def set_(cls, otypes, execution_model_paths, execution_model_depth, schema_distributions):
+    def set_(cls, otypes, execution_model_paths, execution_model_depth, execution_model_evaluation_depth, schema_distributions):
         cls.otypes = otypes
         cls.executionModelPaths = execution_model_paths
         cls.executionModelDepth = execution_model_depth
+        cls.executionModelEvaluationDepth = execution_model_evaluation_depth
         cls.supportDistributions = cls.__make_support_distributions(otypes, schema_distributions)
 
     @classmethod

@@ -14,11 +14,13 @@ class ArrivalTimeDistribution:
         self.__arrival_times = arrival_times
         self.mean = arrival_times.mean()
         self.variance = arrival_times.var()
-        self.stdev = math.sqrt(self.variance)
+        self.stdev = math.sqrt(self.variance) if self.variance > 0 else 0.0
         self.__make_distribution()
 
     def __make_distribution(self):
-        self.__distribution = lambda x: round(self.mean)
+        #self.__distribution = lambda x: round(self.mean)
+        cdist = CumulativeDistribution({time: 1 for time in self.__arrival_times.values})
+        self.__distribution = lambda x: cdist.sample()
 
     def __get_pdf(self):
         a, loc, scale = stats.skewnorm.fit(self.__arrival_times)

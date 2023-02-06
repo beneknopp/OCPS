@@ -24,10 +24,11 @@ export class DOMService {
   private ocpnInfo: Subject<OcpnInfo> = new BehaviorSubject<OcpnInfo>(new OcpnDto())
   private sessionKey: string | undefined;
 
-  private object_color_set = ['#F9AA19', '#9FD1D0', '#F39891', '#C8BFE7' ,'#D0CECE', '#A2DEF4', '#0070C0']
+  private object_color_set = ['#F9AA19', '#9FD1D0', '#F39891', '#C8BFE7', '#D0CECE', '#A2DEF4', '#0070C0']
   ocelConfigValid = false
   ocpnConfigValid = false
   objectModelValid = false
+  useOriginalMarking = true
   netConfigValid = false;
   public step = 1;
 
@@ -97,7 +98,7 @@ export class DOMService {
     this.sessionKey = sessionKey
   }
 
-  getOtypeColor(otype: string, otypes: string[]){
+  getOtypeColor(otype: string, otypes: string[]) {
     return this.object_color_set[otypes.indexOf(otype) % this.object_color_set.length]
   }
 
@@ -162,32 +163,23 @@ export class DOMService {
   }
 
   getColor(index: number) {
-    return this.object_color_set[index %  this.object_color_set.length]
+    return this.object_color_set[index % this.object_color_set.length]
   }
 
   setOcelConfigValid(valid: boolean) {
     this.ocelConfigValid = valid
   }
 
+  setUseOriginalMarking(doUse: boolean) {
+    this.useOriginalMarking = true
+  }
 
   setObjectModelValid(valid: boolean) {
     this.objectModelValid = valid
-    if (!valid) {
-      this.netConfigValid = false
-    }
-    if (this.ocpnConfigValid && this.objectModelValid) {
-      this.netConfigValid = true
-    }
   }
 
   setOcpnConfigValid(valid: boolean) {
-    this.ocpnConfigValid = valid
-    if (!valid) {
-      this.netConfigValid = false
-    }
-    if (this.ocpnConfigValid && this.objectModelValid) {
-      this.netConfigValid = true
-    }
+    this.netConfigValid = valid
   }
 
 

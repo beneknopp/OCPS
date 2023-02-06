@@ -19,6 +19,8 @@ export class ObjectModelInfo {
   selectedSeedType: string | undefined = undefined
   nonEmittingTypes: string[] = []
   numberOfObjects: number = 0;
+  executionModelDepth: number = 0;
+  executionModelEvaluationDepth : number = 0;
   activitySelectedTypes: { [act: string]: string[] }
   activityLeadingTypes: { [act: string]: string | undefined }
 
@@ -27,6 +29,8 @@ export class ObjectModelInfo {
     selectedSeedType: string | undefined = undefined,
     nonEmittingTypes: string[] = [],
     numberOfObjects: number = 0,
+    executionModelDepth: number = 0,
+    executionModelEvaluationDepth: number = 0,
     activitySelectedTypes: { [act: string]: string[] } = {},
     activityLeadingTypes: { [act: string]: string | undefined } = {},
   ) {
@@ -34,6 +38,8 @@ export class ObjectModelInfo {
     this.selectedSeedType = selectedSeedType
     this.nonEmittingTypes = nonEmittingTypes
     this.numberOfObjects = numberOfObjects
+    this.executionModelDepth = executionModelDepth
+    this.executionModelEvaluationDepth = executionModelEvaluationDepth
     this.activitySelectedTypes = activitySelectedTypes
     this.activityLeadingTypes = activityLeadingTypes
   }

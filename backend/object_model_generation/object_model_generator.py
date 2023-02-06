@@ -46,11 +46,40 @@ class ObjectModelGenerator:
 
     def save(self, session_path):
         obj: ObjectInstance
+        original_model = ObjectModel(session_path)
         object_model = ObjectModel(session_path)
         schema_frequencies = {
             otype: dict()
             for otype in self.otypes
         }
+        original_models = {
+            otype: {} for otype in self.otypes
+        }
+        multiply = 8
+        for i in range(multiply):
+            for otype, objs in self.trainingModelPreprocessor.totalObjectModel.items():
+                arrival_times = dict(self.arrivalTimes[otype])
+                for oid in objs:
+                    obj_inst = ObjectInstance(otype, str(oid) + "_" + str(i))
+                    time = round(float((arrival_times[oid])))
+                    obj_inst.time = time
+                    original_models[otype][ str(oid) + "_" + str(i) ] = obj_inst
+        for otype, objs in self.trainingModelPreprocessor.directObjectModel.items():
+            full_otype_model = {}
+            for i in range(multiply):
+                for oid, adj_objs in objs.items():
+                    obj_inst: ObjectInstance = original_models[otype][ str(oid) + "_" + str(i) ]
+                    all_adj_objs = []
+                    for any_otype, any_objs in adj_objs.items():
+                        for any_obj in any_objs:
+                            any_obj_inst = original_models[any_otype][ str(any_obj) + "_" + str(i)]
+                            obj_inst.direct_object_model[any_otype].add(any_obj_inst)
+                            any_obj_inst.reverse_object_model[otype].add(obj_inst)
+                            obj_inst.total_local_model[any_otype].add(any_obj_inst)
+                            any_obj_inst.total_local_model[otype].add(obj_inst)
+                            all_adj_objs.append(any_obj_inst)
+                    full_otype_model[obj_inst] = all_adj_objs
+            original_model.addModel( otype, full_otype_model)
         for otype, objs in self.generatedObjects.items():
             otype_model = {
                 obj: [adj_obj
@@ -70,13 +99,14 @@ class ObjectModelGenerator:
                         if card not in schema_frequencies[otype][path]:
                             schema_frequencies[otype][path][card] = 0
                         schema_frequencies[otype][path][card] = schema_frequencies[otype][path][card] + 1
+        original_model.save_without_global_model(True)
+        object_model.save_without_global_model(False)
         for otype, paths_dict in schema_frequencies.items():
             for path, cardinality_distribution in paths_dict.items():
                 if len(path) < 1:
                     continue
                 if len(cardinality_distribution) < 1:
                     continue
-                print(path)
                 min_card = min(cardinality_distribution)
                 max_card = max(cardinality_distribution)
                 x_axis = range(min_card, max_card + 1)
@@ -87,13 +117,15 @@ class ObjectModelGenerator:
                 dist_path = os.path.join(self.sessionPath, str(path) + "_schema_dist_simulated.pkl")
                 with open(dist_path, "wb") as wf:
                     pickle.dump(stats, wf)
-        object_model.save_without_global_model()
+
+
 
     def __initialize_object_instance_class(self):
         ObjectInstance.set_(
             otypes=self.otypes,
             execution_model_paths=self.trainingModelPreprocessor.executionModelPaths,
             execution_model_depth=self.trainingModelPreprocessor.executionModelDepth,
+            execution_model_evaluation_depth=self.trainingModelPreprocessor.executionModelEvaluationDepth,
             schema_distributions=self.trainingModelPreprocessor.schemaDistributions
         )
 
@@ -106,23 +138,18 @@ class ObjectModelGenerator:
         self.nonEmittingTypes = object_model_parameters.nonEmittingTypes
         oid = RunningId()
         open_objects = {otype: [] for otype in self.otypes}
-        closed_objects = {otype: [] for otype in self.otypes}
+        forward_closed_objects = {otype: [] for otype in self.otypes}
         total_objects = {otype: [] for otype in self.otypes}
-        buffer = []
-        # InitialSeedMaker.initialize_unconnected_objs(
-        #   self.trainingModelPreprocessor.leading_type_process_executions, oid, buffer, seed_type, number_of_objects,
-        #  open_objects, total_objects)
-        # for i in range(number_of_objects):
-        InitialSeedMaker.create_obj(buffer, seed_type, oid, open_objects, total_objects)
+        buffer = [(InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects), [seed_type])]
         self.enforcements = 0
         while len(buffer) > 0:
-            current_obj = buffer[0]
+            current_obj, instantiation_path = buffer[0]
             buffer = buffer[1:]
             current_otype = current_obj.otype
             neighbor_types = object_type_graph.get_parent_and_child_otypes(current_otype)
             if current_otype not in self.nonEmittingTypes:
                 prediction: ObjectLinkPrediction = self.__predict_neighbor(
-                    current_obj, neighbor_types, open_objects, oid)
+                    current_obj, instantiation_path, neighbor_types, open_objects, oid)
                 if prediction.predict:
                     selected_neighbor = prediction.selected_neighbor
                     predicted_type = prediction.predicted_type
@@ -134,20 +161,42 @@ class ObjectModelGenerator:
                         ObjectInstance.merge(selected_neighbor, current_obj, merge_map)
                     if selected_neighbor not in total_objects[predicted_type]:
                         total_objects[predicted_type].append(selected_neighbor)
-                    buffer = buffer + [current_obj]
-                    if selected_neighbor not in buffer:
-                        buffer = buffer + [selected_neighbor]
-                        #buffer.insert(random.randrange(len(buffer) + 1), selected_neighbor)
-                    buffer.insert(random.randrange(len(buffer) + 1), current_obj)
-                else:
-                    open_objects[current_otype] = list(
-                        set([x for x in open_objects[current_otype] if not x == current_obj]))
-                    closed_objects[current_otype].append(current_obj)
-            if len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects:
-                InitialSeedMaker.create_obj(buffer, seed_type, oid, open_objects, total_objects)
-            if len(total_objects[seed_type]) > number_of_objects:
+                    buffer.insert(random.randrange(len(buffer) + 1), (selected_neighbor, instantiation_path + [predicted_type]))
+
+            current_next_types = [ot for ot in object_type_graph.get_neighbor_otypes(current_otype)
+                                  if ot not in instantiation_path]
+            if all(current_obj.locally_closed_types[ot]
+                   for ot in current_next_types):
+                fcos = forward_closed_objects[current_otype]
+                forward_closed_objects[current_otype] = list(set(fcos + [current_obj]))
+                buffer = [x for x in buffer if not x[0] == current_obj]
+            else:
+                buffer.insert(random.randrange(len(buffer) + 1), (current_obj, instantiation_path))
+
+            closed = float(sum(map(lambda otype: len(forward_closed_objects[otype]), self.otypes)))
+            total = float(sum(map(lambda otype: len(total_objects[otype]), self.otypes)))
+            if len(total_objects[seed_type]) > number_of_objects and closed/total > 0.98:
                 break
+            if len(buffer) == 0:
+                buffer = [(InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects), [seed_type])]
+            if total % 100 == 0:
+                print("Total nof objects: " + str((total)))
+        print("enforcements: " + str(self.enforcements))
         self.generatedObjects = total_objects
+
+    def __evaluate_local_closure(self, obj_a, obj_b):
+        ot_a = obj_a.otype
+        ot_b = obj_b.otype
+        #new_a = ObjectInstance(ot_a, 0)
+        new_b = ObjectInstance(ot_b, 0)
+        rnd = random.random()
+        y, direct_support_a, x, mm = self.__compute_global_support(obj_a, new_b)
+        #y, direct_support_b, x, mm = self.__compute_global_support(obj_b, new_a)
+        if rnd > direct_support_a:
+            obj_a.close_type(ot_b)
+        #if direct_support_b == 0:
+        #if rnd > direct_support_b:
+         #   obj_b.close_type(ot_a)
 
     def __sort_buffer(self, buffer):
         obj: ObjectInstance
@@ -161,10 +210,11 @@ class ObjectModelGenerator:
                 obj.oid = index
                 index = index + 1
 
-    def __make_prior_arrival_times_distributions(self):
+    def __make_prior_arrival_times_distributions2(self):
         arrival_times_distributions = {}
         self.flattenedLogs = dict()
         logging.info("Making arrival rate distributions...")
+        self.arrivalTimes = {}
         for otype in self.otypes:
             logging.info(otype + "...")
             flattened_log = pm4py.ocel_flattening(self.ocel, otype)
@@ -173,6 +223,26 @@ class ObjectModelGenerator:
             arrival_times = flattened_log.groupby("case:concept:name").first()["time:timestamp"]
             arrival_times = arrival_times.sort_values()
             arrival_times = arrival_times.apply(lambda row: row.timestamp())
+            self.arrivalTimes[otype] = arrival_times
+            arrival_rates = arrival_times.diff()[1:]
+            dist = ArrivalTimeDistribution(arrival_rates)
+            arrival_times_distributions[otype] = dist
+        self.arrivalTimesDistributions = arrival_times_distributions
+
+    def __make_prior_arrival_times_distributions(self):
+        arrival_times_distributions = {}
+        self.flattenedLogs = dict()
+        logging.info("Making arrival rate distributions...")
+        self.arrivalTimes = {}
+        for otype in self.otypes:
+            logging.info(otype + "...")
+            flattened_log = pm4py.ocel_flattening(self.ocel, otype)
+            flattened_log = flattened_log.sort_values(["time:timestamp"])
+            self.flattenedLogs[otype] = flattened_log
+            arrival_times = flattened_log.groupby("case:concept:name").first()["time:timestamp"]
+            arrival_times = arrival_times.sort_values()
+            arrival_times = arrival_times.apply(lambda row: row.timestamp())
+            self.arrivalTimes[otype] = arrival_times
             arrival_rates = arrival_times.diff()[1:]
             dist = ArrivalTimeDistribution(arrival_rates)
             arrival_times_distributions[otype] = dist
@@ -316,23 +386,28 @@ class ObjectModelGenerator:
             for obj in sl:
                 obj.time = obj.time - min_time
 
-    def __predict_neighbor(self, obj: ObjectInstance, neighbor_types, open_objects, oid: RunningId):
+    def __predict_neighbor(self, obj: ObjectInstance, instantiation_path, neighbor_types, open_objects, oid: RunningId):
         supported_objs = {}
+        fallback_candidates = {}
         new_objs = []
         parent_types = neighbor_types["parents"]
         child_types = neighbor_types["children"]
         neighbor_types = parent_types + child_types
-        neighbor_types = [nt for nt in neighbor_types if not obj.locally_closed_types[nt]]
-        random.shuffle(neighbor_types)
+        neighbor_types = [nt for nt in neighbor_types if not obj.locally_closed_types[nt] and nt not in instantiation_path]
+        #random.shuffle(neighbor_types)
         for neighbor_otype in neighbor_types:
             # try new instance for that otype
             supported_objs[neighbor_otype] = []
+            fallback_candidates[neighbor_otype] = []
             new_obj = ObjectInstance(neighbor_otype, oid.get())
             # choice: decide action based on direct support
+            global_support, direct_support, x, merge_map = self.__compute_global_support(obj, new_obj)
             direct_support = self.__compute_pairwise_support(obj, new_obj)
-            local_support, local_merge_map, zero_ratio = self.__compute_global_support(obj, new_obj)
-            local_candidate = (new_obj, local_support, local_merge_map, zero_ratio)
-            max_support = local_support
+            rnd = random.random()
+            if rnd > direct_support:
+                obj.close_type(neighbor_otype)
+                continue
+            local_candidate = (new_obj, global_support, merge_map)
             new_objs.append(new_obj)
             open_neighbors = open_objects[neighbor_otype]
             # avoid bias towards specific objects
@@ -344,42 +419,35 @@ class ObjectModelGenerator:
                                          open_neighbors
                                          ))
             open_neighbor: ObjectInstance
-            max_global_support = 0
+            found = False
             for open_neighbor in open_neighbors:
-                global_support, merge_map, zero_ratio = self.__compute_global_support(obj, open_neighbor)
-                supported_objs[neighbor_otype].append((open_neighbor, global_support, merge_map, zero_ratio))
-                if global_support > max_support:
-                    max_support = global_support
-                if global_support > max_global_support:
-                    max_global_support = global_support
-            if local_support > max_global_support:
-                # heuristic to prefer existing objects instead of creating new ones
+                global_support, direct_left_support, direct_right_support, merge_map = self.__compute_global_support(obj, open_neighbor)
+                supported_objs[neighbor_otype].append((open_neighbor, global_support, merge_map))
+                rnd = random.random()
+                if rnd < global_support:
+                    supported_objs[neighbor_otype] = [(open_neighbor, global_support, merge_map)]
+                    found = True
+                    break
+                else:
+                    fallback_candidates[neighbor_otype].append((open_neighbor, global_support, merge_map))
+            if not found:
                 supported_objs[neighbor_otype].append(local_candidate)
-            rnd = random.random()
-            # if rnd > max_support:
-            if rnd > direct_support:
-                obj.close_type(neighbor_otype)
-                continue
+                fallback_candidates[neighbor_otype].append(local_candidate)
             if not sum(list(map(lambda x: x[1], supported_objs[neighbor_otype]))) > 0:
-                if direct_support > 0.99:
+                if direct_support > 10.99:
                     # enforce (contradicting supports, so prioritize local support)
-                    enforced_candidates = supported_objs[neighbor_otype]
-                    if not any(candidate[0] == new_obj for candidate in enforced_candidates):
-                        enforced_candidates += [local_candidate]
-                    supported_objs[neighbor_otype] = [(obj, 1-zero_ratio, merge_map, zero_ratio)
-                                                      for (obj, p, merge_map, zero_ratio) in enforced_candidates]
+                    enforced_candidates = fallback_candidates[neighbor_otype]
+                    supported_objs[neighbor_otype] = [(obj, 1, merge_map)
+                                                      for (obj, p, merge_map) in enforced_candidates]
                     self.enforcements = self.enforcements + 1
                 else:
                     obj.close_type(neighbor_otype)
                     continue
             merge_maps = {
-                o: mm for (o, p, mm, zero_ratio) in supported_objs[neighbor_otype]
+                o: mm for (o, p, mm) in supported_objs[neighbor_otype]
             }
-            probs = {o: p for (o, p, mm, zero_ratio) in supported_objs[neighbor_otype]}
-            try:
-                cum_dist = CumulativeDistribution(probs)
-            except:
-                raise ValueError("Why?")
+            probs = {o: p for (o, p, mm) in supported_objs[neighbor_otype]}
+            cum_dist = CumulativeDistribution(probs)
             selected_neighbor = cum_dist.sample()
             merge_map = merge_maps[selected_neighbor]
             predicted_otype = selected_neighbor.otype
@@ -391,8 +459,10 @@ class ObjectModelGenerator:
             prediction = ObjectLinkPrediction(predict=True, predicted_type=predicted_otype, mode=mode, reverse=reverse,
                                               selected_neighbor=selected_neighbor, merge_map=merge_map)
             # logging.info(f"{obj.otype} {str(obj.oid)}: {str(prediction.pretty_print()}"))
+            print(str(obj.oid) + " - " + predicted_otype + " " + str(selected_neighbor.oid))
             return prediction
         return ObjectLinkPrediction(predict=False)
+
 
     def __compute_global_support(self, left_object: ObjectInstance, right_object: ObjectInstance):
         left_otype = left_object.otype
@@ -404,53 +474,79 @@ class ObjectModelGenerator:
         level_objs[level] = dict()
         level_objs[level][path] = [[left_object], [right_object]]
         cut_index = 1
-        # supports for objects on left margin to be evaluated: yes, right side: yes
-        paths[level] = [(path, cut_index)]
+        # extend to left side: yes, right side: yes
+        paths[level] = [(path, True, True, cut_index)]
         left_border_object: ObjectInstance
         right_border_object: ObjectInstance
         global_support = 1.0
+        direct_left_support = 1.0
+        direct_right_support = 1.0
         merge_map = dict()
-        zero_supports = 0
-        pairwise_supports_counts = 0
         while True:
             # evaluate current level supports
-            for path, cut_index in paths[level]:
-                if len(path) == 4:
-                    print(path)
-                if path == ('MATERIAL', 'LEAD_Plan Goods Issue', 'MATERIAL', 'LEAD_Create Purchase Order'):
-                    print("hi")
+            for path, extend_left, extend_right, cut_index in paths[level]:
+                # extend left: merge all left border objects with everything on the right side and vice versa
+                # extend right: merge all right border objects with everything on the left side and vice versa
                 path_objects = level_objs[level][path]
                 left_border_objects = path_objects[0]
                 right_border_objects = path_objects[-1]
-                # path objects are ordered according to the path
-                reverse_path = list(path[:])
-                reverse_path.reverse()
-                reverse_path = tuple(reverse_path)
-                reversed_path_objects = path_objects[:]
-                reversed_path_objects.reverse()
-                for left_border_object in left_border_objects:
-                    support = self.__compute_element_support(left_border_object, path_objects, path, cut_index)
-                    if support < global_support:
-                        global_support = support
-                    if support == 0:
-                        zero_supports += 1
-                    pairwise_supports_counts += 1
-                    self.__update_merge_map(merge_map, left_border_object, path_objects, path, cut_index)
-                for right_border_object in right_border_objects:
-                    support = self.__compute_element_support(
-                        right_border_object, reversed_path_objects, reverse_path, level + 1 - cut_index)
-                    if support < global_support:
-                        global_support = support
-                    if support == 0:
-                        zero_supports += 1
-                    pairwise_supports_counts += 1
-                    self.__update_merge_map(merge_map, right_border_object, reversed_path_objects, reverse_path, level + 1 - cut_index)
-            if level == ObjectInstance.executionModelDepth:
+                left_path_side = path[:cut_index]
+                left_side_objects = path_objects[:cut_index]
+                right_path_side = path[cut_index:]
+                right_side_objects = path_objects[cut_index:]
+                left_path_side_reverse = list(left_path_side[:])
+                left_path_side_reverse.reverse()
+                left_path_side_reversed = tuple(left_path_side_reverse)
+                right_path_side_reverse = list(right_path_side[:])
+                right_path_side_reverse.reverse()
+                right_path_side_reversed = tuple(right_path_side_reverse)
+                left_side_objects_reversed = left_side_objects[:]
+                left_side_objects_reversed.reverse()
+                right_side_objects_reversed = right_side_objects[:]
+                right_side_objects_reversed.reverse()
+                if extend_left:
+                    for left_border_object in left_border_objects:
+                        self.__update_merge_map(
+                            merge_map, left_border_object, right_side_objects, left_path_side, right_path_side)
+                        if level > ObjectInstance.executionModelDepth:
+                            continue
+                        if level > 1 and not (path == ('LEAD_Create Purchase Requisition', 'MATERIAL', 'LEAD_Receive Goods')
+                                    or path == ('LEAD_Receive Goods', 'MATERIAL', 'LEAD_Create Purchase Requisition')):
+                            support = 1
+                        else:
+                            support = self.__compute_element_support(
+                                left_border_object, right_side_objects, left_path_side, right_path_side)
+                        global_support = min(global_support, support)
+                        if left_border_object == left_object:
+                            direct_left_support = min(direct_left_support, support)
+                    if level > ObjectInstance.executionModelDepth:
+                        continue
+                    support = self.__compute_extension_side_vs_other_side_elements_support(
+                           left_border_objects, right_side_objects, left_path_side, right_path_side)
+                    global_support = min(global_support, support)
+                if extend_right:
+                    for right_border_object in right_border_objects:
+                        self.__update_merge_map(
+                            merge_map, right_border_object, left_side_objects_reversed, right_path_side_reversed,
+                            left_path_side_reversed)
+                        if level > ObjectInstance.executionModelDepth:
+                            continue
+                        support = self.__compute_element_support( right_border_object, left_side_objects_reversed,
+                                                                  right_path_side_reversed, left_path_side_reversed)
+                        if right_border_object == right_object:
+                            direct_right_support = min(direct_right_support, support)
+                        global_support = min(global_support, support)
+                    if level > ObjectInstance.executionModelDepth:
+                        continue
+                    support = self.__compute_extension_side_vs_other_side_elements_support( right_border_objects,
+                        left_side_objects_reversed, right_path_side_reversed,left_path_side_reversed)
+                    global_support = min(global_support, support)
+            if level == ObjectInstance.executionModelEvaluationDepth:
                 break
             # new step
             new_paths = []
             level_objs[level + 1] = dict()
-            for path, cut_index in paths.get(level):
+            for path, extend_left, extend_right, cut_index in paths.get(level):
                 path_objects = level_objs[level][path]
                 left_border_type = path[0]
                 right_border_type = path[-1]
@@ -458,10 +554,9 @@ class ObjectModelGenerator:
                 right_border_objects = path_objects[-1]
                 if left_border_objects:
                     left_extensions = self.objectTypeGraph.get_neighbor_otypes(left_border_type)
-
                     for left_extension_type in left_extensions:
                         new_path = tuple([left_extension_type] + list(path))
-                        new_paths.append((new_path, cut_index + 1))
+                        new_paths.append((new_path, True, False, cut_index + 1))
                         left_margin_path = tuple([left_border_type, left_extension_type])
                         new_objs = []
                         for left_obj in left_border_objects:
@@ -475,7 +570,7 @@ class ObjectModelGenerator:
                     right_extensions = self.objectTypeGraph.get_neighbor_otypes(right_border_type)
                     for right_extension_type in right_extensions:
                         new_path = tuple(list(path) + [right_extension_type])
-                        new_paths.append((new_path, cut_index))
+                        new_paths.append((new_path, False, True, cut_index))
                         right_margin_path = tuple([right_border_type, right_extension_type])
                         new_objs = []
                         for right_obj in right_border_objects:
@@ -487,34 +582,78 @@ class ObjectModelGenerator:
                         level_objs[level + 1][new_path] = path_objects + [list(set(new_objs))]
             level = level + 1
             paths[level] = new_paths
-        zero_ratio = float(zero_supports) / pairwise_supports_counts
-        return global_support, merge_map, zero_ratio
+        return global_support, direct_left_support, direct_right_support, merge_map
 
-    def __compute_element_support(self, obj: ObjectInstance, path_objects, path, cut_index):
+    # o1: a, [[x1,x2],[x3,x4,x5]], [a,b,c], [d,e]
+    def __compute_element_support(self, obj: ObjectInstance, other_side_objects, this_path_side, other_path_side):
         otype = obj.otype
         if otype in self.nonEmittingTypes:
             return 1.0
         element_support = 1
-        for depth in range(cut_index, len(path)):
-            subpath = tuple(path[:depth + 1])
-            current_objs = path_objects[depth]
-            current_number_at_obj = len(obj.global_model[depth][subpath])
+        # 0,d; 1,e
+        for i, other_type in enumerate(other_path_side):
+            depth = len(this_path_side) + i
+            subpath = tuple(list(this_path_side) + list(other_path_side[:(i + 1)]))
+            current_objs = other_side_objects[i]
+            current_model = obj.global_model[depth][subpath]
+            current_number_at_obj = len(current_model)
             additions = len([any_obj for any_obj in current_objs
-                             if any_obj not in obj.global_model[depth][subpath]])
+                             if any_obj not in current_model])
+            additions_support = 1
             for j in range(additions):
-                support = obj.supportDistributions[subpath].get_support(current_number_at_obj + j + 1)
-                element_support = min(support, element_support)
+                additions_support = additions_support * obj.supportDistributions[subpath].get_support(
+                    current_number_at_obj + j + 1)
+            element_support = min(element_support, additions_support)
         return element_support
 
-    def __update_merge_map(self, merge_map, obj: ObjectInstance, path_objects, path, cut_index):
-        for depth in range(cut_index, len(path)):
-            subpath = path[:depth + 1]
-            current_objs = path_objects[depth]
+    # [x1,x2,x3], [[y1],[],[y2,y3,y4]] [a,b,c], [d,e,f]
+    def __compute_extension_side_vs_other_side_elements_support(
+            self, extension_side_objects, other_side_objects, extension_side_path, other_side_path):
+        support = 1
+        if not extension_side_objects:
+            return support
+        reversed_extension_side_path = list(extension_side_path[:])
+        reversed_extension_side_path.reverse()
+        for i, otype in enumerate(other_side_path):
+            depth = len(extension_side_path) + i
+            current_level_objects = other_side_objects[i]
+            subpath = list(other_side_path[:(i + 1)])
+            subpath.reverse()
+            subpath = tuple(subpath + reversed_extension_side_path)
+            for current_level_object in current_level_objects:
+                current_model = current_level_object.global_model[depth][subpath]
+                current_number_at_obj = len(current_model)
+                additions = len([any_obj for any_obj in extension_side_objects
+                                 if any_obj not in current_model])
+                element_support = 1
+                for j in range(additions):
+                    element_support = element_support * current_level_object. \
+                        supportDistributions[subpath].get_support(current_number_at_obj + j + 1)
+                support = min(support, element_support)
+        return support
+
+    # {}, x1, [[y1],[],[y2,y3,y4]] [a,b,c], [d,e,f]
+    def __update_merge_map(self, merge_map, obj, other_side_objects, this_path_side, other_path_side):
+        for i, otype in enumerate(other_path_side):
+            depth = len(this_path_side) + i
+            subpath = tuple(list(this_path_side) + list(other_path_side[:(i + 1)]))
+            reversed_subpath = list(subpath[:])
+            reversed_subpath.reverse()
+            reversed_subpath = tuple(reversed_subpath)
+            current_objs = other_side_objects[i]
             additions = [any_obj for any_obj in current_objs
                          if any_obj not in obj.global_model[depth][subpath]]
             if obj not in merge_map:
                 merge_map[obj] = dict()
-            merge_map[obj][subpath] = additions
+            if subpath not in merge_map[obj]:
+                merge_map[obj][subpath] = []
+            merge_map[obj][subpath] = list(set(merge_map[obj][subpath] + additions))
+            for addition in additions:
+                if addition not in merge_map:
+                    merge_map[addition] = dict()
+                if reversed_subpath not in merge_map[addition]:
+                    merge_map[addition][reversed_subpath] = []
+                merge_map[addition][reversed_subpath] = list(set([obj] + merge_map[addition][reversed_subpath]))
 
     def __compute_pairwise_support(self, obj1: ObjectInstance, obj2: ObjectInstance):
         ot1 = obj1.otype
@@ -567,7 +706,7 @@ class ObjectModelGenerator:
                 "stdev": 0
             }
         rel_card_mean = rel_cards.mean()
-        rel_card_stdev = math.sqrt(rel_cards.var()) if len(rel_cards) > 1 else 0
+        rel_card_stdev = math.sqrt(rel_cards.var()) if len(rel_cards) > 1 else 0.0
         return {
             "mean": rel_card_mean,
             "stdev": rel_card_stdev
@@ -582,7 +721,7 @@ class ObjectModelGenerator:
         obj_arrivals = pd.Series(list(map(lambda obj: obj.time, objs))).sort_values()
         obj_arrival_rates = obj_arrivals.diff()[1:]
         mean = obj_arrival_rates.mean()
-        stdev = math.sqrt(obj_arrival_rates.var())
+        stdev = math.sqrt(obj_arrival_rates.var()) if len(obj_arrival_rates) > 1 else 0.0
         return {
             "mean": mean,
             "stdev": stdev

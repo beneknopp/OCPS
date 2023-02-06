@@ -132,7 +132,6 @@ export class LogUploadComponent implements OnInit {
   checkLeadingTypeAssignments() {
     const leadtype_selections = this.ocelInfo.activity_leading_type_selections
     const type_selections = this.ocelInfo.activity_selected_types
-    const acts = this.ocelInfo.acts
     for (var index = 0; index < this.ocelInfo.acts.length; index++) {
       let act = this.ocelInfo.acts[index]
       if (type_selections[act].length > 0 &&
@@ -195,7 +194,6 @@ export class LogUploadComponent implements OnInit {
 
 
   updateObjectTypeGraph() {
-    debugger
     this.type_links = []
     Object.keys(this.ocelInfo.activity_selected_types).map((act) => {
       let leading_type = this.ocelInfo.activity_leading_type_selections[act]
@@ -250,7 +248,7 @@ export class LogUploadComponent implements OnInit {
   }
 
   actConfigValid(act: string) {
-    return this.ocelInfo.activity_selected_types[act].length > 0
+    return this.ocelInfo.activity_selected_types[act]?.length > 0
   }
 
   onConfirm() {

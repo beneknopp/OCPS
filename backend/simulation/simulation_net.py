@@ -29,7 +29,7 @@ class SimulationNet:
         self.netProjections = net_projections
         self.marking = marking
         self.simulationObjects = simulation_objects
-        self.objects = ObjectModel.load(session_path)
+        self.objects = ObjectModel.load(session_path, self.processConfig.useOriginalMarking)
         self.stateSpaceComputer = StateSpaceComputer(self.processConfig, net_projections)
         self.sessionPath = session_path
         self.otypes = self.processConfig.otypes

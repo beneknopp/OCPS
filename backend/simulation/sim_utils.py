@@ -157,18 +157,44 @@ class Predictors:
         stdev = math.sqrt(var)
         return mean, stdev
 
+    def get_mean_act_delay(self, otype, next_act):
+        return self.mean_act_delays[otype][next_act]
+
     def initialize_delay_prediction_function(self):
         delay_predictors = {}
+        self.mean_act_delays = {}
         for otype in self.otypes:
             training_data = self.trainingData[otype]
-            training_data = training_data[["concept:name"] + ["delay"]]
-            stats = training_data.groupby(["concept:name"]).mean()
+            delays_by_features = training_data[self.object_feature_names + ["concept:name"] + ["delay"]]\
+                .groupby(self.object_feature_names + ["concept:name"])["delay"] \
+                .value_counts()
+            stats_dict = dict(delays_by_features)
+            delay_freqs_by_features = {}
+            for key in stats_dict:
+                features = key[:-1]
+                delay = key[-1]
+                freq = stats_dict[key]
+                if features not in delay_freqs_by_features:
+                    delay_freqs_by_features[features] = []
+                delay_freqs_by_features[features].append((delay, freq))
+            ot_delay_predictors = dict()
+            for features, delay_freqs in delay_freqs_by_features.items():
+                total = sum(list(map(lambda delay_freq: delay_freq[1], delay_freqs)))
+                probabilities = {
+                    delay_freq[0]: float(delay_freq[1]) / float(total)
+                    for delay_freq in delay_freqs
+                }
+                ot_delay_predictors[features] = probabilities
+            delay_predictors[otype] = ot_delay_predictors
+            mean_training_frame = training_data[["concept:name"] + ["delay"]]
+            stats = mean_training_frame.groupby(["concept:name"]).mean()
             stats_dict = dict(stats.to_dict()["delay"])
             stats_dict = {
                 key: round(value) if otype not in self.processConfig.nonEmittingTypes else 0
                 for key, value in stats_dict.items()
             }
-            delay_predictors[otype] = stats_dict
+            self.mean_act_delays[otype] = stats_dict
+
         self.delay_predictors = delay_predictors
 
     def save(self):

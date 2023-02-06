@@ -3,6 +3,19 @@
     <div class="simulation-action-box">
         <div class="simulation-controls" style="margin-bottom: 15px;">
             <div style="display: inline-block; margin-bottom: -15px;">
+                <div><label> <input type="checkbox" [(ngModel)]="useOriginalMarking" [disabled]="!domService.objectModelValid"
+                    (change)="useGeneratedMarking = !useGeneratedMarking"> Use Original
+                        Marking
+                    </label></div>
+                    <div><label> <input type="checkbox" [(ngModel)]="useGeneratedMarking" [disabled]="!domService.objectModelValid"
+                        (change)="useOriginalMarking = !useOriginalMarking"> Use Generated
+                            Marking
+                        </label></div>
+            </div>
+        </div>
+
+        <div class="simulation-controls" style="margin-bottom: 15px;">
+            <div style="display: inline-block; margin-bottom: -15px;">
                 <button class="card card-normal" [disabled]="initialized" (click)="onClickInitialize()" tabindex="0">
                     <span>Initialize Model</span>
                 </button>
@@ -72,17 +85,16 @@
                                 <svg:rect *ngSwitchCase="'TRANSITION'"
                                     [attr.width]="node.dimension.width > 30? node.dimension.width : 30"
                                     [attr.height]="30" [attr.fill]="node.color"
-                                    [attr.stroke]="getTransitionBorderColor(node)" 
-                                    [attr.stroke-width]="getTransitionBorderWidth(node)"/>
+                                    [attr.stroke]="getTransitionBorderColor(node)"
+                                    [attr.stroke-width]="getTransitionBorderWidth(node)" />
                                 <svg:circle *ngSwitchCase="'PLACE'" cx="0" cy="0" r="15" stroke="black" stroke-width="0"
                                     [attr.fill]="node.color" />
                             </ng-container>
                             <ng-container *ngIf="hasTokens(node)">
-                                <svg:circle cx="0" cy="0" r="7.5" stroke="black" stroke-width="0"
-                                fill="#000000">
+                                <svg:circle cx="0" cy="0" r="7.5" stroke="black" stroke-width="0" fill="#000000">
                                     <title>{{placeTooltips[node.id]}}</title>
                                 </svg:circle>
-                            </ng-container>                            
+                            </ng-container>
                             <ng-container *ngIf="node.type=='TRANSITION' && 
                                 node.transitionType == 'FINAL'">
                                 <svg:rect [attr.width]="15" [attr.height]="15" stroke="black" stroke-width="0"
@@ -94,7 +106,8 @@
                                 <svg:polygon points="7.5,5 25,15, 7.5,25" fill="rgba(0, 0, 0, 0.582)">
                                 </svg:polygon>/
                             </ng-container>
-                            <svg:text alignment-baseline="central" [attr.x]="getNodeLabelX(node)" [attr.y]="getNodeLabelY(node)">
+                            <svg:text alignment-baseline="central" [attr.x]="getNodeLabelX(node)"
+                                [attr.y]="getNodeLabelY(node)">
                                 {{getNodeLabel(node)}}
                             </svg:text>
                         </svg:g>

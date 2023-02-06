@@ -95,11 +95,16 @@ export class ObjectModelGeneratorComponent implements OnInit {
       object_model_info.selectedSeedType : undefined
     let non_emitting_types = object_model_info.nonEmittingTypes.filter(net => types.find(ot => ot == net))
     let number_of_objects = selected_seed_type ? object_model_info.numberOfObjects : 0
+    let execution_model_depth = object_model_info.executionModelDepth
+    //! TODO
+    let execution_model_evaluation_depth = object_model_info.executionModelEvaluationDepth
     let merged_object_model_info = new ObjectModelInfo(
       types,
       selected_seed_type,
       non_emitting_types,
       number_of_objects,
+      execution_model_depth,
+      execution_model_evaluation_depth,
       activity_selected_types,
       activity_leading_types
     )
@@ -119,7 +124,9 @@ export class ObjectModelGeneratorComponent implements OnInit {
     formData.append("seedType", this.objectModelInfo.selectedSeedType);
     formData.append("numberOfObjects", "" + this.objectModelInfo.numberOfObjects);
     formData.append("otypes", "" + this.objectModelInfo.otypes);
-    formData.append("executionModelDepth", "3");
+    formData.append("executionModelDepth", "" + this.objectModelInfo.executionModelDepth);
+    // TODO
+    formData.append("executionModelEvaluationDepth", "" + this.objectModelInfo.executionModelEvaluationDepth);
     formData.append("nonEmittingTypes", "" + this.objectModelInfo.nonEmittingTypes);
     Object.keys(this.objectModelInfo.activitySelectedTypes).forEach(act => {
       let leading_type = this.objectModelInfo.activityLeadingTypes[act]
@@ -168,25 +175,41 @@ export class ObjectModelGeneratorComponent implements OnInit {
       this.appService.getArrivalTimesStats(session_key, this.selectedPlotType)
     request$.subscribe((om_stats: {
       "err": any,
-      "resp": { [chart_label: string]: ObjectModelStats }
+      "resp": { 
+        "path_distributions": { [chart_label: string]: ObjectModelStats},
+        "mean_deviations": { [level: number] : number}
+     }
     }) => {
-      debugger
       let resp = om_stats["resp"]
+      console.log(resp.mean_deviations)
+      let path_distributions = resp.path_distributions
       this.barChartData = {}
       this.chartLabels = []
-      Object.keys(resp).forEach(chart_label => {
+      let so = [...Object.keys(path_distributions)] 
+      so.sort((a, b) => a.length - b.length)
+      so.forEach(chart_label => {
         this.chartLabels = this.chartLabels.concat(chart_label) 
         this.barChartData[chart_label] = [
-          { data: resp[chart_label].log_based, label: 'Log-Based' },
-          { data: resp[chart_label].simulated, label: 'Simulated' }
+          { data: path_distributions[chart_label].log_based, label: 'Log-Based' },
+          { data: path_distributions[chart_label].simulated, label: 'Simulated' }
         ]
-        this.mbarChartLabels[chart_label] = resp[chart_label].x_axis
+        this.mbarChartLabels[chart_label] = path_distributions[chart_label].x_axis
       })
     })
   }
 
+onClickSkip() {
+  this.domService.setUseOriginalMarking(true)
+  if (this.domService.netConfigValid) {
+    this.router.navigate(['simulate_process'])
+  } else {
+    this.router.navigate(['discover_ocpn'])
+  }  
+}
+
 onClickConfirm() {
   this.domService.setObjectModelValid(true)
+  this.domService.setUseOriginalMarking(false)
   if (this.domService.netConfigValid) {
     this.router.navigate(['simulate_process'])
   } else {
@@ -196,6 +219,12 @@ onClickConfirm() {
 
 getNumberOfGeneratedObjects(otype: string) {
   if (!this.omgResponse) {
+    return ""
+  }
+  if (!this.omgResponse.stats) {
+    return ""
+  }
+  if (!(otype in this.omgResponse.stats)) {
     return ""
   }
   return this.omgResponse.stats[otype]["simulation_stats"]["number_of_objects"]

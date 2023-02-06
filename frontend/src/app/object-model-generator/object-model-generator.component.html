@@ -7,6 +7,9 @@
                 </button>
             </div>
             <div>
+                <button class="card card-small" (click)="onClickSkip()" tabindex="0">
+                    <span>Skip (Use Original Marking)</span>
+                </button>
                 <button [disabled]="!responseValid" class="card card-small" (click)="onClickConfirm()" tabindex="0">
                     <span>Confirm</span>
                 </button>
@@ -29,6 +32,18 @@
                 <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.numberOfObjects">
             </div>
         </div>
+        <div class="object-model-form-field">
+            <label>Execution Model Depth</label><br>
+            <div style="margin-top: 20px">
+                <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.executionModelDepth">
+            </div>
+        </div>
+        <div class="object-model-form-field">
+            <label>Execution Model Evaluation Depth</label><br>
+            <div style="margin-top: 20px">
+                <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.executionModelEvaluationDepth">
+            </div>
+        </div>                
         <div class="object-model-form-field">
             <label>Non-Emitting Types</label>
             <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.nonEmittingTypes" [multiple]="true"

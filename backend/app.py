@@ -4,7 +4,7 @@ import os
 import pickle
 import numpy as np
 import pm4py
-from flask import Flask, flash, request
+from flask import Flask, flash, request, send_from_directory, current_app
 from flask_cors import cross_origin
 
 from dtos.response import Response
@@ -15,11 +15,13 @@ from input_ocel_processing.process_config import ProcessConfig
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
+from object_model_generation.original_marking_maker import OriginalMarkingMaker
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
 from simulation.simulator import Simulator
 from utils.request_params_parser import RequestParamsParser
+from ast import literal_eval as make_tuple
 
 RUNTIME_RESOURCE_FOLDER = os.path.abspath('runtime_resources')
 ALLOWED_EXTENSIONS = {'jsonocel', 'xml'}
@@ -76,6 +78,7 @@ def ocel_config():
     process_config.save()
     postprocessor = InputOCELPostprocessor(session_path, process_config)
     postprocessed_ocel = postprocessor.postprocess()
+    OriginalMarkingMaker(postprocessed_ocel, process_config)
     return Response.get(True)
 
 
@@ -113,6 +116,7 @@ def discover_ocpn():
     ocpn_discoverer = OCPN_Discoverer(session_path)
     activity_selected_types = RequestParamsParser.parse_activity_selected_types(form)
     ocpn_discoverer.discover(activity_selected_types)
+    #ocpn_discoverer.evaluate()
     ocpn_discoverer.save()
     ocpn_dto = ocpn_discoverer.export()
     return ocpn_dto
@@ -132,11 +136,16 @@ def object_model_stats():
     args = request.args
     otype = args["otype"]
     resp = dict()
+    resp["path_distributions"] = dict()
+    mean_deviations = dict()
     for (dirpath, dirnames, filenames) in os.walk(session_path):
         log_based_stats_filenames = [filename for filename in filenames if
-                           filename.startswith("('" + otype) and filename.endswith("dist.pkl")]
+                           filename.endswith("dist.pkl")]# and filename.startswith("('" + otype)]
         for log_based_stats_filename in log_based_stats_filenames:
             path = log_based_stats_filename.split("_schema_dist.pkl")[0]
+            level = len(make_tuple(path)) - 1
+            if level not in mean_deviations:
+                mean_deviations[level] = (0,0)
             simulated_stats_filename = path + "_schema_dist_simulated.pkl"
             log_based = pickle.load(open(os.path.join(session_path, log_based_stats_filename), "rb"))
             simulated = pickle.load(open(os.path.join(session_path, simulated_stats_filename), "rb"))
@@ -149,11 +158,24 @@ def object_model_stats():
             simulated = [0] * (min(simulated["x_axis"]) - total_min) \
                     + simulated["simulated"] \
                     + [0] * (total_max - max(simulated["x_axis"]))
-            resp[path] = {
+            mean, n = mean_deviations[level]
+            deviation = 0
+            m = 0
+            for i in range(len(log_based)):
+                if log_based[i] > 0 or simulated[i] > 0:
+                    deviation += abs(simulated[i] - log_based[i])
+                    m += 1
+            deviation = deviation/m
+            new_mean = (mean*n + deviation)/(n+1)
+            mean_deviations[level] = (new_mean, n+1)
+            resp["path_distributions"][path] = {
                 "x_axis": x_axis,
                 "log_based": log_based,
                 "simulated": simulated
             }
+        resp["mean_deviations"] = dict()
+        for level, (mean, count) in mean_deviations.items():
+            resp["mean_deviations"][level] = mean
     return Response.get(resp)
 
 
@@ -210,14 +232,16 @@ def arrival_stats():
 def initialize_simulation():
     args = request.args
     session_key = args["sessionKey"]
+    use_original_marking = args["useOriginalMarking"] == "true"
     session_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
+    ProcessConfig.update_use_original_marking(session_path, use_original_marking)
     start_logging(session_path)
     simulation_initializer = SimulationInitializer(session_path)
     simulation_initializer.load()
     simulation_initializer.initialize()
     simulation_initializer.save()
     del simulation_initializer
-    simulator = Simulator(session_path)
+    simulator = Simulator(session_path, use_original_marking)
     simulator.initialize()
     simulator.schedule_next_activity()
     state = simulator.export_current_state()
@@ -236,6 +260,33 @@ def simulate():
     state = simulator.export_current_state()
     simulator.save()
     return Response.get(state)
+
+def simulation_eval():
+    args = request.args
+    steps = int(args['steps'])
+    session_path = get_session_path(request)
+    eval_path = os.path.join(session_path, "ocim_eval.txt")
+    with open(eval_path) as rf:
+        rs = rf.read().strip()
+        precision_s, fitness_s = rs.split(";")
+        precision = precision_s.split("=")[1]
+        fitness = fitness_s.split("=")[1]
+        return {
+            "precision": precision,
+            "fitness": fitness
+        }
+
+@app.route('/ocel-export', methods=['GET'])
+@cross_origin()
+def exportOCEL():
+    args = request.args
+    session_key = args["sessionKey"]
+    download_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
+    return send_from_directory(
+        directory=download_path,
+        path = "/",
+        filename="simulated_ocel.jsonocel"
+    )
 
 
 def make_session():

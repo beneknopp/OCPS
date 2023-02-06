@@ -3,6 +3,8 @@ import pickle
 
 import pandas as pd
 
+from object_model_generation.object_instance import ObjectInstance
+from object_model_generation.object_model import ObjectModel
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
 
@@ -27,6 +29,7 @@ class TrainingModelPreprocessor:
         self.activitySelectedTypes = object_model_parameters.activitySelectedTypes
         self.seedType = object_model_parameters.seedType
         self.executionModelDepth = object_model_parameters.executionModelDepth
+        self.executionModelEvaluationDepth = object_model_parameters.executionModelEvaluationDepth
         df = ocel.get_extended_table()
         acts = self.activityLeadingTypes.keys()
         df = df[df["ocel:activity"].isin(acts)]
@@ -35,6 +38,7 @@ class TrainingModelPreprocessor:
     def build(self):
         self.__make_object_type_graph()
         self.__make_process_executions()
+        # TODO: factor out
         self.__make_schema_distributions()
 
     def save(self):
@@ -86,14 +90,6 @@ class TrainingModelPreprocessor:
         self.__make_object_model()
         object_model = self.totalObjectModel
         otypes = self.otypes
-        process_executions = {
-            otype: dict()
-            for otype in otypes
-        }
-        global_schemata = {
-            otype: dict()
-            for otype in otypes
-        }
         local_schemata = {
             otype: dict()
             for otype in otypes
@@ -102,15 +98,15 @@ class TrainingModelPreprocessor:
             otype: dict()
             for otype in otypes
         }
-        process_executions = {otype: {depth: dict() for depth in range(self.executionModelDepth + 1)} for otype in
+        process_executions = {otype: {depth: dict() for depth in range(self.executionModelEvaluationDepth + 1)} for otype in
                               self.otypes}
-        global_schemata = {otype: {depth: dict() for depth in range(self.executionModelDepth + 1)} for otype in
+        global_schemata = {otype: {depth: dict() for depth in range(self.executionModelEvaluationDepth + 1)} for otype in
                            self.otypes}
         execution_model_paths = {otype: dict() for otype in self.otypes}
         for otype in self.otypes:
             current_depth = 0
             paths = [tuple([otype])]
-            while current_depth <= self.executionModelDepth:
+            while current_depth <= self.executionModelEvaluationDepth:
                 execution_model_paths[otype][current_depth] = paths[:]
                 last_paths = paths[:]
                 paths = []
@@ -147,7 +143,7 @@ class TrainingModelPreprocessor:
         schema[current_depth] = {path: 1}
         process_executions[otype][current_depth][path][obj] = [obj]
         global_schemata[otype][current_depth][path][obj] = 1
-        while current_depth < self.executionModelDepth:
+        while current_depth < self.executionModelEvaluationDepth:
             current_model = execution[current_depth]
             execution[current_depth + 1] = dict()
             schema[current_depth + 1] = dict()
@@ -166,6 +162,11 @@ class TrainingModelPreprocessor:
                     process_executions[otype][current_depth + 1][new_path][obj] = new_execution_model
                     global_schemata[otype][current_depth + 1][new_path][obj] = len(new_execution_model)
             current_depth = current_depth + 1
+
+    def __save_original_marking(self):
+        original_model = ObjectModel(self.sessionPath)
+        original_objects = {}
+
 
     def __make_schema_distributions(self):
         self.flatLocalSchemata = {

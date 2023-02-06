@@ -1,6 +1,6 @@
 <div class="toolbar" role="banner">
   <img width="350" alt="Angular Logo" src="/assets/img/pads_rwth.png" />
-  <h1>Object-Centric Process Simulation</h1>
+  <h1>OCim: Object-Centric Process Simulation</h1>
   <div class="spacer"></div>
 </div>
 
@@ -31,6 +31,14 @@
     [ngClass]="router.url === '/simulate_process' ? 'active-card' : ''">
       <span>Simulate Process</span>
     </button>
+    <div class="arrows-container">
+      <fa-icon [ngClass]="false ? 'fa-3x fa-arrows-enabled' : 'fa-3x fa-arrows-disabled'"
+      [icon]="doubleRightArrowsIcon"></fa-icon>
+    </div>
+    <button class="card card-small" routerLink="/simulate_process" [disabled]="true"
+    [ngClass]="router.url === '/evaluate' ? 'active-card' : ''">
+      <span>Evaluate</span>
+    </button>    
   </div>
 
   <router-outlet></router-outlet>

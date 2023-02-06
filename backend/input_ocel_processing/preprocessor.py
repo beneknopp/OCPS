@@ -227,7 +227,7 @@ class InputOCELPreprocessor:
                 otype_occurrences_at_acts[otype + ":count"] > 0.01
                 ]["ocel:activity"].values
             for act in taking_part_in:
-                activity_allowed_otypes[act].append(otype)
+                activity_allowed_otypes[act] = list(set(activity_allowed_otypes[act]+ [otype]))
         self.activity_allowed_otypes = activity_allowed_otypes
 
     def write_state(self):
@@ -236,7 +236,8 @@ class InputOCELPreprocessor:
             wf.write(",".join(self.otypes))
 
     def get_otypes(self):
-        return self.otypes
+        #TODO
+        return list(set(self.otypes))
 
     def get_acts(self):
         return self.acts

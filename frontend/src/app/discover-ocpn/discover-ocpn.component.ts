@@ -28,6 +28,8 @@ export class DiscoverOcpnComponent implements OnInit {
   places: Place[] = [];
   transitions: Transition[] = [];
   arcs: Arc[] = [];
+  precision: number | undefined;
+  fitness: number | undefined;
   ocpnDiscovered = false
 
   constructor(
@@ -48,6 +50,8 @@ export class DiscoverOcpnComponent implements OnInit {
             this.places = ocpnInfo.places
             this.transitions = ocpnInfo.transitions
             this.arcs = ocpnInfo.arcs
+            this.precision = ocpnInfo.precision
+            this.fitness = ocpnInfo.fitness
             let ocpn_graph = this.domService.makeOcpnGraph(ocpnInfo.places, ocpnInfo.transitions, ocpnInfo.arcs,
               this.otypes, this.activityLeadingTypes)
             this.nodes = ocpn_graph[0]
@@ -60,7 +64,7 @@ export class DiscoverOcpnComponent implements OnInit {
 
   ngOnDestroy() {
     this.domService.addOcpnInfo(
-      new OcpnInfo(this.places, this.transitions, this.arcs)
+      new OcpnInfo(this.places, this.transitions, this.arcs, this.precision, this.fitness)
     )
   }
 
@@ -87,6 +91,8 @@ export class DiscoverOcpnComponent implements OnInit {
       let ocpn_graph = this.domService.makeOcpnGraph(places, transitions, arcs, this.otypes, this.activityLeadingTypes)
       this.nodes = ocpn_graph[0]
       this.links = ocpn_graph[1]
+      this.precision = resp.precision
+      this.fitness = resp.fitness
       this.ocpnDiscovered = true
     });
   }
@@ -110,6 +116,12 @@ export class DiscoverOcpnComponent implements OnInit {
     if (this.domService.netConfigValid) {
       this.router.navigate(['simulate_process'])
     }
+  }
+
+  getFooter() {
+    let precision = this.precision ? this.precision + "" : "- - - - -"
+    let fitness = this.fitness ? this.fitness + "" : "- - - - -"
+    return "Evaluation against Input Log - Object-Centric Precision: " + precision + "; Object-Centric Fitness: " + fitness
   }
 
 }

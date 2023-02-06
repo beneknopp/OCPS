@@ -66,17 +66,18 @@ class SimulationInitializer:
 
     def __make_object_feature_names(self):
         self.objectFeatureNames = ["act:" + act for act in self.processConfig.acts] + \
-                                  list(set(["attr:" + key
-                                            for obj in self.objectModel.objectsById.values()
-                                            for key in obj.attributes.keys()]))  # +\
-        # ["otype:" + any_otype for any_otype in self.otypes]
+                                  ["otype:" + any_otype for any_otype in self.otypes]
+                                  #list(set(["attr:" + key
+                                   #         for obj in self.objectModel.objectsById.values()
+                                    #        for key in obj.attributes.keys()]))  # +\
+
 
     def __initialize_object_features(self, obj: ObjectInstance):
         features = {}
         for act in self.processConfig.acts:
             features["act:" + act] = 0
-        # for any_otype in self.otypes:
-        #   features["otype:" + any_otype] = len(obj.total_local_model[any_otype])
+        for any_otype in self.otypes:
+           features["otype:" + any_otype] = len(obj.total_local_model[any_otype])
         for key, value in obj.attributes.items():
             features["attr:" + key] = value
         self.objectFeatures[obj.otype][obj.oid] = features
@@ -85,7 +86,7 @@ class SimulationInitializer:
         self.netProjections = NetProjections.load(self.sessionPath)
 
     def __load_object_model(self):
-        self.objectModel = ObjectModel.load(self.sessionPath)
+        self.objectModel = ObjectModel.load(self.sessionPath, self.processConfig.useOriginalMarking)
 
     def __make_initial_marking(self):
         self.tokens = []
