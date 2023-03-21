@@ -4,7 +4,7 @@ import os
 import pickle
 import numpy as np
 import pm4py
-from flask import Flask, flash, request
+from flask import Flask, flash, request, send_from_directory, current_app
 from flask_cors import cross_origin
 
 from dtos.response import Response
@@ -14,11 +14,15 @@ from input_ocel_processing.preprocessor import InputOCELPreprocessor
 from input_ocel_processing.process_config import ProcessConfig
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
+from object_model_generation.object_type_graph import ObjectTypeGraph
+from object_model_generation.original_marking_maker import OriginalMarkingMaker
+from object_model_generation.stats_mode import StatsMode
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
 from simulation.simulator import Simulator
 from utils.request_params_parser import RequestParamsParser
+from ast import literal_eval as make_tuple
 
 RUNTIME_RESOURCE_FOLDER = os.path.abspath('runtime_resources')
 ALLOWED_EXTENSIONS = {'jsonocel', 'xml'}
@@ -68,20 +72,20 @@ def ocel_config():
     if not request.method == 'POST':
         return Response.get(True)
     session_path = get_session_path(request)
+    start_logging(session_path)
     config_bytes = request.files["ocelInfo"].read()
     config_dto = json.loads(config_bytes)
     process_config = ProcessConfig(config_dto, session_path)
     process_config.save()
     postprocessor = InputOCELPostprocessor(session_path, process_config)
-    postprocessor.postprocess()
+    postprocessed_ocel = postprocessor.postprocess()
+    #OriginalMarkingMaker(postprocessed_ocel, process_config)
     return Response.get(True)
 
-
-@app.route('/generate-object-model', methods=['GET', 'POST'])
+@app.route('/initialize-object-generator', methods=['POST'])
 @cross_origin()
-def generate_object_model():
-    if not request.method == 'POST':
-        return True
+def initialize_object_generator():
+    args = request.args
     session_path = get_session_path(request)
     file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
     ocel = pm4py.read_ocel(file_path)
@@ -91,12 +95,26 @@ def generate_object_model():
     training_model_preprocessor = TrainingModelPreprocessor(session_path, ocel, object_model_parameters)
     training_model_preprocessor.build()
     training_model_preprocessor.save()
-    object_model_generator = ObjectModelGenerator(session_path, ocel, object_model_parameters,
-                                                  training_model_preprocessor)
+    return Response.get(True)
+
+@app.route('/generate-object-model', methods=['GET', 'POST'])
+@cross_origin()
+def generate_object_model():
+    if not request.method == 'POST':
+        return True
+    args = request.args
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
+    ocel = pm4py.read_ocel(file_path)
+    ProcessConfig.update_non_emitting_types(session_path, request.form['nonEmittingTypes'])
+    object_model_parameters = ObjectModelParameters(request.form)
+    logging.info("Preprocessing Training Data...")
+    training_model_preprocessor = TrainingModelPreprocessor.load(session_path)
+    object_model_generator = ObjectModelGenerator(session_path, ocel, object_model_parameters, training_model_preprocessor)
     object_model_generator.generate()
     object_model_generator.save(session_path)
     return object_model_generator.get_response()
-
 
 @app.route('/discover-ocpn', methods=['GET', 'POST'])
 @cross_origin()
@@ -104,10 +122,12 @@ def discover_ocpn():
     if not request.method == 'POST':
         return True
     session_path = get_session_path(request)
+    start_logging(session_path)
     form = request.form
     ocpn_discoverer = OCPN_Discoverer(session_path)
     activity_selected_types = RequestParamsParser.parse_activity_selected_types(form)
     ocpn_discoverer.discover(activity_selected_types)
+    #ocpn_discoverer.evaluate()
     ocpn_discoverer.save()
     ocpn_dto = ocpn_discoverer.export()
     return ocpn_dto
@@ -118,34 +138,83 @@ def discover_ocpn():
 def simulation_state():
     return Response.get(True)
 
-
-@app.route('/object-model-stats', methods=['GET'])
+@app.route('/object-stats', methods=['GET'])
 @cross_origin()
 def object_model_stats():
     session_path = get_session_path(request)
+    start_logging(session_path)
     args = request.args
     otype = args["otype"]
-    process_config = ProcessConfig.load(session_path)
+    stats_key = args["statsKey"]
+    attribute_names_dict = TrainingModelPreprocessor.load_attribute_names(session_path)
+    attribute_names = attribute_names_dict[stats_key][otype]
+    log_dists = None
+    modeled_dists = None
+    simulated_dists = None
+    if stats_key == "cardinality":
+        log_dists = TrainingModelPreprocessor.load_schema_distributions(session_path)
+        modeled_dists = TrainingModelPreprocessor.load_schema_distributions(session_path, mode=StatsMode.MODELED)
+        simulated_dists = TrainingModelPreprocessor.load_schema_distributions(session_path, mode=StatsMode.SIMULATED)
+    elif stats_key == "objectAttribute":
+        log_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path)
+        modeled_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path, mode=StatsMode.MODELED)
+        simulated_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path, mode=StatsMode.SIMULATED)
+    log_dists_otype = log_dists[otype] if log_dists is not None else None
+    modeled_dists_otype = modeled_dists[otype] if modeled_dists is not None else None
+    simulated_dists_otype = simulated_dists[otype] if simulated_dists is not None else None
+    chart_data = TrainingModelPreprocessor.make_chart_data(
+        attribute_names, log_dists_otype, modeled_dists_otype, simulated_dists_otype
+    )
+    return Response.get(chart_data)
+
+@app.route('/object-model-stats', methods=['GET'])
+@cross_origin()
+def s(include_simulated = False):
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
     resp = dict()
-    for any_otype in process_config.otypes:
-        log_based = pickle.load(open(os.path.join(
-            session_path, otype + "_to_" + any_otype + "_schema_dist.pkl"), "rb"))
-        simulated = pickle.load(open(os.path.join(
-            session_path, otype + "_to_" + any_otype + "_schema_dist_simulated.pkl"), "rb"))
-        total_min = min(min(log_based["x_axis"]), min(simulated["x_axis"]))
-        total_max = max(max(log_based["x_axis"]), max(simulated["x_axis"]))
-        x_axis = [str(i) for i in range(total_min, total_max + 1)]
-        log_based = [0] * (min(log_based["x_axis"]) - total_min) \
+    resp["path_distributions"] = dict()
+    mean_deviations = dict()
+    for (dirpath, dirnames, filenames) in os.walk(session_path):
+        log_based_stats_filenames = [filename for filename in filenames if filename.endswith("dist.pkl")]# and filename.startswith("('" + otype)]
+        for log_based_stats_filename in log_based_stats_filenames:
+            path = log_based_stats_filename.split("_schema_dist.pkl")[0]
+            level = len(make_tuple(path)) - 1
+            if level not in mean_deviations:
+                mean_deviations[level] = (0,0)
+            modeled_stats_filename = path + "_schema_dist_modeled.pkl"
+            simulated_stats_filename = path + "_schema_dist_simulated.pkl"
+            log_based = pickle.load(open(os.path.join(session_path, log_based_stats_filename), "rb"))
+            simulated = pickle.load(open(os.path.join(session_path, simulated_stats_filename), "rb"))
+            total_min = min(min(log_based["x_axis"]), min(simulated["x_axis"]))
+            total_max = max(max(log_based["x_axis"]), max(simulated["x_axis"]))
+            x_axis = [str(i) for i in range(total_min, total_max + 1)]
+            log_based = [0] * (min(log_based["x_axis"]) - total_min) \
                     + log_based["log_based"] \
                     + [0] * (total_max - max(log_based["x_axis"]))
-        simulated = [0] * (min(simulated["x_axis"]) - total_min) \
+            simulated = [0] * (min(simulated["x_axis"]) - total_min) \
                     + simulated["simulated"] \
                     + [0] * (total_max - max(simulated["x_axis"]))
-        resp[any_otype] = {
-            "x_axis": x_axis,
-            "log_based": log_based,
-            "simulated": simulated
-        }
+            mean, n = mean_deviations[level]
+            deviation = 0
+            m = 0
+            for i in range(len(log_based)):
+                if log_based[i] > 0 or simulated[i] > 0:
+                    deviation += abs(simulated[i] - log_based[i])
+                    m += 1
+            deviation = deviation/m
+            new_mean = (mean*n + deviation)/(n+1)
+            mean_deviations[level] = (new_mean, n+1)
+            resp["path_distributions"][path] = {
+                "x_axis": x_axis,
+                "log_based": log_based,
+                "simulated": simulated
+            }
+        resp["mean_deviations"] = dict()
+        for level, (mean, count) in mean_deviations.items():
+            resp["mean_deviations"][level] = mean
     return Response.get(resp)
 
 
@@ -153,6 +222,7 @@ def object_model_stats():
 @cross_origin()
 def arrival_stats():
     session_path = get_session_path(request)
+    start_logging(session_path)
     args = request.args
     otype = args["otype"]
     process_config = ProcessConfig.load(session_path)
@@ -201,13 +271,16 @@ def arrival_stats():
 def initialize_simulation():
     args = request.args
     session_key = args["sessionKey"]
+    use_original_marking = args["useOriginalMarking"] == "true"
     session_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
+    ProcessConfig.update_use_original_marking(session_path, use_original_marking)
+    start_logging(session_path)
     simulation_initializer = SimulationInitializer(session_path)
     simulation_initializer.load()
     simulation_initializer.initialize()
     simulation_initializer.save()
     del simulation_initializer
-    simulator = Simulator(session_path)
+    simulator = Simulator(session_path, use_original_marking)
     simulator.initialize()
     simulator.schedule_next_activity()
     state = simulator.export_current_state()
@@ -227,6 +300,33 @@ def simulate():
     simulator.save()
     return Response.get(state)
 
+def simulation_eval():
+    args = request.args
+    steps = int(args['steps'])
+    session_path = get_session_path(request)
+    eval_path = os.path.join(session_path, "ocim_eval.txt")
+    with open(eval_path) as rf:
+        rs = rf.read().strip()
+        precision_s, fitness_s = rs.split(";")
+        precision = precision_s.split("=")[1]
+        fitness = fitness_s.split("=")[1]
+        return {
+            "precision": precision,
+            "fitness": fitness
+        }
+
+@app.route('/ocel-export', methods=['GET'])
+@cross_origin()
+def exportOCEL():
+    args = request.args
+    session_key = args["sessionKey"]
+    download_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
+    return send_from_directory(
+        directory=download_path,
+        path = "/",
+        filename="simulated_ocel.jsonocel"
+    )
+
 
 def make_session():
     with open("running_session_key") as rf:
@@ -240,9 +340,13 @@ def make_session():
     except FileNotFoundError:
         os.mkdir(app.config['RUNTIME_RESOURCE_FOLDER'])
         os.mkdir(session_path)
+    start_logging(session_path)
+    return session_key, session_path
+
+
+def start_logging(session_path):
     logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
                         encoding='utf-8', level=logging.DEBUG)
-    return session_key, session_path
 
 
 def get_session_path(request):

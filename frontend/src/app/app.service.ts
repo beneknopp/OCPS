@@ -43,6 +43,13 @@ export class AppService {
     )
   }
 
+  initializeObjectGenerator(session_key: string, formData: FormData) {
+    return this.http.post<any>(this.backendUrl + 'initialize-object-generator?sessionKey=' + session_key, formData).pipe(
+      tap(_ => this.log('object generator initialized')),
+      catchError(this.handleError<String>('initializeObjectGenerator', ""))
+    )
+  }  
+
   postObjectModelGeneration(session_key: string, formData: FormData) {
     return this.http.post<any>(this.backendUrl + 'generate-object-model?sessionKey=' + session_key, formData).pipe(
       tap(_ => this.log('object model generation posted')),
@@ -50,14 +57,15 @@ export class AppService {
     )
   }
 
-  getObjectModelStats(session_key: string, selected_plot_type: string) {
-    return this.http.get<any>(this.backendUrl + 'object-model-stats'
+  getStats(session_key: string, stats_key: string, otype: string) {
+    return this.http.get<any>(this.backendUrl + 'object-stats'
       + '?sessionKey=' + session_key + "&"
-      + 'otype=' + selected_plot_type
+      + 'statsKey=' + stats_key + "&"
+      + 'otype=' + otype
     ).pipe(
-      tap(_ => this.log('object model stats queried')),
+      tap(_ => this.log('object stats queried')),
       catchError(this.handleError<String>('getObjectModelStats', ""))
-    )
+    )    
   }
 
   getArrivalTimesStats(session_key: string, selected_plot_type: string) {
@@ -87,8 +95,10 @@ export class AppService {
       )
   }
 
-  initializeSimulation(session_key: string) {
-    return this.http.get<any>(this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key).pipe(
+  initializeSimulation(session_key: string, useOriginalMarking: boolean) {
+    let useOriginalMarking_str = String(useOriginalMarking)
+    let url = this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key + "&useOriginalMarking=" + useOriginalMarking_str
+    return this.http.get<any>(url).pipe(
       tap(_ => this.log('simulation initiated')),
       catchError(this.handleError<String>('startSimulation', ""))
     )  }
@@ -98,6 +108,14 @@ export class AppService {
       tap(_ => this.log('simulation ran')),
       catchError(this.handleError<String>('startSimulation', ""))
     )
+  }
+
+  public exportOCEL(session_key: string) {
+    return this.http.get(this.backendUrl + 'ocel-export?&sessionKey=' + session_key,
+      {
+        observe: "response", 
+        responseType: "blob"
+      })
   }
 
   private log(message: string) {

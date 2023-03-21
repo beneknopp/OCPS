@@ -126,48 +126,12 @@ export class LogUploadComponent implements OnInit {
 
   checkObjectTypeGraphValidity() {
     // Check if graph has unique shortest paths 
-    let nodes: { id: string, label: string, color: string }[] = [];
-    this.type_nodes.forEach(val => nodes.push(Object.assign({}, val)));
-    for (var id in nodes) {
-      let links: { source: string, target: string, label: string }[] = [];
-      this.type_links.forEach(val => links.push(Object.assign({}, val)));
-      let shortest_paths: any = {}
-      let buffer: { id: string, path: string[] }[] = [{ id: id, path: [] }]
-      while (buffer.length > 0) {
-        let current = buffer[0]
-        let current_id = current.id
-        let current_path = current.path
-        console.log(current_path)
-        buffer = buffer.slice(1)
-        if (Object.keys(shortest_paths).find(x => x == current_id)) {
-          if (shortest_paths[current_id].length == current_path.length) {
-            this.graphBoxStyle = 'border-color: red'
-            return false;
-          }
-          else if (shortest_paths[current_id].length < current_path.length) {
-            continue
-          }
-        }
-        shortest_paths[current_id] = current_path
-        let neighbors = links.filter((link) => link.source == current_id || link.target == current_id)
-          .map((link) => {
-            if (link.source == current_id) {
-              return { id: link.target, path: current_path.concat([current_id]) }
-            }
-            return { id: link.source, path: current_path.concat([current_id]) }
-          })
-        //links = links.filter( (link) => link.source != current_id && link.target != current_id)
-        buffer = neighbors.concat(buffer)
-      }
-    }
-    this.graphBoxStyle = 'border-color: green'
-    return true;
+    return true
   }
 
   checkLeadingTypeAssignments() {
     const leadtype_selections = this.ocelInfo.activity_leading_type_selections
     const type_selections = this.ocelInfo.activity_selected_types
-    const acts = this.ocelInfo.acts
     for (var index = 0; index < this.ocelInfo.acts.length; index++) {
       let act = this.ocelInfo.acts[index]
       if (type_selections[act].length > 0 &&
@@ -230,7 +194,6 @@ export class LogUploadComponent implements OnInit {
 
 
   updateObjectTypeGraph() {
-    debugger
     this.type_links = []
     Object.keys(this.ocelInfo.activity_selected_types).map((act) => {
       let leading_type = this.ocelInfo.activity_leading_type_selections[act]
@@ -285,7 +248,7 @@ export class LogUploadComponent implements OnInit {
   }
 
   actConfigValid(act: string) {
-    return this.ocelInfo.activity_selected_types[act].length > 0
+    return this.ocelInfo.activity_selected_types[act]?.length > 0
   }
 
   onConfirm() {

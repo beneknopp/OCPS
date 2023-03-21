@@ -9,6 +9,7 @@ class ProcessConfig:
     activityLeadingTypes: dict
     otypeLeadingActivities: dict
     nonEmittingTypes: list
+    useOriginalMarking: bool
 
     @classmethod
     def load(cls, session_path):
@@ -21,17 +22,25 @@ class ProcessConfig:
         self.nonEmittingTypes = config_dto["non_emitting_types"]
         self.activitySelectedTypes = config_dto["activity_selected_types"]
         self.activityLeadingTypes = config_dto["activity_leading_type_selections"]
-        self.otypes = [otype for otype in config_dto["otypes"]
-                       if any(otype in self.activitySelectedTypes[act] for act in self.acts)]
+        # TODO: why are there duplicates?
+        self.otypes = list(set([otype for otype in config_dto["otypes"]
+                       if any(otype in self.activitySelectedTypes[act] for act in self.acts)]))
         self.otypeLeadingActivities = {
             otype: [act for act, ot in self.activityLeadingTypes.items() if ot == otype]
             for otype in self.otypes
         }
+        self.useOriginalMarking = True
 
     def save(self):
         process_config_path = os.path.join(self.session_path, "process_config.pkl")
         with open(process_config_path, "wb") as write_file:
             pickle.dump(self, write_file)
+
+    @classmethod
+    def update_use_original_marking(cls, session_path, use_original_marking):
+        process_config = cls.load(session_path)
+        process_config.useOriginalMarking = use_original_marking
+        process_config.save()
 
     @classmethod
     def update_non_emitting_types(cls, session_path, non_emitting_types_str):

@@ -1,7 +1,15 @@
+import os
+import pickle
+
 from utils.graph import Graph, DirectedEdge
 
 
 class ObjectTypeGraph(Graph):
+
+    @classmethod
+    def load(cls, session_path):
+        otg_path = os.path.join(session_path, "object_type_graph.pkl")
+        return pickle.load(open(otg_path, "rb"))
 
     def __init__(self, otypes):
         self.otypes = otypes
@@ -39,8 +47,12 @@ class ObjectTypeGraph(Graph):
                 "children": list(map(lambda node: node.name, self.get_children(otype)))
             }
 
-    def get_neighbor_otypes(self, otype):
+    def get_parent_and_child_otypes(self, otype):
         return self.neighborOtypes[otype]
+
+    def get_neighbor_otypes(self, otype):
+        neighbors = self.neighborOtypes[otype]
+        return neighbors["parents"] + neighbors["children"]
 
     def __make_shortest_paths(self):
         shortest_paths = {}

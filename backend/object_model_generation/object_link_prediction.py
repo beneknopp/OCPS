@@ -15,12 +15,14 @@ class ObjectLinkPrediction:
     reverse: bool
     selected_neighbor: ObjectInstance
 
-    def __init__(self, predict=False, predicted_type=None, mode=None, reverse=None, selected_neighbor=None):
+    def __init__(self, predict=False, predicted_type=None, mode=None, reverse=None, selected_neighbor=None,
+                 merge_map=None):
         self.predict = predict
         self.predicted_type = predicted_type
         self.mode = mode
         self.reverse = reverse
         self.selected_neighbor = selected_neighbor
+        self.mergeMap = merge_map
 
     def pretty_print(self):
         return str({'predict': self.predict, 'predicted_type': self.predicted_type, 'mode': self.mode.value,

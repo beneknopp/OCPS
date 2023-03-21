@@ -13,19 +13,20 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
   objectModelInfo: ObjectModelInfo = new ObjectModelInfo()
   configValid = true
+  initialized = false
+  reloadStats = false
   responseValid = false;
   selectedSeedType = undefined
   nonEmittingTypes: string[] = []
   sessionKey: string | undefined;
   numberOfObjects: number = 0;
-  selectedPlotType: string | undefined
+  selectedObjectType: string | undefined
   selectedStatsType: string | undefined
-  cachedSelectedPlotType: string | undefined
+  cachedSelectedObjectType: string | undefined
   cachedSelectedStatsType: string | undefined
-  statsTypes = ["Cardinalities", "Relative Arrival Times (in seconds)"]
+  statsTypes = ["Cardinalities", "Object Attributes", "Timing Information"]
 
-
-  public barChartData: { [otype: string]: { data: number[], label: 'Log-Based' | 'Simulated' }[] } = {
+  public barChartData: { [otype: string]: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] } = {
     'orders': [
       { data: [0.0, 0.2, 0.4, 0.3, 0.1, 0.0, 0.0], label: 'Log-Based' },
       { data: [0.0, 0.15, 0.25, 0.25, 0.2, 0.15, 0], label: 'Simulated' }
@@ -56,6 +57,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     }
   ];
   omgResponse: ObjectModelGenerationResponse | undefined;
+  chartLabels: string[] = [];
 
 
   constructor(
@@ -94,11 +96,16 @@ export class ObjectModelGeneratorComponent implements OnInit {
       object_model_info.selectedSeedType : undefined
     let non_emitting_types = object_model_info.nonEmittingTypes.filter(net => types.find(ot => ot == net))
     let number_of_objects = selected_seed_type ? object_model_info.numberOfObjects : 0
+    let execution_model_depth = object_model_info.executionModelDepth
+    //! TODO
+    let execution_model_evaluation_depth = object_model_info.executionModelEvaluationDepth
     let merged_object_model_info = new ObjectModelInfo(
       types,
       selected_seed_type,
       non_emitting_types,
       number_of_objects,
+      execution_model_depth,
+      execution_model_evaluation_depth,
       activity_selected_types,
       activity_leading_types
     )
@@ -118,6 +125,9 @@ export class ObjectModelGeneratorComponent implements OnInit {
     formData.append("seedType", this.objectModelInfo.selectedSeedType);
     formData.append("numberOfObjects", "" + this.objectModelInfo.numberOfObjects);
     formData.append("otypes", "" + this.objectModelInfo.otypes);
+    formData.append("executionModelDepth", "" + this.objectModelInfo.executionModelDepth);
+    // TODO
+    formData.append("executionModelEvaluationDepth", "" + this.objectModelInfo.executionModelEvaluationDepth);
     formData.append("nonEmittingTypes", "" + this.objectModelInfo.nonEmittingTypes);
     Object.keys(this.objectModelInfo.activitySelectedTypes).forEach(act => {
       let leading_type = this.objectModelInfo.activityLeadingTypes[act]
@@ -134,14 +144,15 @@ export class ObjectModelGeneratorComponent implements OnInit {
         let omgResponse = new ObjectModelGenerationResponse(resp)
         this.responseValid = true
         this.omgResponse = omgResponse
-        if (!this.selectedPlotType) {
-          this.selectedPlotType = Object.keys(omgResponse.stats)[0]
+        if (!this.selectedObjectType) {
+          this.selectedObjectType = Object.keys(omgResponse.stats)[0]
         }
         if (!this.selectedStatsType) {
           this.selectedStatsType = this.statsTypes[0]
         }
-        this.cachedSelectedPlotType = undefined
+        this.cachedSelectedObjectType = undefined
         this.cachedSelectedStatsType = undefined
+        this.reloadStats = true
         this.onChangeStatsInput()
       });
   }
@@ -152,61 +163,145 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
   onChangeStatsInput() {
     let session_key = this.domService.getSessionKey()
-    if (!session_key || !this.selectedPlotType || !this.selectedStatsType) {
+    if (!session_key || !this.selectedObjectType || !this.selectedStatsType) {
       return
     }
-    if (this.cachedSelectedPlotType == this.selectedPlotType && this.cachedSelectedStatsType == this.selectedStatsType) {
+    if (this.cachedSelectedObjectType == this.selectedObjectType
+      && this.cachedSelectedStatsType == this.selectedStatsType
+      && !this.reloadStats) {
       // check if anything has changed because handler is called merely on click (not only on change)
       return
     }
-    this.cachedSelectedPlotType = this.selectedPlotType
+    this.reloadStats = false
+    this.cachedSelectedObjectType = this.selectedObjectType
     this.cachedSelectedStatsType = this.selectedStatsType
-    const request$ = this.selectedStatsType == "Cardinalities" ?
-      this.appService.getObjectModelStats(session_key, this.selectedPlotType) :
-      this.appService.getArrivalTimesStats(session_key, this.selectedPlotType)
-    request$.subscribe((om_stats: {
-      "err": any,
-      "resp": { [otype: string]: ObjectModelStats }
-    }) => {
-      let resp = om_stats["resp"]
-      this.barChartData = {}
-      Object.keys(resp).forEach(ot => {
-        this.barChartData[ot] = [
-          { data: resp[ot].log_based, label: 'Log-Based' },
-          { data: resp[ot].simulated, label: 'Simulated' }
-        ]
-        this.mbarChartLabels[ot] = resp[ot].x_axis
+    let stats_key = this.selectedStatsType == "Cardinalities" ? "cardinality" :
+      this.selectedStatsType == "Timing Information" ? "timing" :
+        this.selectedStatsType == "Object Attributes" ? "objectAttribute" : null
+    if (stats_key == null) {
+      throw ("Invalid stats key")
+    }
+    this.appService.getStats(session_key, stats_key, this.selectedObjectType)
+      .subscribe((om_stats: {
+        "err": any,
+        "resp": {
+          [chart_label: string] : {
+            stats: ObjectModelStats,
+            includeModeled: boolean,
+            includeSimulated: boolean,            
+          }
+        },        
+      }) => {
+        let resp = om_stats["resp"]
+        this.barChartData = {}
+        this.chartLabels = []
+        let so = [...Object.keys(resp)]
+        so.sort((a, b) => a.length - b.length)
+        so.forEach(chart_label => {
+          this.chartLabels = this.chartLabels.concat(chart_label)
+          let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
+            { data: resp[chart_label].stats.log_based, label: 'Log-Based' },
+          ]
+          if (resp[chart_label].includeModeled) {
+            label_data = label_data.concat([
+              { data: resp[chart_label].stats.modeled, label: 'Modeled' },
+            ])
+          }
+          if (resp[chart_label].includeSimulated) {
+            label_data = label_data.concat([
+              { data: resp[chart_label].stats.simulated, label: 'Simulated' },
+            ])
+          }          
+          this.barChartData[chart_label] = label_data
+          this.mbarChartLabels[chart_label] = resp[chart_label].stats.x_axis
+        })
       })
+  }
+
+  onClickInitialize() {
+    if (!(this.sessionKey && this.objectModelInfo.selectedSeedType)) {
+      return
+    }
+    const formData = new FormData();
+    formData.append("sessionKey", this.sessionKey);
+    formData.append("seedType", this.objectModelInfo.selectedSeedType);
+    formData.append("otypes", "" + this.objectModelInfo.otypes);
+    formData.append("executionModelDepth", "" + this.objectModelInfo.executionModelDepth);
+    // TODO
+    formData.append("executionModelEvaluationDepth", "" + this.objectModelInfo.executionModelEvaluationDepth);
+    formData.append("nonEmittingTypes", "" + this.objectModelInfo.nonEmittingTypes);
+    Object.keys(this.objectModelInfo.activitySelectedTypes).forEach(act => {
+      let leading_type = this.objectModelInfo.activityLeadingTypes[act]
+      if (!leading_type) {
+        return
+      }
+      let other_types = this.objectModelInfo.activitySelectedTypes[act].filter(x => x != leading_type)
+      let act_types = [leading_type].concat(other_types)
+      formData.append("act:" + act, "" + act_types)
     })
+
+    const initialize$ = this.appService.initializeObjectGenerator(this.sessionKey, formData).subscribe(
+      (resp) => {
+        if (!this.selectedObjectType) {
+          this.selectedObjectType = this.objectModelInfo.otypes[0]
+        }
+        if (!this.selectedStatsType) {
+          this.selectedStatsType = this.statsTypes[0]
+        }
+        this.cachedSelectedObjectType = undefined
+        this.cachedSelectedStatsType = undefined
+        this.onChangeStatsInput()
+        this.initialized = true
+      });
   }
 
-onClickConfirm() {
-  this.domService.setObjectModelValid(true)
-  if (this.domService.netConfigValid) {
-    this.router.navigate(['simulate_process'])
-  } else {
-    this.router.navigate(['discover_ocpn'])
+  onClickSkip() {
+    this.domService.setUseOriginalMarking(true)
+    if (this.domService.netConfigValid) {
+      this.router.navigate(['simulate_process'])
+    } else {
+      this.router.navigate(['discover_ocpn'])
+    }
   }
-}
 
-getNumberOfGeneratedObjects(otype: string) {
-  if (!this.omgResponse) {
-    return ""
+  onClickConfirm() {
+    this.domService.setObjectModelValid(true)
+    this.domService.setUseOriginalMarking(false)
+    if (this.domService.netConfigValid) {
+      this.router.navigate(['simulate_process'])
+    } else {
+      this.router.navigate(['discover_ocpn'])
+    }
   }
-  return this.omgResponse.stats[otype]["simulation_stats"]["number_of_objects"]
-}
 
-getOtherTypes(otype: string) {
-  return this.objectModelInfo.otypes.filter(ot => ot != otype)
-}
-
-getPlotCaption(otype: string) {
-  let selected_plot_type = this.selectedPlotType
-  let selected_stats_type = this.selectedStatsType
-  if (selected_stats_type == "Cardinalities") {
-    return otype + " per " + selected_plot_type
+  getNumberOfGeneratedObjects(otype: string) {
+    if (!this.omgResponse) {
+      return ""
+    }
+    if (!this.omgResponse.stats) {
+      return ""
+    }
+    if (!(otype in this.omgResponse.stats)) {
+      return ""
+    }
+    return this.omgResponse.stats[otype]["simulation_stats"]["number_of_objects"]
   }
-  return "Related " + otype + " arriving relative to " + selected_plot_type
-}
+
+  getOtherTypes(otype: string) {
+    return this.objectModelInfo.otypes.filter(ot => ot != otype)
+  }
+
+  getChartLabels() {
+    return this.chartLabels
+  }
+
+  getPlotCaption(chart_label: string) {
+    let selected_plot_type = this.selectedObjectType
+    let selected_stats_type = this.selectedStatsType
+    if (selected_stats_type == "Cardinalities") {
+      return chart_label
+    }
+    return "Related " + chart_label + " arriving relative to " + selected_plot_type
+  }
 
 }

@@ -29,13 +29,13 @@ class InitialSeedMaker:
         for otype, objs in total_per_type.items():
             nof_objects = len(objs)
             for i in range(nof_objects):
-                cls.create_obj(buffer, otype, oid, open_objects, total_objects)
+                cls.create_obj(otype, oid, open_objects, total_objects)
         #random.shuffle(buffer)
 
     @classmethod
-    def create_obj(cls, buffer, otype, oid, open_objects, total_objects):
+    def create_obj(cls, otype, oid, open_objects, total_objects):
         obj = ObjectInstance(otype, oid.get_and_inc())
         open_objects[otype].append(obj)
         total_objects[otype].append(obj)
-        buffer.append(obj)
         oid.inc()
+        return obj

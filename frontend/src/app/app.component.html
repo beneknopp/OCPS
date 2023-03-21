@@ -1,6 +1,6 @@
 <div class="toolbar" role="banner">
   <img width="350" alt="Angular Logo" src="/assets/img/pads_rwth.png" />
-  <h1>Object-Centric Process Simulation</h1>
+  <h1>OCim: Object-Centric Process Simulation</h1>
   <div class="spacer"></div>
 </div>
 
@@ -17,7 +17,7 @@
     </div>
     <button class="card card-small" routerLink="/object_model" [disabled]="!domService.ocelConfigValid"
       [ngClass]="router.url === '/object_model' ? 'active-card' : ''">
-      <span>Generate Object Model</span>
+      <span>Generate Objects</span>
     </button>
     <button class="card card-small" routerLink="/discover_ocpn" [disabled]="!domService.ocelConfigValid"
     [ngClass]="router.url === '/discover_ocpn' ? 'active-card' : ''">
@@ -31,6 +31,14 @@
     [ngClass]="router.url === '/simulate_process' ? 'active-card' : ''">
       <span>Simulate Process</span>
     </button>
+    <div class="arrows-container">
+      <fa-icon [ngClass]="false ? 'fa-3x fa-arrows-enabled' : 'fa-3x fa-arrows-disabled'"
+      [icon]="doubleRightArrowsIcon"></fa-icon>
+    </div>
+    <button class="card card-small" routerLink="/simulate_process" [disabled]="true"
+    [ngClass]="router.url === '/evaluate' ? 'active-card' : ''">
+      <span>Evaluate</span>
+    </button>    
   </div>
 
   <router-outlet></router-outlet>

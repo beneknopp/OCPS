@@ -1,13 +1,16 @@
 export class ObjectModelStats {
-  log_based: number[];
-  simulated: number[];
-  x_axis: string[];
+  log_based: number[]
+  modeled: number[]
+  simulated: number[]
+  x_axis: string[]
   constructor(
     log_based: number[],
+    modeled: number[],
     simulated: number[],
     x_axis: string[]
   ) {
     this.log_based = log_based
+    this.modeled = modeled
     this.simulated = simulated
     this.x_axis = x_axis
   }
@@ -15,10 +18,12 @@ export class ObjectModelStats {
 
 export class ObjectModelInfo {
 
-  otypes: string[];
+  otypes: string[]
   selectedSeedType: string | undefined = undefined
   nonEmittingTypes: string[] = []
-  numberOfObjects: number = 0;
+  numberOfObjects: number = 0
+  executionModelDepth: number = 0
+  executionModelEvaluationDepth : number = 0
   activitySelectedTypes: { [act: string]: string[] }
   activityLeadingTypes: { [act: string]: string | undefined }
 
@@ -27,13 +32,17 @@ export class ObjectModelInfo {
     selectedSeedType: string | undefined = undefined,
     nonEmittingTypes: string[] = [],
     numberOfObjects: number = 0,
+    executionModelDepth: number = 0,
+    executionModelEvaluationDepth: number = 0,
     activitySelectedTypes: { [act: string]: string[] } = {},
-    activityLeadingTypes: { [act: string]: string | undefined } = {},
+    activityLeadingTypes: { [act: string]: string | undefined } = {}
   ) {
     this.otypes = otypes
     this.selectedSeedType = selectedSeedType
     this.nonEmittingTypes = nonEmittingTypes
     this.numberOfObjects = numberOfObjects
+    this.executionModelDepth = executionModelDepth
+    this.executionModelEvaluationDepth = executionModelEvaluationDepth
     this.activitySelectedTypes = activitySelectedTypes
     this.activityLeadingTypes = activityLeadingTypes
   }

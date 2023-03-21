@@ -31,6 +31,8 @@ export class SimulateProcessComponent implements OnInit {
   initialized = false
   simulationState: SimulationStateDto | undefined;
   placeTooltips: { [place_id: string]: string } = {};
+  useOriginalMarking = true
+  useGeneratedMarking = false
 
   startTransitionIcon = faPlay
 
@@ -40,6 +42,10 @@ export class SimulateProcessComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    if (!this.domService.useOriginalMarking) {
+      this.useOriginalMarking = false
+      this.useGeneratedMarking = true
+    }
     this.domService.activityLeadingTypes$.subscribe((activity_leading_types) => {
       this.domService.ocelInfo$.subscribe((ocelInfo) => {
         this.otypes = ocelInfo.otypes
@@ -61,7 +67,8 @@ export class SimulateProcessComponent implements OnInit {
     if (!session_key) {
       return
     }
-    this.appService.initializeSimulation(session_key).subscribe((resp) => {
+    let useOriginalMarking = this.useOriginalMarking
+    this.appService.initializeSimulation(session_key, useOriginalMarking).subscribe((resp) => {
       this.simulationState = new SimulationStateDto(resp.resp)
       this.makeTooltips()
       this.initialized = true
@@ -119,7 +126,21 @@ export class SimulateProcessComponent implements OnInit {
     this.initialized = false
   }
 
-  onClickOCELExport() { }
+  onClickOCELExport() {
+    let session_key = this.domService.getSessionKey()
+    if (!session_key) {
+      throw Error("OCEL Export started without valid session key")
+    }
+    this.appService.exportOCEL(session_key).subscribe(resp => {
+      let fileName = resp.headers.get("content-disposition")
+        ?.split(";")[1].split("=")[1];
+      let blob : Blob = resp.body as Blob;
+      let a = document.createElement('a');
+      a.download = !!fileName ? fileName : "";
+      a.href = window.URL.createObjectURL(blob)
+      a.click()
+    })
+  }
 
   makeTooltips() {
     if (!this.simulationState) {
@@ -184,14 +205,18 @@ export class SimulateProcessComponent implements OnInit {
   }
 
   getNodeLabel(node: OcpnGraphNode) {
-    if (node.transitionType && node.transitionType == 'ACTIVITY') {
-      return node.label
-    }
-    if (node.type == 'PLACE') {
-      let place = this.places.find(p => p.id == node.id)
-      if (place && place?.isInitial) {
-        return place.otype
+    if (node.transitionType) {
+      if (node.transitionType == "ACTIVITY") {
+        return node.label
       }
+      return node.id 
+    } 
+    if (node.type == 'PLACE') {
+      return node.label
+      //let place = this.places.find(p => p.id == node.id)
+      //if (place && place?.isInitial) {
+      //   return place.otype
+      //}
     }
     return ""
   }
@@ -253,5 +278,6 @@ export class SimulateProcessComponent implements OnInit {
     footer = footer.slice(0, -2) + "."
     return footer
   }
+
 
 }

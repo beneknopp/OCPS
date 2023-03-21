@@ -9,7 +9,7 @@ class InputOCELPreprocessor:
     def __init__(self, session_path, file_name, file):
         file_path = os.path.join(session_path, file_name)
         file.save(file_path)
-        self.session_path = session_path
+        self.sessionPath = session_path
         self.ocel = pm4py.read_ocel(file_path)
         self.df = self.ocel.get_extended_table()
         self.otypes = self.ocel.globals["ocel:global-log"]["ocel:object-types"]
@@ -157,6 +157,7 @@ class InputOCELPreprocessor:
         return self.acts
 
     def write_state(self):
-        otypes_path = os.path.join(self.session_path, "otypes")
+        otypes_path = os.path.join(self.sessionPath, "otypes")
         with open(otypes_path, "w") as wf:
             wf.write(",".join(self.otypes))
+

@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 })
 export class AppComponent {
   
-  title = 'OCPSim';
+  title = 'OCim';
   ping: String = "";
   fileName = "";
   ocel_info  = {
