@@ -8,7 +8,7 @@ class InputOCELPostprocessor:
 
     def __init__(self, session_path, process_config: ProcessConfig):
         self.session_path = session_path
-        raw_ocel_path = os.path.join(session_path, "padded_ocel.jsonocel")
+        raw_ocel_path = os.path.join(session_path, "input.jsonocel")
         self.ocel = pm4py.read_ocel(raw_ocel_path)
         self.process_config = process_config
 
@@ -24,3 +24,7 @@ class InputOCELPostprocessor:
         })
         pm4py.write_ocel(postprocessed_ocel, postprocessed_ocel_path)
         return postprocessed_ocel
+
+    def make_default_distributions(self):
+        self.__
+        pass

@@ -7,6 +7,7 @@ from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_model import ObjectModel
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
+from object_model_generation.stats_mode import StatsMode
 
 
 class TrainingModelPreprocessor:
@@ -16,10 +17,33 @@ class TrainingModelPreprocessor:
         training_model_preprocessor_path = os.path.join(session_path, "training_model_preprocessor.pkl")
         return pickle.load(open(training_model_preprocessor_path, "rb"))
 
+    @classmethod
+    def load_attribute_names(cls, session_path):
+        attribute_names_path = os.path.join(session_path, "attribute_names.pkl")
+        return pickle.load(open(attribute_names_path, "rb"))
+
+    @classmethod
+    def load_object_attribute_value_distributions(cls, session_path, mode: StatsMode = StatsMode.LOG_BASED):
+        object_attribute_value_distributions_filename = "object_attribute_value_distributions_" + str(mode.value) + ".pkl"
+        object_attribute_value_distributions_path = os.path.join(session_path, object_attribute_value_distributions_filename)
+        if not os.path.isfile(object_attribute_value_distributions_path):
+            return None
+        return pickle.load(open(object_attribute_value_distributions_path, "rb"))
+
+    @classmethod
+    def load_schema_distributions(cls, session_path, mode: StatsMode = StatsMode.LOG_BASED):
+        schema_distributions_filename = "schema_distributions_" + str(mode.value) + ".pkl"
+        schema_distributions_path = os.path.join(session_path, schema_distributions_filename)
+        if not os.path.isfile(schema_distributions_path):
+            return None
+        return pickle.load(open(schema_distributions_path, "rb"))
+
     otypes: []
     activityLeadingTypes: []
     activitySelectedTypes: []
     objectTypeGraph: ObjectTypeGraph
+    attributeNames: dict
+    schemaDistributions: dict
 
     def __init__(self, session_path, ocel, object_model_parameters: ObjectModelParameters):
         self.sessionPath = session_path
@@ -40,31 +64,17 @@ class TrainingModelPreprocessor:
         self.__make_process_executions()
         # TODO: factor out
         self.__make_schema_distributions()
+        self.__make_object_attribute_value_distributions()
+        self.__make_attribute_names()
 
     def save(self):
-        # otype -> depth -> path -> cardinality -> frequency
-        for otype, depths_with_paths in self.schemaDistributions.items():
-            for depth, paths_with_cardfreqs in depths_with_paths.items():
-                for path, card_freqs in paths_with_cardfreqs.items():
-                    if len(path) < 1:
-                        continue
-                    card_freqs = list(card_freqs.items())
-                    if len(card_freqs) < 1:
-                        continue
-                    print(path)
-                    card_freqs = pd.DataFrame(card_freqs, columns=["cardinality", "frequency"])
-                    # for card, freq in card_freqs.items():
-                    min_card = min(card_freqs["cardinality"])
-                    max_card = max(card_freqs["cardinality"])
-                    x_axis = range(min_card, max_card + 1)
-                    total = sum(card_freqs["frequency"])
-                    log_based_schema_dist = list(map(
-                        lambda card: sum(card_freqs[card_freqs["cardinality"] == card]["frequency"]) / total,
-                        x_axis))
-                    stats = {"log_based": log_based_schema_dist, "x_axis": x_axis}
-                    dist_path = os.path.join(self.sessionPath, str(path) + "_schema_dist.pkl")
-                    with open(dist_path, "wb") as wf:
-                        pickle.dump(stats, wf)
+        mode = StatsMode.LOG_BASED
+        with open(os.path.join(self.sessionPath, "attribute_names.pkl"), "wb") as wf:
+            pickle.dump(self.attributeNames, wf)
+        with open(os.path.join(self.sessionPath, "object_attribute_value_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
+            pickle.dump(self.objectAttributeValueDistributions, wf)
+        with open(os.path.join(self.sessionPath, "schema_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
+            pickle.dump(self.schemaDistributions, wf)
         with open(os.path.join(self.sessionPath, "training_model_preprocessor.pkl"), "wb") as wf:
             pickle.dump(self, wf)
         with open(os.path.join(self.sessionPath, "object_type_graph.pkl"), "wb") as wf:
@@ -184,14 +194,49 @@ class TrainingModelPreprocessor:
         for otype, depths_with_paths in self.globalSchemata.items():
             schema_distributions[otype] = dict()
             for depth, paths_with_obj_cards in depths_with_paths.items():
-                schema_distributions[otype][depth] = dict()
+                if depth < 1:
+                    continue
                 for path, obj_cards in paths_with_obj_cards.items():
-                    schema_distributions[otype][depth][path] = dict()
+                    path_key = str(path)
+                    schema_distributions[otype][path_key] = dict()
                     for card in obj_cards.values():
-                        if card not in schema_distributions[otype][depth][path]:
-                            schema_distributions[otype][depth][path][card] = 0
-                        schema_distributions[otype][depth][path][card] = schema_distributions[otype][depth][path][card] + 1
+                        if card not in schema_distributions[otype][path_key]:
+                            schema_distributions[otype][path_key][card] = 0
+                        schema_distributions[otype][path_key][card] = schema_distributions[otype][path_key][card] + 1
         self.schemaDistributions = schema_distributions
+
+    def __make_object_attribute_value_distributions(self):
+        self.objectAttributeValueDistributions = dict()
+        objects_df = self.ocel.objects
+        attribute_names = [col for col in objects_df.columns if not col.startswith("ocel:")]
+        oav_dists = {}
+        for otype in self.otypes:
+            oav_dists[otype] = {}
+            for attr in attribute_names:
+                otype_attr_support = objects_df[objects_df["ocel:type"] == otype][objects_df[attr].notnull()]
+                if len(otype_attr_support) == 0:
+                    continue
+                oav_dists[otype][attr] = {}
+                for value in otype_attr_support[attr].values:
+                    value_supp = otype_attr_support[otype_attr_support[attr] == value]
+                    oav_dists[otype][attr][value] = len(value_supp)
+        self.objectAttributeValueDistributions = oav_dists
+
+    def __make_attribute_names(self):
+        attributeNames = dict()
+        attributeNames["cardinality"] = {}
+        for otype, path_dict in self.schemaDistributions.items():
+            attributeNames["cardinality"][otype] = []
+            for path in path_dict.keys():
+                attributeNames["cardinality"][otype].append(str(path))
+        attributeNames["objectAttribute"] = {
+            otype: list(self.objectAttributeValueDistributions[otype].keys())
+            for otype in self.otypes
+        }
+        attributeNames["timing"] = {
+            otype: ["absoluteArrival"] for otype in self.otypes
+        }
+        self.attributeNames = attributeNames
 
     def __make_object_model(self):
         otypes = self.otypes
@@ -257,3 +302,43 @@ class TrainingModelPreprocessor:
                 }
             reverse_object_model[otype][event_object][leading_type].add(leading_object)
             total_object_model[otype][event_object][leading_type].add(leading_object)
+
+    @classmethod
+    def make_chart_data(cls, labels, log_dist, modeled_dist = None, sim_dist = None):
+        stats = {}
+        # dict from attr name to values to freq
+        for label in labels:
+            stats[label] = {}
+            val_freqs = [
+                ("log_based",
+                 pd.DataFrame(list(log_dist[label].items()), columns=["value", "frequency"]))
+            ]
+            if modeled_dist is not None:
+                val_freqs.append((
+                    "modeled",
+                    pd.DataFrame(list(modeled_dist[label].items()), columns=["value", "frequency"])
+                ))
+            if sim_dist is not None:
+                val_freqs.append((
+                    "simulated",
+                    pd.DataFrame(list(sim_dist[label].items()), columns=["value", "frequency"])
+                ))
+            # TODO
+            glob_min_val = 10000000
+            glob_max_val = -100000000
+            for mode, val_freq_dict in val_freqs:
+                min_val = min(val_freq_dict["value"])
+                max_val = max(val_freq_dict["value"])
+                glob_min_val = min(glob_min_val, min_val)
+                glob_max_val = max(glob_max_val, max_val)
+            x_axis = range(glob_min_val, glob_max_val + 1)
+            for mode, val_freq_dict in val_freqs:
+                total = sum(val_freq_dict["frequency"])
+                chart_data = list(map(
+                    lambda card: sum(val_freq_dict[val_freq_dict["value"] == card]["frequency"]) / total,
+                    x_axis))
+                stats[label][mode] = chart_data
+            x_axis = [str(i) for i in range(glob_min_val, glob_max_val + 1)]
+            stats[label]["x_axis"] = x_axis
+        return stats
+

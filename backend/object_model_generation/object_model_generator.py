@@ -138,18 +138,18 @@ class ObjectModelGenerator:
         self.nonEmittingTypes = object_model_parameters.nonEmittingTypes
         oid = RunningId()
         open_objects = {otype: [] for otype in self.otypes}
-        forward_closed_objects = {otype: [] for otype in self.otypes}
+        closed_objects = {otype: [] for otype in self.otypes}
         total_objects = {otype: [] for otype in self.otypes}
-        buffer = [(InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects), [seed_type])]
+        buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
         self.enforcements = 0
         while len(buffer) > 0:
-            current_obj, instantiation_path = buffer[0]
+            current_obj = buffer[0]
             buffer = buffer[1:]
             current_otype = current_obj.otype
             neighbor_types = object_type_graph.get_parent_and_child_otypes(current_otype)
             if current_otype not in self.nonEmittingTypes:
                 prediction: ObjectLinkPrediction = self.__predict_neighbor(
-                    current_obj, instantiation_path, neighbor_types, open_objects, oid)
+                    current_obj, neighbor_types, open_objects, oid)
                 if prediction.predict:
                     selected_neighbor = prediction.selected_neighbor
                     predicted_type = prediction.predicted_type
@@ -161,27 +161,16 @@ class ObjectModelGenerator:
                         ObjectInstance.merge(selected_neighbor, current_obj, merge_map)
                     if selected_neighbor not in total_objects[predicted_type]:
                         total_objects[predicted_type].append(selected_neighbor)
-                    buffer.insert(random.randrange(len(buffer) + 1), (selected_neighbor, instantiation_path + [predicted_type]))
+                    if selected_neighbor not in buffer:
+                        buffer.insert(random.randrange(len(buffer)+1), selected_neighbor)
+                    buffer.insert(random.randrange(len(buffer) + 1), current_obj)
+                else:
+                    open_objects[current_otype] = list(
+                        set([x for x in open_objects[current_otype] if not x == current_obj]))
+                    closed_objects[current_otype].append(current_obj)
 
-            current_next_types = [ot for ot in object_type_graph.get_neighbor_otypes(current_otype)
-                                  if ot not in instantiation_path]
-            if all(current_obj.locally_closed_types[ot]
-                   for ot in current_next_types):
-                fcos = forward_closed_objects[current_otype]
-                forward_closed_objects[current_otype] = list(set(fcos + [current_obj]))
-                buffer = [x for x in buffer if not x[0] == current_obj]
-            else:
-                buffer.insert(random.randrange(len(buffer) + 1), (current_obj, instantiation_path))
-
-            closed = float(sum(map(lambda otype: len(forward_closed_objects[otype]), self.otypes)))
-            total = float(sum(map(lambda otype: len(total_objects[otype]), self.otypes)))
-            if len(total_objects[seed_type]) > number_of_objects and closed/total > 0.98:
-                break
-            if len(buffer) == 0:
-                buffer = [(InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects), [seed_type])]
-            if total % 100 == 0:
-                print("Total nof objects: " + str((total)))
-        print("enforcements: " + str(self.enforcements))
+            if len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects:
+                buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
         self.generatedObjects = total_objects
 
     def __evaluate_local_closure(self, obj_a, obj_b):
@@ -286,8 +275,7 @@ class ObjectModelGenerator:
     # TODO: assign arrival times relative to related objects
     def __make_arrival_stats(self):
         log_based_relative_arrival_times = self.logBasedRelativeArrivalTimes
-        simulated_relative_arrival_times = {otype: {any_otype: [] for any_otype in self.otypes} for otype in
-                                            self.otypes}
+        simulated_relative_arrival_times = {otype: {any_otype: [] for any_otype in self.otypes} for otype in self.otypes}
         for otype in self.otypes:
             obj: ObjectInstance
             for obj in self.generatedObjects[otype]:
@@ -386,67 +374,48 @@ class ObjectModelGenerator:
             for obj in sl:
                 obj.time = obj.time - min_time
 
-    def __predict_neighbor(self, obj: ObjectInstance, instantiation_path, neighbor_types, open_objects, oid: RunningId):
+    def __predict_neighbor(self, obj: ObjectInstance, neighbor_types, open_objects, oid: RunningId):
         supported_objs = {}
-        fallback_candidates = {}
         new_objs = []
         parent_types = neighbor_types["parents"]
         child_types = neighbor_types["children"]
         neighbor_types = parent_types + child_types
-        neighbor_types = [nt for nt in neighbor_types if not obj.locally_closed_types[nt] and nt not in instantiation_path]
-        #random.shuffle(neighbor_types)
+        neighbor_types = [nt for nt in neighbor_types if not obj.locally_closed_types[nt]]
+        random.shuffle(neighbor_types)
         for neighbor_otype in neighbor_types:
             # try new instance for that otype
             supported_objs[neighbor_otype] = []
-            fallback_candidates[neighbor_otype] = []
             new_obj = ObjectInstance(neighbor_otype, oid.get())
             # choice: decide action based on direct support
-            global_support, direct_support, x, merge_map = self.__compute_global_support(obj, new_obj)
             direct_support = self.__compute_pairwise_support(obj, new_obj)
-            rnd = random.random()
-            if rnd > direct_support:
-                obj.close_type(neighbor_otype)
-                continue
-            local_candidate = (new_obj, global_support, merge_map)
+            local_support, dls, rls, merge_map = self.__compute_global_support(obj, new_obj)
+            max_support = local_support
             new_objs.append(new_obj)
+            supported_objs[neighbor_otype].append((new_obj, local_support, merge_map))
             open_neighbors = open_objects[neighbor_otype]
             # avoid bias towards specific objects
             random.shuffle(open_objects[neighbor_otype])
             open_neighbors = list(filter(lambda on:
-                                         # neighbor still open, but not connected to this object yet
-                                         on not in obj.direct_object_model[neighbor_otype] and on not in
-                                         obj.reverse_object_model[neighbor_otype],
-                                         open_neighbors
-                                         ))
+                # neighbor still open, but not connected to this object yet
+                on not in obj.direct_object_model[neighbor_otype] and on not in
+                obj.reverse_object_model[neighbor_otype],
+                open_neighbors))
             open_neighbor: ObjectInstance
-            found = False
             for open_neighbor in open_neighbors:
                 global_support, direct_left_support, direct_right_support, merge_map = self.__compute_global_support(obj, open_neighbor)
                 supported_objs[neighbor_otype].append((open_neighbor, global_support, merge_map))
-                rnd = random.random()
-                if rnd < global_support:
-                    supported_objs[neighbor_otype] = [(open_neighbor, global_support, merge_map)]
-                    found = True
-                    break
-                else:
-                    fallback_candidates[neighbor_otype].append((open_neighbor, global_support, merge_map))
-            if not found:
-                supported_objs[neighbor_otype].append(local_candidate)
-                fallback_candidates[neighbor_otype].append(local_candidate)
+                if global_support > max_support:
+                    max_support = global_support
+            rnd = random.random()
+            # if rnd > max_support:
+            if rnd > direct_support:
+                obj.close_type(neighbor_otype)
+                continue
             if not sum(list(map(lambda x: x[1], supported_objs[neighbor_otype]))) > 0:
-                if direct_support > 10.99:
-                    # enforce (contradicting supports, so prioritize local support)
-                    enforced_candidates = fallback_candidates[neighbor_otype]
-                    supported_objs[neighbor_otype] = [(obj, 1, merge_map)
-                                                      for (obj, p, merge_map) in enforced_candidates]
-                    self.enforcements = self.enforcements + 1
-                else:
-                    obj.close_type(neighbor_otype)
-                    continue
-            merge_maps = {
-                o: mm for (o, p, mm) in supported_objs[neighbor_otype]
-            }
-            probs = {o: p for (o, p, mm) in supported_objs[neighbor_otype]}
+                obj.close_type(neighbor_otype)
+                continue
+            merge_maps = {o: mm for (o, supp, mm) in supported_objs[neighbor_otype] }
+            probs = {o: supp for (o, supp, mm) in supported_objs[neighbor_otype]}
             cum_dist = CumulativeDistribution(probs)
             selected_neighbor = cum_dist.sample()
             merge_map = merge_maps[selected_neighbor]
@@ -458,8 +427,8 @@ class ObjectModelGenerator:
                 open_objects[predicted_otype].append(selected_neighbor)
             prediction = ObjectLinkPrediction(predict=True, predicted_type=predicted_otype, mode=mode, reverse=reverse,
                                               selected_neighbor=selected_neighbor, merge_map=merge_map)
-            # logging.info(f"{obj.otype} {str(obj.oid)}: {str(prediction.pretty_print()}"))
-            print(str(obj.oid) + " - " + predicted_otype + " " + str(selected_neighbor.oid))
+            #logging.info(f"{obj.otype} {str(obj.oid)}: {str(prediction.pretty_print()}"))
+            print(obj.otype + " " + str(obj.oid) + ": "+ str(prediction.pretty_print()))
             return prediction
         return ObjectLinkPrediction(predict=False)
 
@@ -510,9 +479,6 @@ class ObjectModelGenerator:
                             merge_map, left_border_object, right_side_objects, left_path_side, right_path_side)
                         if level > ObjectInstance.executionModelDepth:
                             continue
-                        if level > 1 and not (path == ('LEAD_Create Purchase Requisition', 'MATERIAL', 'LEAD_Receive Goods')
-                                    or path == ('LEAD_Receive Goods', 'MATERIAL', 'LEAD_Create Purchase Requisition')):
-                            support = 1
                         else:
                             support = self.__compute_element_support(
                                 left_border_object, right_side_objects, left_path_side, right_path_side)
@@ -584,7 +550,6 @@ class ObjectModelGenerator:
             paths[level] = new_paths
         return global_support, direct_left_support, direct_right_support, merge_map
 
-    # o1: a, [[x1,x2],[x3,x4,x5]], [a,b,c], [d,e]
     def __compute_element_support(self, obj: ObjectInstance, other_side_objects, this_path_side, other_path_side):
         otype = obj.otype
         if otype in self.nonEmittingTypes:
@@ -606,7 +571,6 @@ class ObjectModelGenerator:
             element_support = min(element_support, additions_support)
         return element_support
 
-    # [x1,x2,x3], [[y1],[],[y2,y3,y4]] [a,b,c], [d,e,f]
     def __compute_extension_side_vs_other_side_elements_support(
             self, extension_side_objects, other_side_objects, extension_side_path, other_side_path):
         support = 1

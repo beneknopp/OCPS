@@ -16,6 +16,7 @@ from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
 from object_model_generation.original_marking_maker import OriginalMarkingMaker
+from object_model_generation.stats_mode import StatsMode
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
@@ -78,9 +79,23 @@ def ocel_config():
     process_config.save()
     postprocessor = InputOCELPostprocessor(session_path, process_config)
     postprocessed_ocel = postprocessor.postprocess()
-    OriginalMarkingMaker(postprocessed_ocel, process_config)
+    #OriginalMarkingMaker(postprocessed_ocel, process_config)
     return Response.get(True)
 
+@app.route('/initialize-object-generator', methods=['POST'])
+@cross_origin()
+def initialize_object_generator():
+    args = request.args
+    session_path = get_session_path(request)
+    file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
+    ocel = pm4py.read_ocel(file_path)
+    ProcessConfig.update_non_emitting_types(session_path, request.form['nonEmittingTypes'])
+    object_model_parameters = ObjectModelParameters(request.form)
+    logging.info("Preprocessing Training Data...")
+    training_model_preprocessor = TrainingModelPreprocessor(session_path, ocel, object_model_parameters)
+    training_model_preprocessor.build()
+    training_model_preprocessor.save()
+    return Response.get(True)
 
 @app.route('/generate-object-model', methods=['GET', 'POST'])
 @cross_origin()
@@ -95,15 +110,11 @@ def generate_object_model():
     ProcessConfig.update_non_emitting_types(session_path, request.form['nonEmittingTypes'])
     object_model_parameters = ObjectModelParameters(request.form)
     logging.info("Preprocessing Training Data...")
-    training_model_preprocessor = TrainingModelPreprocessor(session_path, ocel, object_model_parameters)
-    training_model_preprocessor.build()
-    training_model_preprocessor.save()
-    object_model_generator = ObjectModelGenerator(session_path, ocel, object_model_parameters,
-                                                  training_model_preprocessor)
+    training_model_preprocessor = TrainingModelPreprocessor.load(session_path)
+    object_model_generator = ObjectModelGenerator(session_path, ocel, object_model_parameters, training_model_preprocessor)
     object_model_generator.generate()
     object_model_generator.save(session_path)
     return object_model_generator.get_response()
-
 
 @app.route('/discover-ocpn', methods=['GET', 'POST'])
 @cross_origin()
@@ -127,10 +138,38 @@ def discover_ocpn():
 def simulation_state():
     return Response.get(True)
 
+@app.route('/object-stats', methods=['GET'])
+@cross_origin()
+def object_model_stats():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
+    stats_key = args["statsKey"]
+    attribute_names_dict = TrainingModelPreprocessor.load_attribute_names(session_path)
+    attribute_names = attribute_names_dict[stats_key][otype]
+    log_dists = None
+    modeled_dists = None
+    simulated_dists = None
+    if stats_key == "cardinality":
+        log_dists = TrainingModelPreprocessor.load_schema_distributions(session_path)
+        modeled_dists = TrainingModelPreprocessor.load_schema_distributions(session_path, mode=StatsMode.MODELED)
+        simulated_dists = TrainingModelPreprocessor.load_schema_distributions(session_path, mode=StatsMode.SIMULATED)
+    elif stats_key == "objectAttribute":
+        log_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path)
+        modeled_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path, mode=StatsMode.MODELED)
+        simulated_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path, mode=StatsMode.SIMULATED)
+    log_dists_otype = log_dists[otype] if log_dists is not None else None
+    modeled_dists_otype = modeled_dists[otype] if modeled_dists is not None else None
+    simulated_dists_otype = simulated_dists[otype] if simulated_dists is not None else None
+    chart_data = TrainingModelPreprocessor.make_chart_data(
+        attribute_names, log_dists_otype, modeled_dists_otype, simulated_dists_otype
+    )
+    return Response.get(chart_data)
 
 @app.route('/object-model-stats', methods=['GET'])
 @cross_origin()
-def object_model_stats():
+def s(include_simulated = False):
     session_path = get_session_path(request)
     start_logging(session_path)
     args = request.args
@@ -139,13 +178,13 @@ def object_model_stats():
     resp["path_distributions"] = dict()
     mean_deviations = dict()
     for (dirpath, dirnames, filenames) in os.walk(session_path):
-        log_based_stats_filenames = [filename for filename in filenames if
-                           filename.endswith("dist.pkl")]# and filename.startswith("('" + otype)]
+        log_based_stats_filenames = [filename for filename in filenames if filename.endswith("dist.pkl")]# and filename.startswith("('" + otype)]
         for log_based_stats_filename in log_based_stats_filenames:
             path = log_based_stats_filename.split("_schema_dist.pkl")[0]
             level = len(make_tuple(path)) - 1
             if level not in mean_deviations:
                 mean_deviations[level] = (0,0)
+            modeled_stats_filename = path + "_schema_dist_modeled.pkl"
             simulated_stats_filename = path + "_schema_dist_simulated.pkl"
             log_based = pickle.load(open(os.path.join(session_path, log_based_stats_filename), "rb"))
             simulated = pickle.load(open(os.path.join(session_path, simulated_stats_filename), "rb"))
