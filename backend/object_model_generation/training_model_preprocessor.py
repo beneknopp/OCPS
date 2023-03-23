@@ -3,6 +3,7 @@ import pickle
 
 import pandas as pd
 
+from object_model_generation.generator_parametrization import GeneratorParametrization, ParameterType
 from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_model import ObjectModel
 from object_model_generation.object_model_parameters import ObjectModelParameters
@@ -43,7 +44,8 @@ class TrainingModelPreprocessor:
     activitySelectedTypes: []
     objectTypeGraph: ObjectTypeGraph
     attributeNames: dict
-    schemaDistributions: dict
+    objectAttributeValueDistributions: dict
+    cardinalityDistributions: dict
 
     def __init__(self, session_path, ocel, object_model_parameters: ObjectModelParameters):
         self.sessionPath = session_path
@@ -66,15 +68,17 @@ class TrainingModelPreprocessor:
         self.__make_schema_distributions()
         self.__make_object_attribute_value_distributions()
         self.__make_attribute_names()
+        self.__initialize_generator_parametrization()
 
     def save(self):
         mode = StatsMode.LOG_BASED
+        self.generator_parametrization.save(self.sessionPath)
         with open(os.path.join(self.sessionPath, "attribute_names.pkl"), "wb") as wf:
             pickle.dump(self.attributeNames, wf)
         with open(os.path.join(self.sessionPath, "object_attribute_value_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
             pickle.dump(self.objectAttributeValueDistributions, wf)
-        with open(os.path.join(self.sessionPath, "schema_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
-            pickle.dump(self.schemaDistributions, wf)
+        with open(os.path.join(self.sessionPath, "cardinality_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
+            pickle.dump(self.cardinalityDistributions, wf)
         with open(os.path.join(self.sessionPath, "training_model_preprocessor.pkl"), "wb") as wf:
             pickle.dump(self, wf)
         with open(os.path.join(self.sessionPath, "object_type_graph.pkl"), "wb") as wf:
@@ -198,12 +202,10 @@ class TrainingModelPreprocessor:
                     continue
                 for path, obj_cards in paths_with_obj_cards.items():
                     path_key = str(path)
-                    schema_distributions[otype][path_key] = dict()
+                    schema_distributions[otype][path_key] = []
                     for card in obj_cards.values():
-                        if card not in schema_distributions[otype][path_key]:
-                            schema_distributions[otype][path_key][card] = 0
-                        schema_distributions[otype][path_key][card] = schema_distributions[otype][path_key][card] + 1
-        self.schemaDistributions = schema_distributions
+                        schema_distributions[otype][path_key].append(card)
+        self.cardinalityDistributions = schema_distributions
 
     def __make_object_attribute_value_distributions(self):
         self.objectAttributeValueDistributions = dict()
@@ -216,24 +218,24 @@ class TrainingModelPreprocessor:
                 otype_attr_support = objects_df[objects_df["ocel:type"] == otype][objects_df[attr].notnull()]
                 if len(otype_attr_support) == 0:
                     continue
-                oav_dists[otype][attr] = {}
+                oav_dists[otype][attr] = []
                 for value in otype_attr_support[attr].values:
                     value_supp = otype_attr_support[otype_attr_support[attr] == value]
-                    oav_dists[otype][attr][value] = len(value_supp)
+                    oav_dists[otype][attr] += len(value_supp)*[value]
         self.objectAttributeValueDistributions = oav_dists
 
     def __make_attribute_names(self):
         attributeNames = dict()
-        attributeNames["cardinality"] = {}
-        for otype, path_dict in self.schemaDistributions.items():
-            attributeNames["cardinality"][otype] = []
+        attributeNames[ParameterType.CARDINALITY] = {}
+        for otype, path_dict in self.cardinalityDistributions.items():
+            attributeNames[ParameterType.CARDINALITY][otype] = []
             for path in path_dict.keys():
-                attributeNames["cardinality"][otype].append(str(path))
-        attributeNames["objectAttribute"] = {
+                attributeNames[ParameterType.CARDINALITY][otype].append(str(path))
+        attributeNames[ParameterType.OBJECT_ATTRIBUTE] = {
             otype: list(self.objectAttributeValueDistributions[otype].keys())
             for otype in self.otypes
         }
-        attributeNames["timing"] = {
+        attributeNames[ParameterType.TIMING] = {
             otype: ["absoluteArrival"] for otype in self.otypes
         }
         self.attributeNames = attributeNames
@@ -303,42 +305,9 @@ class TrainingModelPreprocessor:
             reverse_object_model[otype][event_object][leading_type].add(leading_object)
             total_object_model[otype][event_object][leading_type].add(leading_object)
 
-    @classmethod
-    def make_chart_data(cls, labels, log_dist, modeled_dist = None, sim_dist = None):
-        stats = {}
-        # dict from attr name to values to freq
-        for label in labels:
-            stats[label] = {}
-            val_freqs = [
-                ("log_based",
-                 pd.DataFrame(list(log_dist[label].items()), columns=["value", "frequency"]))
-            ]
-            if modeled_dist is not None:
-                val_freqs.append((
-                    "modeled",
-                    pd.DataFrame(list(modeled_dist[label].items()), columns=["value", "frequency"])
-                ))
-            if sim_dist is not None:
-                val_freqs.append((
-                    "simulated",
-                    pd.DataFrame(list(sim_dist[label].items()), columns=["value", "frequency"])
-                ))
-            # TODO
-            glob_min_val = 10000000
-            glob_max_val = -100000000
-            for mode, val_freq_dict in val_freqs:
-                min_val = min(val_freq_dict["value"])
-                max_val = max(val_freq_dict["value"])
-                glob_min_val = min(glob_min_val, min_val)
-                glob_max_val = max(glob_max_val, max_val)
-            x_axis = range(glob_min_val, glob_max_val + 1)
-            for mode, val_freq_dict in val_freqs:
-                total = sum(val_freq_dict["frequency"])
-                chart_data = list(map(
-                    lambda card: sum(val_freq_dict[val_freq_dict["value"] == card]["frequency"]) / total,
-                    x_axis))
-                stats[label][mode] = chart_data
-            x_axis = [str(i) for i in range(glob_min_val, glob_max_val + 1)]
-            stats[label]["x_axis"] = x_axis
-        return stats
+    def __initialize_generator_parametrization(self):
+        generator_parametrization = GeneratorParametrization(
+            self.otypes, self.cardinalityDistributions, self.objectAttributeValueDistributions, []
+        )
+        self.generator_parametrization = generator_parametrization
 

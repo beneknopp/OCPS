@@ -48,7 +48,7 @@ export class AppService {
       tap(_ => this.log('object generator initialized')),
       catchError(this.handleError<String>('initializeObjectGenerator', ""))
     )
-  }  
+  }
 
   postObjectModelGeneration(session_key: string, formData: FormData) {
     return this.http.post<any>(this.backendUrl + 'generate-object-model?sessionKey=' + session_key, formData).pipe(
@@ -57,15 +57,53 @@ export class AppService {
     )
   }
 
-  getStats(session_key: string, stats_key: string, otype: string) {
-    return this.http.get<any>(this.backendUrl + 'object-stats'
-      + '?sessionKey=' + session_key + "&"
-      + 'statsKey=' + stats_key + "&"
-      + 'otype=' + otype
+  getParameters(session_key: string,  otype: string, parameter_type: string) {
+    let request_parameters = 'sessionKey=' + session_key + "&"
+    + 'otype=' + otype + "&"
+    + 'parameterType=' + parameter_type
+    return this.http.get<any>(this.backendUrl + 'generator-parameters?' + request_parameters
     ).pipe(
       tap(_ => this.log('object stats queried')),
       catchError(this.handleError<String>('getObjectModelStats', ""))
-    )    
+    )
+  }
+
+  selectForTraining(session_key: string, otype: string, parameter_type: string, attribute: string, selected: boolean) {
+    let request_parameters = 'sessionKey=' + session_key + "&"
+      + 'parameterType=' + parameter_type + "&"
+      + 'otype=' + otype + "&"
+      + 'attribute=' + attribute + "&"
+      + 'selected=' + (selected ? "True" : "False")
+    return this.http.get<any>(this.backendUrl + 'select-for-training?' + request_parameters
+    ).pipe(
+      tap(_ => this.log('attribute (un-)selected for training')),
+      catchError(this.handleError<String>('selectForTraining', ""))
+    )
+  }
+
+  switchModel(session_key: string, otype: string, parameter_type: string, attribute: string, fitting_model: string) {
+    let request_parameters = 'sessionKey=' + session_key + "&"
+      + 'parameterType=' + parameter_type + "&"
+      + 'otype=' + otype + "&"
+      + 'attribute=' + attribute + "&"
+      + 'fittingModel=' + fitting_model
+    return this.http.get<any>(this.backendUrl + 'switch-model?' + request_parameters
+    ).pipe(
+      tap(_ => this.log('fitting model switched')),
+      catchError(this.handleError<String>('switchModel', ""))
+    )
+  }
+
+  changeParameters(session_key: string, parameter_type: string, otype: string, attribute: string, parameters: string) {
+    const form_data = new FormData();
+    form_data.append("parameterType", parameter_type);
+    form_data.append("otype", otype);
+    form_data.append("attribute", attribute);
+    form_data.append("parameters", parameters);
+    return this.http.post<any>(this.backendUrl + 'change-parameters?sessionKey=' + session_key, form_data).pipe(
+      tap(_ => this.log('parameter configuration changed')),
+      catchError(this.handleError<String>('setParameters', ""))
+    )
   }
 
   getArrivalTimesStats(session_key: string, selected_plot_type: string) {
@@ -75,6 +113,18 @@ export class AppService {
     ).pipe(
       tap(_ => this.log('arrival times stats queried')),
       catchError(this.handleError<String>('getArrivalTimesStats', ""))
+    )
+  }
+
+  getDefaultParameters(session_key: string, otype: string, stats_key: string, attribute_name: string) {
+    return this.http.get<any>(this.backendUrl + 'default-parameters'
+      + '?sessionKey=' + session_key + "&"
+      + 'statsKey=' + stats_key + "&"
+      + 'otype=' + otype + "&"
+      + 'attribute=' + attribute_name
+    ).pipe(
+      tap(_ => this.log('parameters queried')),
+      catchError(this.handleError<String>('getObjectModelStats', ""))
     )
   }
 
@@ -101,7 +151,8 @@ export class AppService {
     return this.http.get<any>(url).pipe(
       tap(_ => this.log('simulation initiated')),
       catchError(this.handleError<String>('startSimulation', ""))
-    )  }
+    )
+  }
 
   startSimulation(steps: number, session_key: string) {
     return this.http.get<any>(this.backendUrl + 'simulate?steps=' + steps + "&sessionKey=" + session_key).pipe(
@@ -113,7 +164,7 @@ export class AppService {
   public exportOCEL(session_key: string) {
     return this.http.get(this.backendUrl + 'ocel-export?&sessionKey=' + session_key,
       {
-        observe: "response", 
+        observe: "response",
         responseType: "blob"
       })
   }
@@ -124,7 +175,7 @@ export class AppService {
 
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
-      console.error(error); 
+      console.error(error);
       this.log(`${operation} failed: ${error.message}`);
       return of(result as T);
     };

@@ -1,18 +1,15 @@
 export class ObjectModelStats {
-  log_based: number[]
-  modeled: number[]
-  simulated: number[]
-  x_axis: string[]
+  LOG_BASED: number[]
+  MODELED: number[]
+  SIMULATED: number[]
   constructor(
-    log_based: number[],
-    modeled: number[],
-    simulated: number[],
-    x_axis: string[]
+    LOG_BASED: number[],
+    MODELED: number[],
+    SIMULATED: number[],
   ) {
-    this.log_based = log_based
-    this.modeled = modeled
-    this.simulated = simulated
-    this.x_axis = x_axis
+    this.LOG_BASED = LOG_BASED
+    this.MODELED = MODELED
+    this.SIMULATED = SIMULATED
   }
 }
 
@@ -22,8 +19,8 @@ export class ObjectModelInfo {
   selectedSeedType: string | undefined = undefined
   nonEmittingTypes: string[] = []
   numberOfObjects: number = 0
-  executionModelDepth: number = 0
-  executionModelEvaluationDepth : number = 0
+  executionModelDepth: number = 1
+  executionModelEvaluationDepth : number = 1
   activitySelectedTypes: { [act: string]: string[] }
   activityLeadingTypes: { [act: string]: string | undefined }
 
@@ -32,8 +29,8 @@ export class ObjectModelInfo {
     selectedSeedType: string | undefined = undefined,
     nonEmittingTypes: string[] = [],
     numberOfObjects: number = 0,
-    executionModelDepth: number = 0,
-    executionModelEvaluationDepth: number = 0,
+    executionModelDepth: number = 1,
+    executionModelEvaluationDepth: number = 1,
     activitySelectedTypes: { [act: string]: string[] } = {},
     activityLeadingTypes: { [act: string]: string | undefined } = {}
   ) {

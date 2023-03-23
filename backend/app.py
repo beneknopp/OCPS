@@ -12,6 +12,7 @@ from input_ocel_processing.ocel_file_format import OcelFileFormat
 from input_ocel_processing.postprocessor import InputOCELPostprocessor
 from input_ocel_processing.preprocessor import InputOCELPreprocessor
 from input_ocel_processing.process_config import ProcessConfig
+from object_model_generation.generator_parametrization import GeneratorParametrization
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
@@ -97,6 +98,66 @@ def initialize_object_generator():
     training_model_preprocessor.save()
     return Response.get(True)
 
+@app.route('/generator-parameters', methods=['GET'])
+@cross_origin()
+def get_parameters():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request  .args
+    otype = args["otype"]
+    parameter_type = args["parameterType"]
+    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    parameter_export = generator_parametrization.export_parameters(otype, parameter_type)
+    return Response.get(parameter_export)
+
+@app.route('/select-for-training', methods=['GET'])
+@cross_origin()
+def select_for_training():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
+    parameter_type = args["parameterType"]
+    attribute = args["attribute"]
+    selected = True if args["selected"] == "True" else False
+    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    generator_parametrization.select_for_training(otype, parameter_type, attribute, selected)
+    generator_parametrization.save(session_path)
+    parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
+    return Response.get(parameter_export)
+
+@app.route('/switch-model', methods=['GET'])
+@cross_origin()
+def switch_model():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
+    parameter_type = args["parameterType"]
+    attribute = args["attribute"]
+    fitting_model = args["fittingModel"]
+    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    generator_parametrization.switch_fitting_model(otype, parameter_type, attribute, fitting_model)
+    generator_parametrization.save(session_path)
+    parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
+    return Response.get(parameter_export)
+
+@app.route('/change-parameters', methods=['GET'])
+@cross_origin()
+def change_parameters():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
+    parameter_type = args["parameterType"]
+    attribute = args["attribute"]
+    parameters = args["parameters"]
+    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    generator_parametrization.change_parameters(otype, parameter_type, attribute, parameters)
+    generator_parametrization.save(session_path)
+    parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
+    return Response.get(parameter_export)
+
 @app.route('/generate-object-model', methods=['GET', 'POST'])
 @cross_origin()
 def generate_object_model():
@@ -137,86 +198,6 @@ def discover_ocpn():
 @cross_origin()
 def simulation_state():
     return Response.get(True)
-
-@app.route('/object-stats', methods=['GET'])
-@cross_origin()
-def object_model_stats():
-    session_path = get_session_path(request)
-    start_logging(session_path)
-    args = request.args
-    otype = args["otype"]
-    stats_key = args["statsKey"]
-    attribute_names_dict = TrainingModelPreprocessor.load_attribute_names(session_path)
-    attribute_names = attribute_names_dict[stats_key][otype]
-    log_dists = None
-    modeled_dists = None
-    simulated_dists = None
-    if stats_key == "cardinality":
-        log_dists = TrainingModelPreprocessor.load_schema_distributions(session_path)
-        modeled_dists = TrainingModelPreprocessor.load_schema_distributions(session_path, mode=StatsMode.MODELED)
-        simulated_dists = TrainingModelPreprocessor.load_schema_distributions(session_path, mode=StatsMode.SIMULATED)
-    elif stats_key == "objectAttribute":
-        log_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path)
-        modeled_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path, mode=StatsMode.MODELED)
-        simulated_dists = TrainingModelPreprocessor.load_object_attribute_value_distributions(session_path, mode=StatsMode.SIMULATED)
-    log_dists_otype = log_dists[otype] if log_dists is not None else None
-    modeled_dists_otype = modeled_dists[otype] if modeled_dists is not None else None
-    simulated_dists_otype = simulated_dists[otype] if simulated_dists is not None else None
-    chart_data = TrainingModelPreprocessor.make_chart_data(
-        attribute_names, log_dists_otype, modeled_dists_otype, simulated_dists_otype
-    )
-    return Response.get(chart_data)
-
-@app.route('/object-model-stats', methods=['GET'])
-@cross_origin()
-def s(include_simulated = False):
-    session_path = get_session_path(request)
-    start_logging(session_path)
-    args = request.args
-    otype = args["otype"]
-    resp = dict()
-    resp["path_distributions"] = dict()
-    mean_deviations = dict()
-    for (dirpath, dirnames, filenames) in os.walk(session_path):
-        log_based_stats_filenames = [filename for filename in filenames if filename.endswith("dist.pkl")]# and filename.startswith("('" + otype)]
-        for log_based_stats_filename in log_based_stats_filenames:
-            path = log_based_stats_filename.split("_schema_dist.pkl")[0]
-            level = len(make_tuple(path)) - 1
-            if level not in mean_deviations:
-                mean_deviations[level] = (0,0)
-            modeled_stats_filename = path + "_schema_dist_modeled.pkl"
-            simulated_stats_filename = path + "_schema_dist_simulated.pkl"
-            log_based = pickle.load(open(os.path.join(session_path, log_based_stats_filename), "rb"))
-            simulated = pickle.load(open(os.path.join(session_path, simulated_stats_filename), "rb"))
-            total_min = min(min(log_based["x_axis"]), min(simulated["x_axis"]))
-            total_max = max(max(log_based["x_axis"]), max(simulated["x_axis"]))
-            x_axis = [str(i) for i in range(total_min, total_max + 1)]
-            log_based = [0] * (min(log_based["x_axis"]) - total_min) \
-                    + log_based["log_based"] \
-                    + [0] * (total_max - max(log_based["x_axis"]))
-            simulated = [0] * (min(simulated["x_axis"]) - total_min) \
-                    + simulated["simulated"] \
-                    + [0] * (total_max - max(simulated["x_axis"]))
-            mean, n = mean_deviations[level]
-            deviation = 0
-            m = 0
-            for i in range(len(log_based)):
-                if log_based[i] > 0 or simulated[i] > 0:
-                    deviation += abs(simulated[i] - log_based[i])
-                    m += 1
-            deviation = deviation/m
-            new_mean = (mean*n + deviation)/(n+1)
-            mean_deviations[level] = (new_mean, n+1)
-            resp["path_distributions"][path] = {
-                "x_axis": x_axis,
-                "log_based": log_based,
-                "simulated": simulated
-            }
-        resp["mean_deviations"] = dict()
-        for level, (mean, count) in mean_deviations.items():
-            resp["mean_deviations"][level] = mean
-    return Response.get(resp)
-
 
 @app.route('/arrival-times', methods=['GET'])
 @cross_origin()

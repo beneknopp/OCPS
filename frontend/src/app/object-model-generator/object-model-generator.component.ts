@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppService } from '../app.service';
 import { DOMService } from '../dom.service';
+import { AttributeParametrizationResponse } from './generator-info';
 import { ObjectModelGenerationResponse, ObjectModelInfo, ObjectModelStats } from './object-model-info';
 
 @Component({
@@ -21,10 +22,15 @@ export class ObjectModelGeneratorComponent implements OnInit {
   sessionKey: string | undefined;
   numberOfObjects: number = 0;
   selectedObjectType: string | undefined
-  selectedStatsType: string | undefined
+  selectedParameterType: string | undefined
   cachedSelectedObjectType: string | undefined
-  cachedSelectedStatsType: string | undefined
+  cachedselectedParameterType: string | undefined
   statsTypes = ["Cardinalities", "Object Attributes", "Timing Information"]
+  trainingSelectionMap: { [attribute: string]: boolean } = {}
+  trainingModelMap: { [attribute: string]: string } = {}
+  touchedParameters: { [attribute: string]: boolean } = {}
+  attributeModelCandidates: { [attribute: string]: string[] } = {}
+  parameterMap: { [attribute: string]: string } = {}
 
   public barChartData: { [otype: string]: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] } = {
     'orders': [
@@ -57,7 +63,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     }
   ];
   omgResponse: ObjectModelGenerationResponse | undefined;
-  chartLabels: string[] = [];
+  attributes: string[] = [];
 
 
   constructor(
@@ -147,11 +153,11 @@ export class ObjectModelGeneratorComponent implements OnInit {
         if (!this.selectedObjectType) {
           this.selectedObjectType = Object.keys(omgResponse.stats)[0]
         }
-        if (!this.selectedStatsType) {
-          this.selectedStatsType = this.statsTypes[0]
+        if (!this.selectedParameterType) {
+          this.selectedParameterType = this.statsTypes[0]
         }
         this.cachedSelectedObjectType = undefined
-        this.cachedSelectedStatsType = undefined
+        this.cachedselectedParameterType = undefined
         this.reloadStats = true
         this.onChangeStatsInput()
       });
@@ -161,62 +167,88 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
   onChangeNonEmittingTypes() { }
 
+  getSelectedParameterType() {
+    let parameter_type = this.selectedParameterType == "Cardinalities" ? "CARDINALITY" :
+      this.selectedParameterType == "Timing Information" ? "TIMING" :
+        this.selectedParameterType == "Object Attributes" ? "OBJECT_ATTRIBUTE" : null
+    if (parameter_type == null) {
+      throw ("Invalid value for selectedParameterType")
+    }
+    return parameter_type
+  }
+
+  getSelectedObjectType() {
+    let object_type = this.selectedObjectType
+    if (!object_type) {
+      throw ("Invalid value for selectedObjectType")
+    }
+    return object_type
+  }
+
   onChangeStatsInput() {
     let session_key = this.domService.getSessionKey()
-    if (!session_key || !this.selectedObjectType || !this.selectedStatsType) {
+    if (!session_key || !this.selectedObjectType || !this.selectedParameterType) {
       return
     }
     if (this.cachedSelectedObjectType == this.selectedObjectType
-      && this.cachedSelectedStatsType == this.selectedStatsType
+      && this.cachedselectedParameterType == this.selectedParameterType
       && !this.reloadStats) {
       // check if anything has changed because handler is called merely on click (not only on change)
       return
     }
     this.reloadStats = false
     this.cachedSelectedObjectType = this.selectedObjectType
-    this.cachedSelectedStatsType = this.selectedStatsType
-    let stats_key = this.selectedStatsType == "Cardinalities" ? "cardinality" :
-      this.selectedStatsType == "Timing Information" ? "timing" :
-        this.selectedStatsType == "Object Attributes" ? "objectAttribute" : null
-    if (stats_key == null) {
-      throw ("Invalid stats key")
-    }
-    this.appService.getStats(session_key, stats_key, this.selectedObjectType)
+    this.cachedselectedParameterType = this.selectedParameterType
+    let parameter_type = this.getSelectedParameterType()
+    let object_type = this.getSelectedObjectType()
+    this.getParameters(session_key, object_type, parameter_type)
+  }
+
+  getParameters(session_key: string, object_type: string, parameter_type: string) {
+    this.appService.getParameters(session_key, object_type, parameter_type)
       .subscribe((om_stats: {
         "err": any,
         "resp": {
-          [chart_label: string] : {
-            stats: ObjectModelStats,
+          [attribute: string]: {
+            //label: string // == attribute
+            xAxis: string[]
+            yAxes: ObjectModelStats,
             includeModeled: boolean,
-            includeSimulated: boolean,            
+            includeSimulated: boolean,
           }
-        },        
+        },
       }) => {
         let resp = om_stats["resp"]
         this.barChartData = {}
-        this.chartLabels = []
+        this.attributes = []
         let so = [...Object.keys(resp)]
         so.sort((a, b) => a.length - b.length)
-        so.forEach(chart_label => {
-          this.chartLabels = this.chartLabels.concat(chart_label)
+        so.forEach(attribute => {
+          let params = resp[attribute]
+          this.attributes = this.attributes.concat(attribute)
+          this.trainingSelectionMap[attribute] = params.includeModeled
+          this.trainingModelMap[attribute] = "---"
+          // TODO
+          this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Beta", "Poisson"]
           let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
-            { data: resp[chart_label].stats.log_based, label: 'Log-Based' },
+            { data: params.yAxes.LOG_BASED, label: 'Log-Based' },
           ]
-          if (resp[chart_label].includeModeled) {
+          if (params.includeModeled) {
             label_data = label_data.concat([
-              { data: resp[chart_label].stats.modeled, label: 'Modeled' },
+              { data: params.yAxes.MODELED, label: 'Modeled' },
             ])
           }
-          if (resp[chart_label].includeSimulated) {
+          if (params.includeSimulated) {
             label_data = label_data.concat([
-              { data: resp[chart_label].stats.simulated, label: 'Simulated' },
+              { data: params.yAxes.SIMULATED, label: 'Simulated' },
             ])
-          }          
-          this.barChartData[chart_label] = label_data
-          this.mbarChartLabels[chart_label] = resp[chart_label].stats.x_axis
+          }
+          this.barChartData[attribute] = label_data
+          this.mbarChartLabels[attribute] = resp[attribute].xAxis
         })
       })
   }
+
 
   onClickInitialize() {
     if (!(this.sessionKey && this.objectModelInfo.selectedSeedType)) {
@@ -245,11 +277,11 @@ export class ObjectModelGeneratorComponent implements OnInit {
         if (!this.selectedObjectType) {
           this.selectedObjectType = this.objectModelInfo.otypes[0]
         }
-        if (!this.selectedStatsType) {
-          this.selectedStatsType = this.statsTypes[0]
+        if (!this.selectedParameterType) {
+          this.selectedParameterType = this.statsTypes[0]
         }
         this.cachedSelectedObjectType = undefined
-        this.cachedSelectedStatsType = undefined
+        this.cachedselectedParameterType = undefined
         this.onChangeStatsInput()
         this.initialized = true
       });
@@ -274,6 +306,87 @@ export class ObjectModelGeneratorComponent implements OnInit {
     }
   }
 
+  onSelectForTraining(attribute: string) {
+    if (!this.sessionKey) {
+      return
+    }
+    if (this.trainingModelMap[attribute] == "---") {
+      this.trainingModelMap[attribute] = this.attributeModelCandidates[attribute][0]
+    }
+    let parameter_type = this.getSelectedParameterType()
+    let object_type = this.getSelectedObjectType()
+    let selected = this.trainingSelectionMap[attribute]
+    this.appService.selectForTraining(this.sessionKey, object_type, parameter_type, attribute, selected).subscribe((om_stats: {
+      "err": any,
+      "resp": AttributeParametrizationResponse,
+    }) => {
+      let parameters = om_stats["resp"]
+      this.updateAttributeParametrization(attribute, parameters)
+    })
+  }
+
+  onChangeFittingModel(attribute: string) {
+    if (!this.sessionKey) {
+      return
+    }
+    let parameter_type = this.getSelectedParameterType()
+    let object_type = this.getSelectedObjectType()
+    let fitting_model = this.trainingModelMap[attribute].toUpperCase()
+    this.appService.switchModel(this.sessionKey, object_type, parameter_type, attribute, fitting_model).subscribe((om_stats: {
+      "err": any,
+      "resp": AttributeParametrizationResponse,
+    }) => {
+      let parameters = om_stats["resp"]
+      this.updateAttributeParametrization(attribute, parameters)
+    })
+  }
+
+  onClickApplyParameters(attribute: string) {
+    if (!this.sessionKey) {
+      return
+    }
+    let parameter_type = this.getSelectedParameterType()
+    let object_type = this.getSelectedObjectType()
+    let parameters = this.parameterMap[attribute]
+    this.appService.changeParameters(this.sessionKey, parameter_type, object_type, attribute, parameters).subscribe((om_stats: {
+      "err": any,
+      "resp": AttributeParametrizationResponse,
+    }) => {
+      let parameters = om_stats["resp"]
+      this.updateAttributeParametrization(attribute, parameters)
+    })
+  }
+
+  updateAttributeParametrization(attribute: string, attribute_parameters: AttributeParametrizationResponse) {
+    let include_modeled = attribute_parameters.includeModeled
+    let include_simulated = attribute_parameters.includeSimulated
+    this.trainingSelectionMap[attribute] = include_modeled
+    if(include_modeled) {
+      this.parameterMap[attribute] = attribute_parameters.parameters
+    }
+    let y_axes = attribute_parameters.yAxes
+    // TODO
+    let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
+      { data: y_axes.LOG_BASED, label: 'Log-Based' },
+    ]
+    if (include_modeled) {
+      label_data = label_data.concat([
+        { data: y_axes.MODELED, label: 'Modeled' },
+      ])
+    }
+    if (include_simulated) {
+      label_data = label_data.concat([
+        { data: y_axes.SIMULATED, label: 'Simulated' },
+      ])
+    }
+    this.barChartData[attribute] = label_data
+    this.mbarChartLabels[attribute] = attribute_parameters.xAxis
+  }
+
+  onTouchParameters(attribute: string) {
+    this.touchedParameters[attribute] = true
+  }
+
   getNumberOfGeneratedObjects(otype: string) {
     if (!this.omgResponse) {
       return ""
@@ -291,13 +404,9 @@ export class ObjectModelGeneratorComponent implements OnInit {
     return this.objectModelInfo.otypes.filter(ot => ot != otype)
   }
 
-  getChartLabels() {
-    return this.chartLabels
-  }
-
   getPlotCaption(chart_label: string) {
     let selected_plot_type = this.selectedObjectType
-    let selected_stats_type = this.selectedStatsType
+    let selected_stats_type = this.selectedParameterType
     if (selected_stats_type == "Cardinalities") {
       return chart_label
     }

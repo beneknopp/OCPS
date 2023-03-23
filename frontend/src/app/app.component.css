@@ -98,6 +98,11 @@ svg.material-icons:not(:last-child) {
     width: 168px;
 }
 
+.card.card-smallest {
+    height: 10px;
+    width: 120px;
+}
+
 .card.card-normal {
     height: 16px;
     width: 200px;
