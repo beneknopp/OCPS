@@ -1,14 +1,10 @@
 import os
 import pickle
 
-import pandas as pd
-
 from object_model_generation.generator_parametrization import GeneratorParametrization, ParameterType
-from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_model import ObjectModel
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
-from object_model_generation.stats_mode import StatsMode
 
 
 class TrainingModelPreprocessor:
@@ -22,22 +18,6 @@ class TrainingModelPreprocessor:
     def load_attribute_names(cls, session_path):
         attribute_names_path = os.path.join(session_path, "attribute_names.pkl")
         return pickle.load(open(attribute_names_path, "rb"))
-
-    @classmethod
-    def load_object_attribute_value_distributions(cls, session_path, mode: StatsMode = StatsMode.LOG_BASED):
-        object_attribute_value_distributions_filename = "object_attribute_value_distributions_" + str(mode.value) + ".pkl"
-        object_attribute_value_distributions_path = os.path.join(session_path, object_attribute_value_distributions_filename)
-        if not os.path.isfile(object_attribute_value_distributions_path):
-            return None
-        return pickle.load(open(object_attribute_value_distributions_path, "rb"))
-
-    @classmethod
-    def load_schema_distributions(cls, session_path, mode: StatsMode = StatsMode.LOG_BASED):
-        schema_distributions_filename = "schema_distributions_" + str(mode.value) + ".pkl"
-        schema_distributions_path = os.path.join(session_path, schema_distributions_filename)
-        if not os.path.isfile(schema_distributions_path):
-            return None
-        return pickle.load(open(schema_distributions_path, "rb"))
 
     otypes: []
     activityLeadingTypes: []
@@ -71,14 +51,9 @@ class TrainingModelPreprocessor:
         self.__initialize_generator_parametrization()
 
     def save(self):
-        mode = StatsMode.LOG_BASED
-        self.generator_parametrization.save(self.sessionPath)
+        self.generatorParametrization.save(self.sessionPath)
         with open(os.path.join(self.sessionPath, "attribute_names.pkl"), "wb") as wf:
             pickle.dump(self.attributeNames, wf)
-        with open(os.path.join(self.sessionPath, "object_attribute_value_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
-            pickle.dump(self.objectAttributeValueDistributions, wf)
-        with open(os.path.join(self.sessionPath, "cardinality_distributions_"+str(mode.value)+".pkl"), "wb") as wf:
-            pickle.dump(self.cardinalityDistributions, wf)
         with open(os.path.join(self.sessionPath, "training_model_preprocessor.pkl"), "wb") as wf:
             pickle.dump(self, wf)
         with open(os.path.join(self.sessionPath, "object_type_graph.pkl"), "wb") as wf:
@@ -309,5 +284,5 @@ class TrainingModelPreprocessor:
         generator_parametrization = GeneratorParametrization(
             self.otypes, self.cardinalityDistributions, self.objectAttributeValueDistributions, []
         )
-        self.generator_parametrization = generator_parametrization
+        self.generatorParametrization = generator_parametrization
 

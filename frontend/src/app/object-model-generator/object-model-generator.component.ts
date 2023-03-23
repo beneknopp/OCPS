@@ -153,9 +153,6 @@ export class ObjectModelGeneratorComponent implements OnInit {
         if (!this.selectedObjectType) {
           this.selectedObjectType = Object.keys(omgResponse.stats)[0]
         }
-        if (!this.selectedParameterType) {
-          this.selectedParameterType = this.statsTypes[0]
-        }
         this.cachedSelectedObjectType = undefined
         this.cachedselectedParameterType = undefined
         this.reloadStats = true
@@ -229,7 +226,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
           this.trainingSelectionMap[attribute] = params.includeModeled
           this.trainingModelMap[attribute] = "---"
           // TODO
-          this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Beta", "Poisson"]
+          this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Poisson"]
           let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
             { data: params.yAxes.LOG_BASED, label: 'Log-Based' },
           ]

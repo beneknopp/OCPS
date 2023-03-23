@@ -51,7 +51,7 @@ export class AppService {
   }
 
   postObjectModelGeneration(session_key: string, formData: FormData) {
-    return this.http.post<any>(this.backendUrl + 'generate-object-model?sessionKey=' + session_key, formData).pipe(
+    return this.http.post<any>(this.backendUrl + 'generate-objects?sessionKey=' + session_key, formData).pipe(
       tap(_ => this.log('object model generation posted')),
       catchError(this.handleError<String>('postObjectModelGeneration', ""))
     )

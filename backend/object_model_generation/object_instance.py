@@ -1,7 +1,7 @@
 import logging
 
 from utils.support_distribution import SupportDistribution
-
+from object_model_generation.generator_parametrization import AttributeParameterization
 
 class ObjectInstance:
     otypes: list
@@ -22,14 +22,16 @@ class ObjectInstance:
     def __make_support_distributions(cls, otypes, schema_distributions):
         support_distributions = dict()
         for otype in otypes:
-            otype_schemata = schema_distributions[otype]
+            otype_dists = schema_distributions[otype]
             otype_support_distributions = dict()
-            for paths_with_distributions in otype_schemata.values():
-                for path, distribution in paths_with_distributions.items():
-                    otype_support_distributions[path] = SupportDistribution(path, distribution)
+            for path_str, attr_parametrization in otype_dists.items():
+                attr_parametrization: AttributeParameterization
+                if not attr_parametrization.includeModeled:
+                    continue
+                distribution = attr_parametrization.get_modeled_frequency_distribution()
+                otype_support_distributions[path_str] = SupportDistribution(path_str, distribution)
             support_distributions[otype] = otype_support_distributions
         return support_distributions
-    # support: sample() ->
 
     def __init__(self, otype, oid):
         self.oid = oid

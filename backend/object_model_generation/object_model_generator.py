@@ -7,6 +7,7 @@ import random
 import pandas as pd
 import pm4py
 
+from object_model_generation.generator_parametrization import ParameterType
 from object_model_generation.initial_seed_maker import InitialSeedMaker
 from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_link_prediction import PredictionMode, ObjectLinkPrediction
@@ -31,6 +32,7 @@ class ObjectModelGenerator:
         self.objectTypeGraph = training_model_preprocessor.objectTypeGraph
         self.otypes = training_model_preprocessor.otypes
         self.trainingModelPreprocessor = training_model_preprocessor
+        self.generatorParametrization = training_model_preprocessor.generatorParametrization
 
     def generate(self):
         self.__initialize_object_instance_class()
@@ -121,12 +123,17 @@ class ObjectModelGenerator:
 
 
     def __initialize_object_instance_class(self):
+        # TODO: unify parameter-relevant fields / classes
+        schema_distributions = {
+            otype: otype_params[ParameterType.CARDINALITY]
+            for otype, otype_params in self.generatorParametrization.parameters.items()
+        }
         ObjectInstance.set_(
             otypes=self.otypes,
             execution_model_paths=self.trainingModelPreprocessor.executionModelPaths,
             execution_model_depth=self.trainingModelPreprocessor.executionModelDepth,
             execution_model_evaluation_depth=self.trainingModelPreprocessor.executionModelEvaluationDepth,
-            schema_distributions=self.trainingModelPreprocessor.schemaDistributions
+            schema_distributions=schema_distributions
         )
 
     def __run_generation(self):
@@ -168,7 +175,6 @@ class ObjectModelGenerator:
                     open_objects[current_otype] = list(
                         set([x for x in open_objects[current_otype] if not x == current_obj]))
                     closed_objects[current_otype].append(current_obj)
-
             if len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects:
                 buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
         self.generatedObjects = total_objects
@@ -566,7 +572,7 @@ class ObjectModelGenerator:
                              if any_obj not in current_model])
             additions_support = 1
             for j in range(additions):
-                additions_support = additions_support * obj.supportDistributions[subpath].get_support(
+                additions_support = additions_support * obj.supportDistributions[str(subpath)].get_support(
                     current_number_at_obj + j + 1)
             element_support = min(element_support, additions_support)
         return element_support
@@ -592,7 +598,7 @@ class ObjectModelGenerator:
                 element_support = 1
                 for j in range(additions):
                     element_support = element_support * current_level_object. \
-                        supportDistributions[subpath].get_support(current_number_at_obj + j + 1)
+                        supportDistributions[str(subpath)].get_support(current_number_at_obj + j + 1)
                 support = min(support, element_support)
         return support
 
@@ -624,20 +630,20 @@ class ObjectModelGenerator:
         ot2 = obj2.otype
         depth = 1
         if obj1 in obj2.global_model[depth][tuple([ot2, ot1])]:
-            if obj2 not in obj1.global_model[depth][tuple([ot1, ot2])]:
+            if obj2 not in obj1.global_model[depth][str(tuple([ot1, ot2]))]:
                 raise ValueError("How can it be?")
             return 1.0
         if ot1 in self.nonEmittingTypes:
             support_for_obj2_at_obj1 = 1.0
         else:
             nof_ot2_at_obj1 = len(obj1.global_model[depth][tuple([ot1, ot2])])
-            support_for_obj2_at_obj1 = ObjectInstance.supportDistributions[ot1][tuple([ot1, ot2])].get_support(
+            support_for_obj2_at_obj1 = ObjectInstance.supportDistributions[ot1][str(tuple([ot1, ot2]))].get_support(
                 nof_ot2_at_obj1 + 1)
         if ot2 in self.nonEmittingTypes:
             support_for_obj1_at_obj2 = 1.0
         else:
             nof_ot1_at_obj2 = len(obj2.global_model[depth][tuple([ot2, ot1])])
-            support_for_obj1_at_obj2 = ObjectInstance.supportDistributions[ot2][tuple([ot2, ot1])].get_support(
+            support_for_obj1_at_obj2 = ObjectInstance.supportDistributions[ot2][str(tuple([ot2, ot1]))].get_support(
                 nof_ot1_at_obj2 + 1)
         # return support_for_obj1_at_obj2*support_for_obj2_at_obj1
         return (min(support_for_obj1_at_obj2, support_for_obj2_at_obj1))
@@ -690,3 +696,6 @@ class ObjectModelGenerator:
             "mean": mean,
             "stdev": stdev
         }
+
+    def update_stats(self):
+        self.generatorParametrization

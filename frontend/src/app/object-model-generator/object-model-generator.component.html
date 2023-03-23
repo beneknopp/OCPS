@@ -3,19 +3,16 @@
         <div>
             <div style="display: inline-block;">
                 <button class="card card-small" (click)="onClickInitialize()" tabindex="0">
-                    <span>Initialize</span>
+                    <span>Initialize Generator</span>
                 </button>
             </div>
             <div>
                 <button class="card card-small" [disabled]="!configValid || !initialized" (click)="onClickStart()"
                     tabindex="0">
-                    <span>Start</span>
-                </button>
-                <button class="card card-small" (click)="onClickSkip()" tabindex="0">
-                    <span>Skip (Use Original Marking)</span>
+                    <span>Start Generation</span>
                 </button>
                 <button [disabled]="!responseValid" class="card card-small" (click)="onClickConfirm()" tabindex="0">
-                    <span>Confirm</span>
+                    <span>Save Objects</span>
                 </button>
             </div>
         </div>
@@ -86,7 +83,7 @@
         </div>
         <div class="stats-plot-box" *ngIf="selectedObjectType">
             <div *ngFor="let attribute of attributes"
-                style="width: 98%; height: 280px; padding: 2.4%; margin-bottom: 40px;">
+                style="width: 98%; height: 280px;">
                 <h5>{{getPlotCaption(attribute)}}</h5>
                 <div style="width: 48%; display: inline-block;">
                     <canvas baseChart [datasets]="barChartData[attribute]" [labels]="mbarChartLabels[attribute]"
@@ -96,7 +93,7 @@
                 <div style="margin-left: 20px; display: inline-block; vertical-align: top; width: 48%">
                     <div>
                         <label>
-                            <input type="checkbox" [(ngModel)]="trainingSelectionMap[attribute]"
+                            <input type="checkbox" style="margin-left: 0" [(ngModel)]="trainingSelectionMap[attribute]"
                                 (change)="onSelectForTraining(attribute)">
                             Use in Generator Training
                         </label>
@@ -110,18 +107,25 @@
                                 [value]="model">{{model}}
                             </ng-option>
                         </ng-select>
+                        <div style="display: inline-block; vertical-align: top;">
+                            <button class="card card-smallest" style="margin-left: 0; margin-top: 20px"
+                                (click)="onClickApplyParameters(attribute)" tabindex="0"
+                                [disabled]="!trainingSelectionMap[attribute]">
+                                <span>Apply Parameters</span>
+                            </button>
+                        </div>
                     </div>
-                    <div *ngIf="trainingSelectionMap[attribute]" class="object-model-form-field"
-                        style="display: inline-block; vertical-align: top;">
-                        <button class="card card-smallest"
-                            (click)="onClickApplyParameters(attribute)" tabindex="0">
-                            <span>Apply Parameters</span>
-                        </button>
-                    </div>
-                    <div *ngIf="trainingSelectionMap[attribute]" style="display: inline-block; vertical-align: top;">
-                        Parameters:
-                        <input type="text" [(ngModel)]="parameterMap[attribute]"
+                    <div class="object-model-form-field"
+                        style="display: inline-block; vertical-align: top; margin-left: 15px">
+                        Parameters:<br>
+                        <textarea type="text" style="width: 180px; min-height: 108px; margin-bottom: 10px"
+                            [disabled]="!trainingSelectionMap[attribute]" [(ngModel)]="parameterMap[attribute]"
                             (change)="onTouchParameters(attribute)">
+                            </textarea>
+                        <div *ngIf="trainingModelMap[attribute] == 'Custom'" >
+                            <label>Mean Shift</label>
+                            <input type="number" style="width: 180px;">
+                        </div>
                     </div>
                 </div>
             </div>

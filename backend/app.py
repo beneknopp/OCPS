@@ -17,7 +17,6 @@ from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
 from object_model_generation.original_marking_maker import OriginalMarkingMaker
-from object_model_generation.stats_mode import StatsMode
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
@@ -142,12 +141,12 @@ def switch_model():
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
 
-@app.route('/change-parameters', methods=['GET'])
+@app.route('/change-parameters', methods=['POST'])
 @cross_origin()
 def change_parameters():
     session_path = get_session_path(request)
     start_logging(session_path)
-    args = request.args
+    args = request.form
     otype = args["otype"]
     parameter_type = args["parameterType"]
     attribute = args["attribute"]
@@ -158,12 +157,11 @@ def change_parameters():
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
 
-@app.route('/generate-object-model', methods=['GET', 'POST'])
+@app.route('/generate-objects', methods=['GET', 'POST'])
 @cross_origin()
 def generate_object_model():
     if not request.method == 'POST':
         return True
-    args = request.args
     session_path = get_session_path(request)
     start_logging(session_path)
     file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
@@ -174,6 +172,7 @@ def generate_object_model():
     training_model_preprocessor = TrainingModelPreprocessor.load(session_path)
     object_model_generator = ObjectModelGenerator(session_path, ocel, object_model_parameters, training_model_preprocessor)
     object_model_generator.generate()
+    object_model_generator.update_stats()
     object_model_generator.save(session_path)
     return object_model_generator.get_response()
 

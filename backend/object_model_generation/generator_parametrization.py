@@ -26,6 +26,7 @@ class ParameterType(Enum):
 class ModelType(Enum):
     CUSTOM = "CUSTOM"
     NORMAL = "NORMAL"
+    #UNIFORM = "UNIFORM" maybe later
     POISSON = "POISSON"
 
 
@@ -104,6 +105,14 @@ class Modeler():
             mapped_ticks.append(val)
         return mapped_ticks
 
+    def __map_uniform(self, ticks):
+        mapped_ticks = []
+        mu, std = [float(param.split(": ")[1]) for param in self.parameters.split(";")]
+        for tick in ticks:
+            val = norm(mu, std).pdf(tick)
+            mapped_ticks.append(val)
+        return mapped_ticks
+
     def __map_poisson(self, ticks):
         if any(x < 0 for x in ticks):
             raise AttributeError("Invalid arguments for Poisson distribution")
@@ -173,6 +182,7 @@ class AttributeParameterization():
         }
         json_export["includeModeled"] = self.includeModeled
         json_export["includeSimulated"] = self.includeSimulated
+        json_export["parameters"] = self.modeler.parameters
         return json_export
 
     def switch_model_type(self, model_type):
@@ -183,9 +193,16 @@ class AttributeParameterization():
         self.__set_model_chart_data()
 
     def change_parameters(self, parameters_str):
-        data = self.data
         self.modeler.parameters = parameters_str
-        self.modeler.fit_data(data)
+        self.__set_model_chart_data()
+
+    def get_modeled_frequency_distribution(self):
+        # TODO: adjust ticks/x-axis to comprise modeled distribution
+        dist = {
+            self.xAxis[i]: self.yAxes[ParameterMode.MODELED][i]
+            for i in range(len(self.xAxis))
+        }
+        return dist
 
 
 class GeneratorParametrization():
@@ -229,7 +246,7 @@ class GeneratorParametrization():
         for otype, attr_data in object_attribute_dists.items():
             for attr, data in attr_data.items():
                 attr_par = AttributeParameterization(label=attr, data=data, parameter_type=object_attribute_type)
-                parameters[otype][object_attribute_type] = attr_par
+                parameters[otype][object_attribute_type][attr] = attr_par
         self.parameters = parameters
 
     def export_parameters(self, otype: str, parameter_type_str: str, attribute: str = ""):
