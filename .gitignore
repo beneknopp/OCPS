@@ -3,3 +3,11 @@ frontend/.vscode
 frontend/node_modules/
 frontend/node_modules/.package-lock.json
 .idea/
+backend/__pycache__/app.cpython-39.pyc
+backend/object_model_generation/__pycache__/
+backend/dtos/__pycache__/
+backend/input_ocel_processing/__pycache__/
+backend/eval/__pycache__/
+backend/ocpn_discovery/__pycache__/
+backend/simulation/__pycache__/
+backend/utils/__pycache__/

@@ -31,6 +31,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
   touchedParameters: { [attribute: string]: boolean } = {}
   attributeModelCandidates: { [attribute: string]: string[] } = {}
   parameterMap: { [attribute: string]: string } = {}
+  load: boolean = true
 
   public barChartData: { [otype: string]: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] } = {
     'orders': [
@@ -223,6 +224,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
         so.forEach(attribute => {
           let params = resp[attribute]
           this.attributes = this.attributes.concat(attribute)
+          this.touchedParameters[attribute] = false
           this.trainingSelectionMap[attribute] = params.includeModeled
           this.trainingModelMap[attribute] = "---"
           // TODO
@@ -248,12 +250,12 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
 
   onClickInitialize() {
-    if (!(this.sessionKey && this.objectModelInfo.selectedSeedType)) {
+    if (!this.sessionKey){ // && this.objectModelInfo.selectedSeedType)) {
       return
     }
     const formData = new FormData();
     formData.append("sessionKey", this.sessionKey);
-    formData.append("seedType", this.objectModelInfo.selectedSeedType);
+    //formData.append("seedType", this.objectModelInfo.selectedSeedType);
     formData.append("otypes", "" + this.objectModelInfo.otypes);
     formData.append("executionModelDepth", "" + this.objectModelInfo.executionModelDepth);
     // TODO
@@ -358,7 +360,8 @@ export class ObjectModelGeneratorComponent implements OnInit {
     let include_modeled = attribute_parameters.includeModeled
     let include_simulated = attribute_parameters.includeSimulated
     this.trainingSelectionMap[attribute] = include_modeled
-    if(include_modeled) {
+    this.touchedParameters[attribute] = false
+    if (include_modeled) {
       this.parameterMap[attribute] = attribute_parameters.parameters
     }
     let y_axes = attribute_parameters.yAxes

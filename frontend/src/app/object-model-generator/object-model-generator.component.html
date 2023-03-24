@@ -7,32 +7,19 @@
                 </button>
             </div>
             <div>
-                <button class="card card-small" [disabled]="!configValid || !initialized" (click)="onClickStart()"
-                    tabindex="0">
+                <button class="card card-small"
+                    [disabled]="!configValid || !initialized || !objectModelInfo.selectedSeedType"
+                    (click)="onClickStart()" tabindex="0">
                     <span>Start Generation</span>
                 </button>
-                <button [disabled]="!responseValid" class="card card-small" (click)="onClickConfirm()" tabindex="0">
+                <button [disabled]="!responseValid " class="card card-small" (click)="onClickConfirm()" tabindex="0">
                     <span>Save Objects</span>
                 </button>
             </div>
         </div>
     </div>
     <div class="generator-config-box">
-        <h4>Initial Seed</h4>
-        <div class="object-model-form-field">
-            <label>Object Type</label>
-            <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.selectedSeedType" [multiple]="false"
-                (click)="onChangeSelectedSeedType()">
-                <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
-                </ng-option>
-            </ng-select>
-        </div>
-        <div class="object-model-form-field">
-            <label>Number of Objects</label><br>
-            <div style="margin-top: 20px">
-                <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.numberOfObjects">
-            </div>
-        </div>
+        <h4>Initial Parameters</h4>
         <div class="object-model-form-field">
             <label>Execution Model Depth</label><br>
             <div style="margin-top: 20px">
@@ -45,15 +32,34 @@
                 <input type="number" placeholder="1" [(ngModel)]="objectModelInfo.executionModelEvaluationDepth">
             </div>
         </div>
+        <br>
+        <h4>Generation Parameters</h4>
         <div class="object-model-form-field">
+            <label>Object Type</label>
+            <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.selectedSeedType" [multiple]="false"
+                (click)="onChangeSelectedSeedType()" [disabled]="!initialized">
+                <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
+                </ng-option>
+            </ng-select>
+        </div>
+        <div class="object-model-form-field">
+            <label>Number of Objects</label><br>
+            <div style="margin-top: 20px">
+                <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.numberOfObjects"
+                    [disabled]="!initialized">
+            </div>
+        </div>
+
+        <!--<div class="object-model-form-field">
             <label>Non-Emitting Types</label>
             <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.nonEmittingTypes" [multiple]="true"
                 (click)="onChangeNonEmittingTypes()">
                 <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
                 </ng-option>
             </ng-select>
-        </div>
+        </div>-->
         <div *ngIf="omgResponse">
+            <br>
             <h4>Number of Generated Objects:</h4>
             <div *ngFor="let otype of objectModelInfo.otypes">
                 <br>
@@ -82,8 +88,7 @@
             </div>
         </div>
         <div class="stats-plot-box" *ngIf="selectedObjectType">
-            <div *ngFor="let attribute of attributes"
-                style="width: 98%; height: 280px;">
+            <div *ngFor="let attribute of attributes" style="width: 98%; height: 280px;">
                 <h5>{{getPlotCaption(attribute)}}</h5>
                 <div style="width: 48%; display: inline-block;">
                     <canvas baseChart [datasets]="barChartData[attribute]" [labels]="mbarChartLabels[attribute]"
@@ -110,22 +115,22 @@
                         <div style="display: inline-block; vertical-align: top;">
                             <button class="card card-smallest" style="margin-left: 0; margin-top: 20px"
                                 (click)="onClickApplyParameters(attribute)" tabindex="0"
-                                [disabled]="!trainingSelectionMap[attribute]">
+                                [disabled]="!trainingSelectionMap[attribute] || !touchedParameters[attribute]">
                                 <span>Apply Parameters</span>
                             </button>
                         </div>
                     </div>
                     <div class="object-model-form-field"
-                        style="display: inline-block; vertical-align: top; margin-left: 15px">
+                        style="display: inline-block; vertical-align: top; margin-left: 15px;">
                         Parameters:<br>
                         <textarea type="text" style="width: 180px; min-height: 108px; margin-bottom: 10px"
                             [disabled]="!trainingSelectionMap[attribute]" [(ngModel)]="parameterMap[attribute]"
-                            (change)="onTouchParameters(attribute)">
+                            (click)="onTouchParameters(attribute)">
                             </textarea>
-                        <div *ngIf="trainingModelMap[attribute] == 'Custom'" >
+                        <!--<div *ngIf="trainingModelMap[attribute] == 'Custom'" >
                             <label>Mean Shift</label>
-                            <input type="number" style="width: 180px;">
-                        </div>
+                            <input type="number" style="width: 180px;"  [(ngModel)]="meanShift[attribute]" [disabled]="!trainingSelectionMap[attribute]">
+                        </div>-->
                     </div>
                 </div>
             </div>
