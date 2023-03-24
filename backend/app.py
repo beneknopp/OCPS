@@ -105,7 +105,8 @@ def get_parameters():
     args = request  .args
     otype = args["otype"]
     parameter_type = args["parameterType"]
-    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    training_model_preprocessor: TrainingModelPreprocessor = TrainingModelPreprocessor.load(session_path)
+    generator_parametrization: GeneratorParametrization = training_model_preprocessor.generatorParametrization
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type)
     return Response.get(parameter_export)
 
@@ -119,9 +120,10 @@ def select_for_training():
     parameter_type = args["parameterType"]
     attribute = args["attribute"]
     selected = True if args["selected"] == "True" else False
-    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    training_model_preprocessor: TrainingModelPreprocessor = TrainingModelPreprocessor.load(session_path)
+    generator_parametrization: GeneratorParametrization = training_model_preprocessor.generatorParametrization
     generator_parametrization.select_for_training(otype, parameter_type, attribute, selected)
-    generator_parametrization.save(session_path)
+    training_model_preprocessor.save()
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
 
@@ -135,9 +137,10 @@ def switch_model():
     parameter_type = args["parameterType"]
     attribute = args["attribute"]
     fitting_model = args["fittingModel"]
-    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    training_model_preprocessor: TrainingModelPreprocessor = TrainingModelPreprocessor.load(session_path)
+    generator_parametrization: GeneratorParametrization = training_model_preprocessor.generatorParametrization
     generator_parametrization.switch_fitting_model(otype, parameter_type, attribute, fitting_model)
-    generator_parametrization.save(session_path)
+    training_model_preprocessor.save()
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
 
@@ -151,9 +154,10 @@ def change_parameters():
     parameter_type = args["parameterType"]
     attribute = args["attribute"]
     parameters = args["parameters"]
-    generator_parametrization: GeneratorParametrization = GeneratorParametrization.load(session_path)
+    training_model_preprocessor: TrainingModelPreprocessor = TrainingModelPreprocessor.load(session_path)
+    generator_parametrization: GeneratorParametrization = training_model_preprocessor.generatorParametrization
     generator_parametrization.change_parameters(otype, parameter_type, attribute, parameters)
-    generator_parametrization.save(session_path)
+    training_model_preprocessor.save()
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
 
@@ -172,8 +176,8 @@ def generate_object_model():
     training_model_preprocessor = TrainingModelPreprocessor.load(session_path)
     object_model_generator = ObjectModelGenerator(session_path, ocel, object_model_parameters, training_model_preprocessor)
     object_model_generator.generate()
-    object_model_generator.update_stats()
-    object_model_generator.save(session_path)
+    object_model_generator.make_model_and_stats()
+    object_model_generator.save()
     return object_model_generator.get_response()
 
 @app.route('/discover-ocpn', methods=['GET', 'POST'])

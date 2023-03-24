@@ -204,6 +204,20 @@ class AttributeParameterization():
         }
         return dist
 
+    def update_simulated_data(self, simulated_data):
+        values = list(simulated_data.keys())
+        total = sum(simulated_data.values())
+        if len(values) == 0:
+            raise ValueError("Empty list of attribute values")
+        mapped_x_axis =[]
+        for tick in self.xAxis:
+            if tick in values:
+                mapped_x_axis.append(float(simulated_data[tick])/total)
+            else:
+                mapped_x_axis.append(0)
+        self.yAxes[ParameterMode.SIMULATED] = mapped_x_axis
+        self.includeSimulated = True
+
 
 class GeneratorParametrization():
 
@@ -248,6 +262,15 @@ class GeneratorParametrization():
                 attr_par = AttributeParameterization(label=attr, data=data, parameter_type=object_attribute_type)
                 parameters[otype][object_attribute_type][attr] = attr_par
         self.parameters = parameters
+
+    def get_parameters(self, otype = "", parameter_type = "", attribute = ""):
+        if len(otype) == 0:
+            return self.parameters
+        if len(parameter_type) == 0:
+            return self.parameters[otype]
+        if len(attribute) == 0:
+            return self.parameters[otype][ParameterType(parameter_type)]
+        return self.parameters[otype][ParameterType(parameter_type)][attribute]
 
     def export_parameters(self, otype: str, parameter_type_str: str, attribute: str = ""):
         parameter_type = ParameterType(parameter_type_str)

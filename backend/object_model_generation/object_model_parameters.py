@@ -12,7 +12,7 @@ class ObjectModelParameters:
     executionModelEvaluationDepth: int
 
     def __init__(self, omp_dto):
-        self.seedType = omp_dto['seedType']
+        self.seedType = omp_dto['seedType'] if "seedType" in omp_dto else None
         otypes_str = omp_dto['otypes']
         self.executionModelDepth = int(omp_dto["executionModelDepth"])
         self.executionModelEvaluationDepth = int(omp_dto["executionModelEvaluationDepth"])

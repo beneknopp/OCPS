@@ -12,7 +12,10 @@ class TrainingModelPreprocessor:
     @classmethod
     def load(cls, session_path):
         training_model_preprocessor_path = os.path.join(session_path, "training_model_preprocessor.pkl")
-        return pickle.load(open(training_model_preprocessor_path, "rb"))
+        training_model_preprocessor : TrainingModelPreprocessor = pickle.load(open(training_model_preprocessor_path, "rb"))
+        generator_parametrization : GeneratorParametrization = GeneratorParametrization.load(session_path)
+        training_model_preprocessor.generatorParametrization = generator_parametrization
+        return training_model_preprocessor
 
     @classmethod
     def load_attribute_names(cls, session_path):
@@ -23,6 +26,7 @@ class TrainingModelPreprocessor:
     activityLeadingTypes: []
     activitySelectedTypes: []
     objectTypeGraph: ObjectTypeGraph
+    generatorParametrization: GeneratorParametrization
     attributeNames: dict
     objectAttributeValueDistributions: dict
     cardinalityDistributions: dict
@@ -33,7 +37,7 @@ class TrainingModelPreprocessor:
         self.otypes = object_model_parameters.otypes
         self.activityLeadingTypes = object_model_parameters.activityLeadingTypes
         self.activitySelectedTypes = object_model_parameters.activitySelectedTypes
-        self.seedType = object_model_parameters.seedType
+        #self.seedType = object_model_parameters.seedType
         self.executionModelDepth = object_model_parameters.executionModelDepth
         self.executionModelEvaluationDepth = object_model_parameters.executionModelEvaluationDepth
         df = ocel.get_extended_table()
