@@ -6,7 +6,6 @@ import { AppComponent } from './app.component';
 
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -25,11 +24,10 @@ import { SimulateProcessComponent } from './simulate-process/simulate-process.co
     LogUploadComponent,
     ObjectModelGeneratorComponent,
     SimulateProcessComponent,
-    DiscoverOcpnComponent
+    DiscoverOcpnComponent,
   ],
   imports: [
     BrowserModule,
-    MatProgressSpinnerModule,
     HttpClientModule,
     NgxGraphModule,
     NgSelectModule,

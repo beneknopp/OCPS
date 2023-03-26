@@ -3,12 +3,12 @@ import os
 import pickle
 from enum import Enum
 
-import pandas as pd
 import numpy as np
-import scipy.stats
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.stats import norm, poisson
+
+from utils.cumulative_distribution import CumulativeDistribution
 
 
 class ParameterMode(Enum):
@@ -27,16 +27,79 @@ class ModelType(Enum):
     CUSTOM = "CUSTOM"
     NORMAL = "NORMAL"
     #UNIFORM = "UNIFORM" maybe later
-    POISSON = "POISSON"
+    EXPONENTIAL = "EXPONENTIAL"
 
+class DataType(Enum):
+    INTEGER = "INTEGER"
+    CONTINUOUS = "CONTINUOUS"
+    CATEGORICAL = "CATEGORICAL"
+
+class Predictor:
+
+    modelType: ModelType
+    dataType: DataType
+
+    def __init__(self, data_type: DataType):
+        self.dataType = data_type
+        pass
+
+    def init_custom(self, weighted_items: dict):
+        self.modelType = ModelType.CUSTOM
+        pmf: CumulativeDistribution = CumulativeDistribution(weighted_items)
+        self.pmf = pmf
+
+    def init_normal(self, mu, std):
+        self.modelType = ModelType.NORMAL
+        self.mu = mu
+        self.std = std
+
+    def init_exponential(self, lamb, scale, M):
+        self.modelType = ModelType.EXPONENTIAL
+        self.lamb = lamb
+        self.scale = scale
+        self.M = M
+
+    def sample(self):
+        if self.modelType == ModelType.CUSTOM:
+            pmf: CumulativeDistribution = self.pmf
+            return pmf.sample()
+        if self.modelType == ModelType.NORMAL:
+            s = -1
+            i = 0
+            while s < -1:
+                s = np.random.normal(self.mu, self.std, 1)[0]
+                if self.dataType != DataType.INTEGER:
+                    break
+                i += 1
+                if i > 100000:
+                    raise ValueError("Timeout in sampling from distribution.")
+            return s
+        if self.modelType == ModelType.EXPONENTIAL:
+            s = -1
+            i = 0
+            while s < -1:
+                s = np.random.exponential(self.lamb, 1)[0]
+                if self.dataType != DataType.INTEGER:
+                    break
+                i += 1
+                if i > 100000:
+                    raise ValueError("Timeout in sampling from distribution.")
+            return s*self.scale*self.M
+
+def exponential_fit_function(x, lamb, scale):
+    return lamb * np.exp(-lamb * scale * x)
 
 class Modeler():
 
     parameters: str
     modelType: ModelType
+    dataType: DataType
+    predictor: Predictor
+    bins: int
 
-    def __init__(self, model_type: ModelType):
+    def __init__(self, model_type: ModelType, data_type: DataType):
         self.modelType = model_type
+        self.dataType = data_type
         self.parameters = ""
 
     def fit_data(self, data: []):
@@ -44,8 +107,8 @@ class Modeler():
             self.__fit_custom(data)
         elif self.modelType == ModelType.NORMAL:
             self.__fit_normal(data)
-        elif self.modelType == ModelType.POISSON:
-            self.__fit_poisson(data)
+        elif self.modelType == ModelType.EXPONENTIAL:
+            self.__fit_exponential(data)
         else:
             raise AttributeError()
         return self.parameters
@@ -54,41 +117,89 @@ class Modeler():
         sorted_vals = sorted(list(set(data)))
         parameters = ""
         n = len(data)
-        for val in sorted_vals:
-            ratio = float(data.count(val))/n
-            rounded_ratio = round(ratio*100) / 100
-            parameters += str(val) + ": " + str(ratio) + "; "
+        if self.dataType == DataType.CONTINUOUS:
+            parameters += "bins=50; "
+            bins = 50
+            self.bins = bins
+            data = sorted(data)
+            maxvalue = max(data)
+            minvalue = min(data)
+            i = 0
+            j = 0
+            w = float(maxvalue - minvalue) / bins
+            binmax = minvalue + w
+            weighted_vals = {
+                minvalue + round((k+1)*w*100)/100 : 0
+                for k in range(bins)
+            }
+            bin_centers = sorted(list(weighted_vals.keys()))
+            while i < n:
+                current_value = data[i]
+                while binmax < current_value - 0.001:
+                    binmax += w
+                    j += 1
+                bin_center = bin_centers[j]
+                weighted_vals[bin_center] = weighted_vals[bin_center] + 1
+                i += 1
+            for val, freq in weighted_vals.items():
+                ratio = float(freq)/n
+                rounded_ratio = round(ratio * 100) / 100
+                parameters += str(val) + ": " + str(rounded_ratio) + "; "
+        else:
+            weighted_vals = {}
+            for val in sorted_vals:
+                ratio = float(data.count(val))/n
+                rounded_ratio = round(ratio*100) / 100
+                parameters += str(val) + ": " + str(rounded_ratio) + "; "
+                weighted_vals[val] = ratio
+        self.defaultAxis = sorted(list(weighted_vals.keys()))
+        self.predictor = Predictor(self.dataType)
+        self.predictor.init_custom(weighted_vals)
         self.parameters = parameters[:-2]
 
     def __fit_normal(self, data):
         mu, std = norm.fit(data)
+        self.predictor = Predictor(self.dataType)
+        self.predictor.init_normal(mu, std)
         self.parameters = "mu: " + str(mu) + "; std: " + str(std)
 
-    def __fit_poisson(self, data):
-        minval = math.floor(min(data))
-        maxval = math.ceil(max(data))
-        # the bins have to be kept as a positive integer because poisson is a positive integer distribution
-        bins = np.arange(minval, maxval) - 0.5
-        entries, bin_edges, patches = plt.hist(data, bins=bins, density=True, label='Data')
-        # calculate bin centers
+    def __fit_exponential(self, data):
+        data_set = sorted(data)
+        minvalue = min(data_set)
+        maxvalue = max(data_set)
+        w = math.ceil((maxvalue - minvalue) / 50)
+        bins = np.array([(minvalue + k * w) - 0.5 for k in range(50)])
+        data_set = np.array(data_set) / maxvalue
+        bins = bins / maxvalue
+        entries, bin_edges, patches = plt.hist(data_set, bins=bins, density=False, label='Data')
         middles_bins = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-        parameters, cov_matrix = curve_fit(lambda k, lamb: poisson.pmf(k, lamb), middles_bins, entries)
-        self.parameters = "lambda: " + str(parameters[0])
+        entries = entries / sum(entries)
+        fitted = curve_fit(exponential_fit_function, middles_bins, entries)
+        parameters, cov_matrix = fitted
+        lamb, s = parameters
+        self.predictor = Predictor(self.dataType)
+        self.predictor.init_exponential(lamb, s, maxvalue)
+        self.parameters = "lambda=" + str(lamb) + "; scale=" + str(s) + "; M=" + str(maxvalue)
 
-    def map_axis(self, ticks):
+    def map_axis(self, ticks=None):
         if self.modelType == ModelType.CUSTOM:
             mapped_ticks = self.__map_custom(ticks)
         elif self.modelType == ModelType.NORMAL:
             mapped_ticks = self.__map_normal(ticks)
-        elif self.modelType == ModelType.POISSON:
-            mapped_ticks = self.__map_poisson(ticks)
+        elif self.modelType == ModelType.EXPONENTIAL:
+            mapped_ticks = self.__map_exponential(ticks)
         else:
             raise AttributeError()
         return mapped_ticks
 
     def __map_custom(self, ticks):
         mapped_ticks = []
-        val_freqs = [valfreq.split(": ") for valfreq in self.parameters.split("; ")]
+        if self.dataType == DataType.CONTINUOUS:
+            parameters = self.parameters.split("; ")
+            bins = int(parameters[0].split("=")[1])
+            val_freqs = [valfreq.split(": ") for valfreq in parameters[1:]]
+        else:
+            val_freqs = [valfreq.split(": ") for valfreq in self.parameters.split("; ")]
         vals_to_freqs = {(valfreq[0]) : float(valfreq[1]) for valfreq in val_freqs}
         for tick in ticks:
             if str(tick) in vals_to_freqs:
@@ -113,20 +224,27 @@ class Modeler():
             mapped_ticks.append(val)
         return mapped_ticks
 
-    def __map_poisson(self, ticks):
-        if any(x < 0 for x in ticks):
+    def __map_exponential(self, ticks):
+        sorted_ticks = sorted(ticks)
+        if len(sorted_ticks) < 2 or any(x < 0 for x in ticks):
             raise AttributeError("Invalid arguments for Poisson distribution")
+        width = sorted_ticks[1] - sorted_ticks[0]
         mapped_ticks = []
-        lamb = float(self.parameters.split(";")[0].split(": ")[1])
-        for tick in ticks:
-            val = poisson(lamb).pmf(tick)
+        parameters = self.parameters.split(";")
+        lamb, scale, M = map(lambda x: float(x.split("=")[1]), parameters)
+        cdf = lambda x: 1 - (1/scale)*np.exp(-lamb*scale*x/M)
+        for tick in sorted_ticks:
+            val = cdf(tick + width / 2) - cdf(tick - width / 2)
             mapped_ticks.append(val)
         return mapped_ticks
 
+    def draw(self):
+        return self.predictor.sample()
 
 class AttributeParameterization():
 
     label: str
+    dataType: DataType
     # final (log data)
     modeler: Modeler
     parameterType: ParameterType
@@ -137,27 +255,52 @@ class AttributeParameterization():
     yAxes: dict
     data: []
 
-    def __init__(self, label, data, parameter_type: ParameterType, include_modeled=False, include_simulated=False):
+    def __init__(self, label, data, parameter_type: ParameterType, include_modeled=False, include_simulated=False, data_type: DataType = None):
         self.data = data
         self.label = label
         self.parameterType = parameter_type
         self.includeModeled = include_modeled
         self.includeSimulated = include_simulated
-        self.__initialize_modeler(ModelType.CUSTOM)
+        self.__initialize_modeler(data_type)
         self.__initialize_chart_data()
 
-    def __initialize_modeler(self, model_type):
-        modeler = Modeler(model_type)
+    def __initialize_modeler(self, data_type: DataType):
+        model_type = self.__fit_initial_model_type()
+        if data_type is None:
+            data_type = self.__fit_data_type()
+        self.dataType = data_type
+        modeler = Modeler(model_type, data_type)
         modeler.fit_data(self.data)
         self.modeler = modeler
+
+    def __fit_initial_model_type(self):
+        return ModelType.CUSTOM
+
+    def __fit_data_type(self):
+        if all(type(i) == int for i in self.data):
+            return DataType.INTEGER
+        else:
+            isFloat = True
+            for i in self.data:
+                try:
+                    float(i)
+                except:
+                    isFloat = False
+                if not isFloat:
+                    break
+            if isFloat:
+                return DataType.CONTINUOUS
+        return DataType.CATEGORICAL
 
     def __initialize_chart_data(self):
         yAxes = {}
         data = self.data
         if len(data) == 0:
             raise ValueError("Empty list of attribute values")
-        if type(data[0]) == str:
+        if self.dataType is DataType.CATEGORICAL:
             x_axis = list(set(data))
+        elif self.dataType is DataType.CONTINUOUS:
+            x_axis = self.modeler.defaultAxis
         else:
             min_val = math.floor(min(data))
             max_val = math.ceil(max(data)) + 1
@@ -187,7 +330,8 @@ class AttributeParameterization():
 
     def switch_model_type(self, model_type):
         data = self.data
-        modeler = Modeler(model_type)
+        data_type = self.modeler.dataType
+        modeler = Modeler(model_type, data_type)
         modeler.fit_data(data)
         self.modeler = modeler
         self.__set_model_chart_data()
@@ -218,6 +362,8 @@ class AttributeParameterization():
         self.yAxes[ParameterMode.SIMULATED] = mapped_x_axis
         self.includeSimulated = True
 
+    def draw(self):
+        return self.modeler.draw()
 
 class GeneratorParametrization():
 
@@ -253,14 +399,25 @@ class GeneratorParametrization():
         }
         cardinality_type = ParameterType.CARDINALITY
         object_attribute_type = ParameterType.OBJECT_ATTRIBUTE
-        for otype, path_to_cards in cardinality_dists.items():
-            for path, data in path_to_cards.items():
-                attr_par = AttributeParameterization(label=path, data=data, parameter_type=cardinality_type)
+        timing_type = ParameterType.TIMING
+        for otype in self.otypes:
+            for path_to_cards in cardinality_dists[otype].items():
+                path, data = path_to_cards
+                include_modeled = len(path.split(",")) < 3
+                attr_par = AttributeParameterization(label=path, data=data, parameter_type=cardinality_type, include_modeled=include_modeled,
+                                                         data_type = DataType.INTEGER)
                 parameters[otype][cardinality_type][path] = attr_par
-        for otype, attr_data in object_attribute_dists.items():
-            for attr, data in attr_data.items():
-                attr_par = AttributeParameterization(label=attr, data=data, parameter_type=object_attribute_type)
-                parameters[otype][object_attribute_type][attr] = attr_par
+            for attr_data in object_attribute_dists[otype].items():
+                    attr, data = attr_data
+                    include_modeled = True
+                    attr_par = AttributeParameterization(label=attr, data=data, parameter_type=object_attribute_type, include_modeled=include_modeled)
+                    parameters[otype][object_attribute_type][attr] = attr_par
+            for timing_data in timing_dists[otype].items():
+                    attr, data = timing_data
+                    include_modeled = attr == "Arrival Rates (independent)"
+                    attr_par = AttributeParameterization(label=attr, data=data, parameter_type=timing_type, include_modeled=include_modeled,
+                                                            data_type=DataType.CONTINUOUS)
+                    parameters[otype][timing_type][attr] = attr_par
         self.parameters = parameters
 
     def get_parameters(self, otype = "", parameter_type = "", attribute = ""):

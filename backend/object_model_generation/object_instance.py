@@ -9,6 +9,7 @@ class ObjectInstance:
     executionModelDepth: int
     executionModelEvaluationDepth: int
     supportDistributions: dict
+    attributes: dict
 
     @classmethod
     def set_(cls, otypes, execution_model_paths, execution_model_depth, execution_model_evaluation_depth, schema_distributions):
@@ -44,6 +45,7 @@ class ObjectInstance:
         self.locally_closed = False
         self.globally_closed = False
         self.supportDistributions = self.supportDistributions[otype]
+        self.attributes = dict()
         self.__initialize_global_model()
 
     def __initialize_global_model(self):
@@ -123,3 +125,6 @@ class ObjectInstance:
 
     def set_timestamp(self, time):
         self.time = time
+
+    def assign_attribute(self, attribute, value):
+        self.attributes[attribute] = value

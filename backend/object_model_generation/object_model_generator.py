@@ -38,6 +38,7 @@ class ObjectModelGenerator:
     def generate(self):
         self.__initialize_object_instance_class()
         self.__run_generation()
+        self.__assign_object_attributes()
         self.__reindex_generated_objects()
         self.__make_arrival_times()
 
@@ -195,6 +196,15 @@ class ObjectModelGenerator:
         obj: ObjectInstance
         buffer.sort(key=lambda obj: self.otypes.index(obj.otype))
 
+    def __assign_object_attributes(self):
+        obj: ObjectInstance
+        for otype, objs in self.generatedObjects.items():
+            attribute_parametrizations = self.generatorParametrization.get_parameters(otype, ParameterType.OBJECT_ATTRIBUTE.value)
+            for attribute, attribute_parametrization in attribute_parametrizations.items():
+                attribute_parametrization: AttributeParameterization
+                for obj in objs:
+                    value = attribute_parametrization.draw()
+                    obj.assign_attribute(attribute, value)
 
     def __reindex_generated_objects(self):
         generated_objects = self.generatedObjects
@@ -223,62 +233,6 @@ class ObjectModelGenerator:
             dist = ArrivalTimeDistribution(arrival_rates)
             arrival_times_distributions[otype] = dist
         self.arrivalTimesDistributions = arrival_times_distributions
-
-
-    def __make_prior_arrival_times_distributions(self):
-        arrival_times_distributions = {}
-        self.flattenedLogs = dict()
-        logging.info("Making arrival rate distributions...")
-        self.arrivalTimes = {}
-        for otype in self.otypes:
-            logging.info(otype + "...")
-            flattened_log = pm4py.ocel_flattening(self.ocel, otype)
-            flattened_log = flattened_log.sort_values(["time:timestamp"])
-            self.flattenedLogs[otype] = flattened_log
-            arrival_times = flattened_log.groupby("case:concept:name").first()["time:timestamp"]
-            arrival_times = arrival_times.sort_values()
-            arrival_times = arrival_times.apply(lambda row: row.timestamp())
-            self.arrivalTimes[otype] = arrival_times
-            arrival_rates = arrival_times.diff()[1:]
-            dist = ArrivalTimeDistribution(arrival_rates)
-            arrival_times_distributions[otype] = dist
-        self.arrivalTimesDistributions = arrival_times_distributions
-
-
-    def __make_relative_arrival_times_distributions(self):
-        log_based_relative_arrival_times = {
-            otype: {
-                any_otype: []
-                for any_otype in self.otypes
-            } for otype in self.otypes
-        }
-        arrival_times = dict()
-        for otype in self.otypes:
-            flattened_log = self.flattenedLogs[otype]
-            ot_arrival_times = flattened_log.groupby("case:concept:name").first()["time:timestamp"]
-            ot_arrival_times = ot_arrival_times.apply(lambda row: row.timestamp())
-            arrival_times[otype] = ot_arrival_times
-        # otype -> depths -> paths -> objs -> model
-        global_model = self.trainingModelPreprocessor.globalObjectModel
-        dists = dict()
-        model_depth = 1
-        for otype in self.otypes:
-            dists[otype] = dict()
-            for path, obj_models in global_model[otype][model_depth].items():
-                for obj, obj_model in obj_models.items():
-                    arrival_time = arrival_times[otype][obj]
-                    any_otype = path[-1]
-                    log_based_rel_times = log_based_relative_arrival_times[otype][any_otype]
-                    for related_obj in obj_model:
-                        related_arrival_time = arrival_times[any_otype][related_obj]
-                        relative_arrival_time = related_arrival_time - arrival_time
-                        log_based_rel_times.append(relative_arrival_time)
-            for any_otype in self.otypes:
-                log_based_rel_times = log_based_relative_arrival_times[otype][any_otype]
-                if log_based_rel_times:
-                    dists[otype][any_otype] = ArrivalTimeDistribution(pd.Series(log_based_rel_times))
-        self.relativeArrivalTimesDistributions = dists
-        self.logBasedRelativeArrivalTimes = log_based_relative_arrival_times
 
 
     # TODO: assign arrival times relative to related objects

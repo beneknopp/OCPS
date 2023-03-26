@@ -3,7 +3,7 @@ from random import random
 
 class CumulativeDistribution:
 
-    def __init__(self, weighted_items):
+    def __init__(self, weighted_items: dict):
         self.__make_probabilities(weighted_items)
         self.__make_cumulative_distribution()
 
@@ -27,11 +27,11 @@ class CumulativeDistribution:
             cum_p += p
         cum_prob_dist[-1] = (cum_prob_dist[-1][0], 1.0)
         self.cumulative_distribution = cum_prob_dist
-        self.predictor = lambda x: next(el for el in cum_prob_dist if el[1] >= x)[0]
 
     def sample(self):
         rnd = random()
-        return self.predictor(rnd)
+        s = next(el for el in self.cumulative_distribution if el[1] >= rnd)[0]
+        return s
 
     def sample_n(self, n):
         return [self.sample() for i in range(n)]

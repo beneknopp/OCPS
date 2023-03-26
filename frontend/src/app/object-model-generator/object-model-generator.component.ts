@@ -111,6 +111,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
       selected_seed_type,
       non_emitting_types,
       number_of_objects,
+      "",
       execution_model_depth,
       execution_model_evaluation_depth,
       activity_selected_types,
@@ -228,7 +229,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
           this.trainingSelectionMap[attribute] = params.includeModeled
           this.trainingModelMap[attribute] = "---"
           // TODO
-          this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Poisson"]
+          this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Exponential"]
           let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
             { data: params.yAxes.LOG_BASED, label: 'Log-Based' },
           ]
@@ -295,7 +296,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     }
   }
 
-  onClickConfirm() {
+  onClickSave() {
     this.domService.setObjectModelValid(true)
     this.domService.setUseOriginalMarking(false)
     if (this.domService.netConfigValid) {

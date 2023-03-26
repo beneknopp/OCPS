@@ -1,6 +1,8 @@
 import os
 import pickle
 
+import pm4py
+
 from object_model_generation.generator_parametrization import GeneratorParametrization, ParameterType
 from object_model_generation.object_model import ObjectModel
 from object_model_generation.object_model_parameters import ObjectModelParameters
@@ -48,9 +50,9 @@ class TrainingModelPreprocessor:
     def build(self):
         self.__make_object_type_graph()
         self.__make_process_executions()
-        # TODO: factor out
         self.__make_schema_distributions()
         self.__make_object_attribute_value_distributions()
+        self.__make_timing_information()
         self.__make_attribute_names()
         self.__initialize_generator_parametrization()
 
@@ -203,6 +205,65 @@ class TrainingModelPreprocessor:
                     oav_dists[otype][attr] += len(value_supp)*[value]
         self.objectAttributeValueDistributions = oav_dists
 
+    def __make_timing_information(self):
+        self.timingDistributions = {
+            otype: dict()
+            for otype in self.otypes
+        }
+        self.__make_prior_arrival_times_distributions()
+        self.__make_relative_arrival_times_distributions()
+
+    def __make_prior_arrival_times_distributions(self):
+        self.flattenedLogs = dict()
+        self.arrivalTimes = {}
+        for otype in self.otypes:
+            flattened_log = pm4py.ocel_flattening(self.ocel, otype)
+            flattened_log = flattened_log.sort_values(["time:timestamp"])
+            self.flattenedLogs[otype] = flattened_log
+            arrival_times = flattened_log.groupby("case:concept:name").first()["time:timestamp"]
+            arrival_times = arrival_times.sort_values()
+            arrival_times = arrival_times.apply(lambda row: row.timestamp())
+            self.arrivalTimes[otype] = arrival_times
+            arrival_rates = arrival_times.diff()[1:].values
+            attr = "Arrival Rates (independent)"
+            self.timingDistributions[otype][attr] = list(arrival_rates)
+
+    def __make_relative_arrival_times_distributions(self):
+        log_based_relative_arrival_times = {
+            otype: {
+                any_otype: []
+                for any_otype in self.otypes
+            } for otype in self.otypes
+        }
+        arrival_times = dict()
+        for otype in self.otypes:
+            flattened_log = self.flattenedLogs[otype]
+            ot_arrival_times = flattened_log.groupby("case:concept:name").first()["time:timestamp"]
+            ot_arrival_times = ot_arrival_times.apply(lambda row: row.timestamp())
+            arrival_times[otype] = ot_arrival_times
+        # otype -> depths -> paths -> objs -> model
+        global_model = self.globalObjectModel
+        dists = dict()
+        model_depth = 1
+        for otype in self.otypes:
+            dists[otype] = dict()
+            for path, obj_models in global_model[otype][model_depth].items():
+                for obj, obj_model in obj_models.items():
+                    arrival_time = arrival_times[otype][obj]
+                    any_otype = path[-1]
+                    log_based_rel_times = log_based_relative_arrival_times[otype][any_otype]
+                    for related_obj in obj_model:
+                        related_arrival_time = arrival_times[any_otype][related_obj]
+                        relative_arrival_time = related_arrival_time - arrival_time
+                        log_based_rel_times.append(relative_arrival_time)
+            for any_otype in self.otypes:
+                log_based_rel_times = log_based_relative_arrival_times[otype][any_otype]
+                if log_based_rel_times:
+                    attr = "Arrival Rates (relative to '" + otype + "')"
+                    self.timingDistributions[any_otype][attr] = list(log_based_rel_times)
+        self.relativeArrivalTimesDistributions = dists
+        self.logBasedRelativeArrivalTimes = log_based_relative_arrival_times
+
     def __make_attribute_names(self):
         attributeNames = dict()
         attributeNames[ParameterType.CARDINALITY] = {}
@@ -286,7 +347,7 @@ class TrainingModelPreprocessor:
 
     def __initialize_generator_parametrization(self):
         generator_parametrization = GeneratorParametrization(
-            self.otypes, self.cardinalityDistributions, self.objectAttributeValueDistributions, []
+            self.otypes, self.cardinalityDistributions, self.objectAttributeValueDistributions, self.timingDistributions
         )
         self.generatorParametrization = generator_parametrization
 
