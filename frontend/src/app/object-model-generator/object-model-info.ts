@@ -19,8 +19,9 @@ export class ObjectModelInfo {
   selectedSeedType: string | undefined = undefined
   nonEmittingTypes: string[] = []
   numberOfObjects: number = 0
+  markingName: string
   executionModelDepth: number = 1
-  executionModelEvaluationDepth : number = 1
+  executionModelEvaluationDepth: number = 1
   activitySelectedTypes: { [act: string]: string[] }
   activityLeadingTypes: { [act: string]: string | undefined }
 
@@ -29,6 +30,7 @@ export class ObjectModelInfo {
     selectedSeedType: string | undefined = undefined,
     nonEmittingTypes: string[] = [],
     numberOfObjects: number = 0,
+    markingName: string = "",
     executionModelDepth: number = 1,
     executionModelEvaluationDepth: number = 1,
     activitySelectedTypes: { [act: string]: string[] } = {},
@@ -38,6 +40,7 @@ export class ObjectModelInfo {
     this.selectedSeedType = selectedSeedType
     this.nonEmittingTypes = nonEmittingTypes
     this.numberOfObjects = numberOfObjects
+    this.markingName = markingName
     this.executionModelDepth = executionModelDepth
     this.executionModelEvaluationDepth = executionModelEvaluationDepth
     this.activitySelectedTypes = activitySelectedTypes
@@ -47,44 +50,9 @@ export class ObjectModelInfo {
 }
 
 export class ObjectModelGenerationResponse {
-  stats: {
-    [otype: string]: {
-      "original_stats": {
-        "mean": number,
-        "stdev": number
-      },
-      "simulation_stats": {
-        "mean": number,
-        "stdev": number,
-        "number_of_objects": number,
-        "relations": {
-          [otype: string]: {
-            "mean": number,
-            "stdev": number
-          }
-        }
-      },
-    }
-  }
-  constructor(stats: {
-    [otype: string]: {
-      "original_stats": {
-        "mean": number,
-        "stdev": number
-      },
-      "simulation_stats": {
-        "mean": number,
-        "stdev": number,
-        "number_of_objects": number,
-        "relations": {
-          [otype: string]: {
-            "mean": number,
-            "stdev": number
-          }
-        }
-      }
-    }
-  }) {
+  stats: { [otype: string]: { "number_of_objects": number } }
+
+  constructor(stats: { [otype: string]: { "number_of_objects": number } }) {
     this.stats = stats
   }
 }

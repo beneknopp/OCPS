@@ -16,6 +16,7 @@ import { LogUploadComponent } from './log-upload/log-upload.component';
 import { MessageComponent } from './message/message.component';
 import { ObjectModelGeneratorComponent } from './object-model-generator/object-model-generator.component';
 import { SimulateProcessComponent } from './simulate-process/simulate-process.component';
+import { EvaluateComponent } from './evaluate/evaluate.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { SimulateProcessComponent } from './simulate-process/simulate-process.co
     ObjectModelGeneratorComponent,
     SimulateProcessComponent,
     DiscoverOcpnComponent,
+    EvaluateComponent,
   ],
   imports: [
     BrowserModule,

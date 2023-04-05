@@ -18,7 +18,6 @@ from simulation.simulation_net import SimulationNet
 from simulation.simulation_object_instance import SimulationObjectInstance, ScheduledActivity
 from utils.cumulative_distribution import CumulativeDistribution
 from eval.evaluators import ocel_to_ocel
-from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
 
 
 class Simulator:
@@ -203,7 +202,7 @@ class Simulator:
                             continue
                         execution_model = [leading_obj]
                         #execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
-                        execution_model = [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
+                        execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
                         execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
                         execution_probabilities[candidate_activity] = execution_probability
                         max_prob = max(max_prob, execution_probability)

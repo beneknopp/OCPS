@@ -12,7 +12,14 @@
                     (click)="onClickStart()" tabindex="0">
                     <span>Start Generation</span>
                 </button>
-                <button [disabled]="!responseValid " class="card card-small" (click)="onClickConfirm()" tabindex="0">
+                <!--<div class="object-model-form-field">
+                    <label>Name of Object Set</label><br>
+                    <div style="margin-top: 20px">
+                        <input type="text" placeholder="" [(ngModel)]="objectModelInfo.markingName">
+                    </div>
+                </div>-->
+                <button [disabled]="!responseValid" class="card card-small"
+                    (click)="onClickSave()" tabindex="0">
                     <span>Save Objects</span>
                 </button>
             </div>

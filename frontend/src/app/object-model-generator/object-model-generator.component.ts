@@ -398,7 +398,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     if (!(otype in this.omgResponse.stats)) {
       return ""
     }
-    return this.omgResponse.stats[otype]["simulation_stats"]["number_of_objects"]
+    return this.omgResponse.stats[otype]["number_of_objects"]
   }
 
   getOtherTypes(otype: string) {

@@ -10,6 +10,8 @@ class ProcessConfig:
     otypeLeadingActivities: dict
     nonEmittingTypes: list
     useOriginalMarking: bool
+    simulCount : int
+    simulTypeCount: dict
 
     @classmethod
     def load(cls, session_path):
@@ -27,6 +29,11 @@ class ProcessConfig:
                        if any(otype in self.activitySelectedTypes[act] for act in self.acts)]))
         self.otypeLeadingActivities = {
             otype: [act for act, ot in self.activityLeadingTypes.items() if ot == otype]
+            for otype in self.otypes
+        }
+        self.simulCount = 0
+        self.simulTypeCount = {
+            otype: 0
             for otype in self.otypes
         }
         self.useOriginalMarking = True
@@ -47,3 +54,22 @@ class ProcessConfig:
         process_config: ProcessConfig = cls.load(session_path)
         process_config.nonEmittingTypes = non_emitting_types_str.split(",") if len(non_emitting_types_str) > 0 else []
         process_config.save()
+
+    #TODO right now only total object count is used
+    @classmethod
+    def update_simul_type_count(cls, session_path, otype, count):
+        process_config: ProcessConfig = cls.load(session_path)
+        process_config.simulTypeCount[otype] = count
+        process_config.save()
+
+    @classmethod
+    def update_simul_count(cls, session_path, count):
+        process_config: ProcessConfig = cls.load(session_path)
+        process_config.simulCount = count
+        process_config.save()
+
+    @classmethod
+    def get_simul_count(cls, session_path):
+        process_config: ProcessConfig = cls.load(session_path)
+        count = process_config.simulCount
+        return count

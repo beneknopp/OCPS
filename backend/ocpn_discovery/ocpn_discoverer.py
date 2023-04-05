@@ -36,6 +36,8 @@ class OCPN_Discoverer:
         }
         #ocel = pm4py.filter_ocel_object_types_allowed_activities(ocel, types_selected_activity)
         ocel = ocel_import_factory.apply(file_path=self.file_path)
+        ocel: OCEL
+        pm4py.ocel
         ocpn = ocpn_discovery_factory.apply(ocel, parameters={"debug": False})
         #ocpn_dict = pm4py.discover_oc_petri_net(ocel)
         self.ocpn_dict = ocpn

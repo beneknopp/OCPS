@@ -68,6 +68,8 @@ export class SimulateProcessComponent implements OnInit {
       return
     }
     let useOriginalMarking = this.useOriginalMarking
+    // TODO: something about this
+    this.domService.setUseOriginalMarking(useOriginalMarking)
     this.appService.initializeSimulation(session_key, useOriginalMarking).subscribe((resp) => {
       this.simulationState = new SimulationStateDto(resp.resp)
       this.makeTooltips()
@@ -83,6 +85,7 @@ export class SimulateProcessComponent implements OnInit {
     this.appService.startSimulation(steps, session_key).subscribe((resp) => {
       this.simulationState = new SimulationStateDto(resp.resp)
       this.makeTooltips()
+      this.domService.enableEvaluation()
     })
   }
 

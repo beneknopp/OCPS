@@ -30,6 +30,7 @@ export class DOMService {
   objectModelValid = false
   useOriginalMarking = true
   netConfigValid = false;
+  evaluationEnabled = false  
   public step = 1;
 
   get activitySelectedTypes$() {
@@ -171,7 +172,7 @@ export class DOMService {
   }
 
   setUseOriginalMarking(doUse: boolean) {
-    this.useOriginalMarking = true
+    this.useOriginalMarking = doUse
   }
 
   setObjectModelValid(valid: boolean) {
@@ -182,5 +183,8 @@ export class DOMService {
     this.netConfigValid = valid
   }
 
+  enableEvaluation() {
+    this.evaluationEnabled = true
+  }
 
 }

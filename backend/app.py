@@ -8,6 +8,7 @@ from flask import Flask, flash, request, send_from_directory, current_app
 from flask_cors import cross_origin
 
 from dtos.response import Response
+from eval.simulation_evaluator import SimulationEvaluator
 from input_ocel_processing.ocel_file_format import OcelFileFormat
 from input_ocel_processing.postprocessor import InputOCELPostprocessor
 from input_ocel_processing.preprocessor import InputOCELPreprocessor
@@ -15,14 +16,11 @@ from input_ocel_processing.process_config import ProcessConfig
 from object_model_generation.generator_parametrization import GeneratorParametrization
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
-from object_model_generation.object_type_graph import ObjectTypeGraph
-from object_model_generation.original_marking_maker import OriginalMarkingMaker
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
 from simulation.simulator import Simulator
 from utils.request_params_parser import RequestParamsParser
-from ast import literal_eval as make_tuple
 
 RUNTIME_RESOURCE_FOLDER = os.path.abspath('runtime_resources')
 ALLOWED_EXTENSIONS = {'jsonocel', 'xml'}
@@ -178,7 +176,8 @@ def generate_object_model():
     object_model_generator.generate()
     object_model_generator.make_model_and_stats()
     object_model_generator.save()
-    return object_model_generator.get_response()
+    response = object_model_generator.get_response()
+    return response
 
 @app.route('/discover-ocpn', methods=['GET', 'POST'])
 @cross_origin()
@@ -271,6 +270,17 @@ def initialize_simulation():
     simulator.save()
     return Response.get(state)
 
+@app.route('/eval-simulation', methods=['GET'])
+@cross_origin()
+def simulation_eval():
+    args = request.args
+    session_key = args["sessionKey"]
+    session_path = get_session_path(request)
+    print(session_key)
+    simulation_evaluator = SimulationEvaluator(session_path)
+    simulation_evaluator.evaluate()
+    response = simulation_evaluator.export()
+    return Response.get(response)
 
 @app.route('/simulate', methods=['GET'])
 @cross_origin()
@@ -284,21 +294,6 @@ def simulate():
     simulator.save()
     return Response.get(state)
 
-def simulation_eval():
-    args = request.args
-    steps = int(args['steps'])
-    session_path = get_session_path(request)
-    eval_path = os.path.join(session_path, "ocim_eval.txt")
-    with open(eval_path) as rf:
-        rs = rf.read().strip()
-        precision_s, fitness_s = rs.split(";")
-        precision = precision_s.split("=")[1]
-        fitness = fitness_s.split("=")[1]
-        return {
-            "precision": precision,
-            "fitness": fitness
-        }
-
 @app.route('/ocel-export', methods=['GET'])
 @cross_origin()
 def exportOCEL():
@@ -310,7 +305,6 @@ def exportOCEL():
         path = "/",
         filename="simulated_ocel.jsonocel"
     )
-
 
 def make_session():
     with open("running_session_key") as rf:

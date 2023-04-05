@@ -42,13 +42,6 @@ class ObjectModelGenerator:
         self.__reindex_generated_objects()
         self.__make_arrival_times()
 
-
-    def __make_arrival_times(self):
-        self.__make_prior_arrival_times_distributions()
-        self.__make_relative_arrival_times_distributions()
-        self.__assign_arrival_times()
-        self.__make_arrival_stats()
-
     def make_model_and_stats(self):
         session_path = self.sessionPath
         obj: ObjectInstance
@@ -60,10 +53,10 @@ class ObjectModelGenerator:
         }
         original_objs_dict = {}
         for otype, objs in self.trainingModelPreprocessor.totalObjectModel.items():
-            arrival_times = dict(self.arrivalTimes[otype])
+            arrival_times = dict(self.trainingModelPreprocessor.arrivalTimes[otype])
             for oid in objs:
                 obj_inst = ObjectInstance(otype, str(oid))
-                time = round(float((arrival_times[oid])))
+                time = round(float(arrival_times[oid]))
                 obj_inst.time = time
                 original_objs_dict[str(oid)] = obj_inst
         for otype, objs in self.trainingModelPreprocessor.directObjectModel.items():
@@ -73,7 +66,6 @@ class ObjectModelGenerator:
                 all_adj_objs = []
                 for any_otype, any_objs in adj_objs.items():
                     for any_obj in any_objs:
-
                         any_obj_inst = original_objs_dict[str(any_obj)]
                         obj_inst.direct_object_model[any_otype].add(any_obj_inst)
                         any_obj_inst.reverse_object_model[otype].add(obj_inst)
@@ -234,33 +226,7 @@ class ObjectModelGenerator:
             arrival_times_distributions[otype] = dist
         self.arrivalTimesDistributions = arrival_times_distributions
 
-
-    # TODO: assign arrival times relative to related objects
-    def __make_arrival_stats(self):
-        log_based_relative_arrival_times = self.logBasedRelativeArrivalTimes
-        simulated_relative_arrival_times = {otype: {any_otype: [] for any_otype in self.otypes} for otype in
-                                            self.otypes}
-        for otype in self.otypes:
-            obj: ObjectInstance
-            for obj in self.generatedObjects[otype]:
-                arrival_time = obj.time
-                for any_otype in self.otypes:
-                    path = (otype, any_otype)
-                    if path not in obj.global_model[1]:
-                        continue
-                    for related_obj in obj.global_model[1][path]:
-                        related_arrival_time = related_obj.time
-                        relative_arrival_time = related_arrival_time - arrival_time
-                        simulated_relative_arrival_times[otype][any_otype].append(relative_arrival_time)
-            log_based_arr_stats_path = os.path.join(self.sessionPath, "arrival_times_" + otype + "_log_based.pkl")
-            simulated_arr_stats_path = os.path.join(self.sessionPath, "arrival_times_" + otype + "_simulated.pkl")
-            with open(log_based_arr_stats_path, "wb") as wf:
-                pickle.dump(log_based_relative_arrival_times[otype], wf)
-            with open(simulated_arr_stats_path, "wb") as wf:
-                pickle.dump(simulated_relative_arrival_times[otype], wf)
-
-
-    def __assign_arrival_times(self):
+    def __make_arrival_times(self):
         logging.info("Assigning Arrival Times...")
         seed_type = self.objectModelParameters.seedType
         seed_objects = list(self.generatedObjects[seed_type])
@@ -270,6 +236,17 @@ class ObjectModelGenerator:
         handled_objs = set()
         current_obj: ObjectInstance
         related_obj: ObjectInstance
+        seed_type_time_dist = self.trainingModelPreprocessor.generatorParametrization.get_parameters(
+                    seed_type, ParameterType.TIMING.value, "Arrival Rates (independent)")
+        related_time_dists = {}
+        # TODO: make this more safe (assumption that all relative arrival rate distributions for neighboring types exist)
+        for otype in self.otypes:
+            related_time_dists[otype] = {}
+            time_dists = self.trainingModelPreprocessor.generatorParametrization.get_parameters(otype, ParameterType.TIMING.value)
+            for any_type in self.otypes:
+                attr = "Arrival Rates (relative to '" + any_type + "')"
+                if attr in time_dists:
+                    related_time_dists[otype][any_type] = time_dists[attr]
         while len(buffer) > 0:
             current_obj = buffer[0]
             buffer = buffer[1:]
@@ -277,7 +254,7 @@ class ObjectModelGenerator:
             if current_otype == seed_type:
                 current_obj.time = running_timestamps[current_otype]
                 handled_objs.add(current_obj)
-                time = round(self.arrivalTimesDistributions[seed_type].sample())
+                time = round(seed_type_time_dist.draw())
                 running_timestamps[current_otype] = running_timestamps[current_otype] + time
             open_local_model = {
                 obj for sl in current_obj.total_local_model.values()
@@ -287,8 +264,7 @@ class ObjectModelGenerator:
             for related_obj in open_local_model:
                 related_type = related_obj.otype
                 if related_type != seed_type:
-                    relative_arrival_time = round(
-                        self.relativeArrivalTimesDistributions[current_otype][related_type].sample())
+                    relative_arrival_time = round(related_time_dists[related_type][current_otype].draw())
                     related_obj.time = current_obj.time + relative_arrival_time
                 handled_objs.add(related_obj)
                 buffer = buffer + [related_obj]
@@ -562,7 +538,7 @@ class ObjectModelGenerator:
         support = 1
         support_events = 0
         if not extension_side_objects:
-            return support
+            return support, support_events
         reversed_extension_side_path = list(extension_side_path[:])
         reversed_extension_side_path.reverse()
         for i, otype in enumerate(other_side_path):
@@ -644,20 +620,8 @@ class ObjectModelGenerator:
         for ot in self.otypes:
             response_dict[ot] = dict()
             generated_objects = self.generatedObjects[ot]
-            response_dict[ot]["simulation_stats"] = self.__get_arrival_rate_mean_stdev(generated_objects)
-            orig_mean = self.arrivalTimesDistributions[ot].mean
-            orig_stdev = self.arrivalTimesDistributions[ot].stdev
-            response_dict[ot]["original_stats"] = {
-                "mean": orig_mean,
-                "stdev": orig_stdev
-            }
-            response_dict[ot]["simulation_stats"]["relations"] = dict()
-            for any_ot in self.otypes:
-                relation_stats = self.__get_relation_mean_stdev(generated_objects, any_ot)
-                response_dict[ot]["simulation_stats"]["relations"][any_ot] = relation_stats
-            response_dict[ot]["simulation_stats"]["number_of_objects"] = len(generated_objects)
+            response_dict[ot]["number_of_objects"] = len(generated_objects)
         return response_dict
-
 
     def __get_relation_mean_stdev(self, objs, otype):
         rel_cards = list(map(lambda obj: len(obj.total_local_model[otype]), objs))

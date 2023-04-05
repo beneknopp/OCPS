@@ -23,6 +23,10 @@ class InputOCELPostprocessor:
             for otype in otypes
         })
         pm4py.write_ocel(postprocessed_ocel, postprocessed_ocel_path)
+        for otype in otypes:
+            flog = pm4py.ocel.ocel_flattening(postprocessed_ocel, otype)
+            flat_path = os.path.join(self.session_path, "flattened_" + otype + ".xes")
+            pm4py.write_xes(flog, flat_path)
         return postprocessed_ocel
 
     def make_default_distributions(self):

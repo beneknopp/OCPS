@@ -57,10 +57,10 @@ export class AppService {
     )
   }
 
-  getParameters(session_key: string,  otype: string, parameter_type: string) {
+  getParameters(session_key: string, otype: string, parameter_type: string) {
     let request_parameters = 'sessionKey=' + session_key + "&"
-    + 'otype=' + otype + "&"
-    + 'parameterType=' + parameter_type
+      + 'otype=' + otype + "&"
+      + 'parameterType=' + parameter_type
     return this.http.get<any>(this.backendUrl + 'generator-parameters?' + request_parameters
     ).pipe(
       tap(_ => this.log('object stats queried')),
@@ -159,6 +159,12 @@ export class AppService {
       tap(_ => this.log('simulation ran')),
       catchError(this.handleError<String>('startSimulation', ""))
     )
+  }
+
+  getEvaluation(session_key: string) {
+    return this.http.get<any>(this.backendUrl + "eval-simulation?sessionKey=" + session_key).pipe(
+      tap(_ => this.log('got evaluation')),
+      catchError(this.handleError<String>('startSimulation', "")))
   }
 
   public exportOCEL(session_key: string) {

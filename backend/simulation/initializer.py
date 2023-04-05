@@ -78,8 +78,9 @@ class SimulationInitializer:
             features["act:" + act] = 0
         for any_otype in self.otypes:
            features["otype:" + any_otype] = len(obj.total_local_model[any_otype])
-        for key, value in obj.attributes.items():
-            features["attr:" + key] = value
+        # TOOO. how to incorporate non-categorical features?
+        #for key, value in obj.attributes.items():
+        #    features["attr:" + key] = value
         self.objectFeatures[obj.otype][obj.oid] = features
 
     def __load_net(self):

@@ -66,7 +66,9 @@ class OcelMaker:
         ocel_path = os.path.join(self.sessionPath, "simulated_ocel_origMarking=" + str(self.processConfig.useOriginalMarking).lower() + \
                                  "_nofObjects=" + str(nof_objs) + ".jsonocel")
         pm4py.write_ocel(filtered_simulated_ocel, ocel_path)
+        ProcessConfig.update_simul_count(self.sessionPath, nof_objs)
         for otype in self.processConfig.otypes:
             flattened_otype_simulated = ocel_flattening(simulated_ocel, otype)
             flat_path = os.path.join(self.sessionPath, 'flattened_' + otype + '_simulated_' + str(nof_objs) + '.xes')
             pm4py.write_xes(flattened_otype_simulated, flat_path)
+            ProcessConfig.update_simul_type_count(self.sessionPath, otype, nof_objs)

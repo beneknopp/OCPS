@@ -194,7 +194,6 @@ class Predictors:
                 for key, value in stats_dict.items()
             }
             self.mean_act_delays[otype] = stats_dict
-
         self.delay_predictors = delay_predictors
 
     def save(self):

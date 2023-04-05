@@ -83,8 +83,6 @@ class SimulationNet:
                     place = places[preset_index]
                     old_preset = self.marking.tokensByPlaces[place]
                     obj_in_old_preset = list(filter(lambda token: token.oid == obj.oid, old_preset))
-                    if len(obj_in_old_preset) == 0:
-                        raise AttributeError("Missing tokens for transition firing")
                     bound_token: Token = obj_in_old_preset[0]
                     firing_time = bound_token.time if bound_token.time > firing_time else firing_time
                     bound_tokens.append(bound_token)
@@ -104,6 +102,8 @@ class SimulationNet:
                 if otype not in self.processConfig.nonEmittingTypes:
                     self.marking.update_object_time(obj.oid, new_tokens_time)
                     simulation_object.time = new_tokens_time
+                    if transition_name in self.acts:
+                        simulation_object.lastActivity = transition_name
                 obj.time = new_tokens_time
         return firing_time
 

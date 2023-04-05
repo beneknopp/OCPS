@@ -35,7 +35,7 @@
       <fa-icon [ngClass]="false ? 'fa-3x fa-arrows-enabled' : 'fa-3x fa-arrows-disabled'"
       [icon]="doubleRightArrowsIcon"></fa-icon>
     </div>
-    <button class="card card-small" routerLink="/simulate_process" [disabled]="true"
+    <button class="card card-small" routerLink="/evaluate_simulation" [disabled]="!domService.evaluationEnabled"
     [ngClass]="router.url === '/evaluate' ? 'active-card' : ''">
       <span>Evaluate</span>
     </button>    

@@ -20,7 +20,8 @@ class SimulationObjectInstance:
     time: int
     tokens: list  # of Token
     directObjectModel: dict # of SimulationObjectInstance
-    active: bool # next activity predicted
+    active: bool # next activity is clear
+    lastActivity: str | None
     nextActivity: ScheduledActivity
 
     def __init__(self, obj_instance: ObjectInstance, tokens):
@@ -30,4 +31,5 @@ class SimulationObjectInstance:
         self.time = obj_instance.time
         self.tokens = tokens
         self.active = False
+        self.lastActivity = None
         self.directObjectModel = dict()
