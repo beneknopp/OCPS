@@ -43,6 +43,14 @@ export class AppService {
     )
   }
 
+  getObjectModelNames(session_key: string) {
+    return this.http.get<any>(this.backendUrl + 'object-model-names'
+      + '?sessionKey=' + session_key
+    ).pipe(
+      tap(_ => this.log('object model names queried')),
+      catchError(this.handleError<String>('getObjectModelNames', ""))
+    )  }
+
   initializeObjectGenerator(session_key: string, formData: FormData) {
     return this.http.post<any>(this.backendUrl + 'initialize-object-generator?sessionKey=' + session_key, formData).pipe(
       tap(_ => this.log('object generator initialized')),
@@ -145,9 +153,11 @@ export class AppService {
       )
   }
 
-  initializeSimulation(session_key: string, useOriginalMarking: boolean) {
-    let useOriginalMarking_str = String(useOriginalMarking)
-    let url = this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key + "&useOriginalMarking=" + useOriginalMarking_str
+  initializeSimulation(session_key: string, use_original_marking: boolean, object_model_name = "") {
+    let useOriginalMarking_str = String(use_original_marking)
+    let url = this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key 
+      + "&useOriginalMarking=" + useOriginalMarking_str
+      + "&objectModelName=" + object_model_name
     return this.http.get<any>(url).pipe(
       tap(_ => this.log('simulation initiated')),
       catchError(this.handleError<String>('startSimulation', ""))
@@ -157,6 +167,13 @@ export class AppService {
   startSimulation(steps: number, session_key: string) {
     return this.http.get<any>(this.backendUrl + 'simulate?steps=' + steps + "&sessionKey=" + session_key).pipe(
       tap(_ => this.log('simulation ran')),
+      catchError(this.handleError<String>('startSimulation', ""))
+    )
+  }
+
+  setObjectModelName(session_key: string, name: string) {
+    return this.http.get<any>(this.backendUrl + 'name-objects?sessionKey=' + session_key + '&name=' + name).pipe(
+      tap(_ => this.log('objects named')),
       catchError(this.handleError<String>('startSimulation', ""))
     )
   }

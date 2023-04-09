@@ -19,7 +19,7 @@ export class ObjectModelInfo {
   selectedSeedType: string | undefined = undefined
   nonEmittingTypes: string[] = []
   numberOfObjects: number = 0
-  markingName: string
+  name: string
   executionModelDepth: number = 1
   executionModelEvaluationDepth: number = 1
   activitySelectedTypes: { [act: string]: string[] }
@@ -30,7 +30,7 @@ export class ObjectModelInfo {
     selectedSeedType: string | undefined = undefined,
     nonEmittingTypes: string[] = [],
     numberOfObjects: number = 0,
-    markingName: string = "",
+    name: string = "",
     executionModelDepth: number = 1,
     executionModelEvaluationDepth: number = 1,
     activitySelectedTypes: { [act: string]: string[] } = {},
@@ -40,7 +40,7 @@ export class ObjectModelInfo {
     this.selectedSeedType = selectedSeedType
     this.nonEmittingTypes = nonEmittingTypes
     this.numberOfObjects = numberOfObjects
-    this.markingName = markingName
+    this.name = name
     this.executionModelDepth = executionModelDepth
     this.executionModelEvaluationDepth = executionModelEvaluationDepth
     this.activitySelectedTypes = activitySelectedTypes

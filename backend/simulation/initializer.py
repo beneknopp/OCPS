@@ -14,7 +14,7 @@ from ocpn_discovery.net_utils import Place, NetProjections
 from .ocel_maker import OcelMaker
 from .sim_utils import Marking, Token, Predictors
 from .simulation_net import SimulationNet
-from .simulation_object_instance import SimulationObjectInstance
+from object_model_generation.object_instance import SimulationObjectInstance
 
 
 class SimulationInitializer:
@@ -28,9 +28,9 @@ class SimulationInitializer:
         self.processConfig: ProcessConfig = ProcessConfig.load(session_path)
         self.otypes = self.processConfig.otypes
 
-    def load(self):
+    def load(self, object_model_name = ""):
         self.__load_net()
-        self.__load_object_model()
+        self.__load_object_model(object_model_name)
 
     def initialize(self):
         self.__make_initial_marking()
@@ -67,10 +67,6 @@ class SimulationInitializer:
     def __make_object_feature_names(self):
         self.objectFeatureNames = ["act:" + act for act in self.processConfig.acts] + \
                                   ["otype:" + any_otype for any_otype in self.otypes]
-                                  #list(set(["attr:" + key
-                                   #         for obj in self.objectModel.objectsById.values()
-                                    #        for key in obj.attributes.keys()]))  # +\
-
 
     def __initialize_object_features(self, obj: ObjectInstance):
         features = {}
@@ -86,8 +82,12 @@ class SimulationInitializer:
     def __load_net(self):
         self.netProjections = NetProjections.load(self.sessionPath)
 
-    def __load_object_model(self):
-        self.objectModel = ObjectModel.load(self.sessionPath, self.processConfig.useOriginalMarking)
+    def __load_object_model(self, name = ""):
+        path = self.sessionPath
+        if len(name) > 0:
+            path = os.path.join(path, "objects")
+            path = os.path.join(path, name)
+        self.objectModel = ObjectModel.load(path, self.processConfig.useOriginalMarking)
 
     def __make_initial_marking(self):
         self.tokens = []
@@ -101,6 +101,7 @@ class SimulationInitializer:
             if len(initial_places) != 1:
                 raise ValueError("The number of initial places for '" + otype + "' is not exactly 1.")
             p = initial_places[0]
+            # TODO: fix error when using original marking
             for obj in self.objectModel.objectsByType[otype].keys():
                 token = Token(obj.oid, otype, obj.time, p)
                 simulation_object = SimulationObjectInstance(obj, [token])
@@ -118,6 +119,9 @@ class SimulationInitializer:
                         if any_otype not in sim_obj.directObjectModel:
                             sim_obj.directObjectModel[any_otype] = []
                         sim_obj.directObjectModel[any_otype].append(any_sim_obj)
+                        if otype not in any_sim_obj.directObjectModel:
+                            any_sim_obj.reverseObjectModel[otype] = []
+                        any_sim_obj.reverseObjectModel[otype] = list(set(any_sim_obj.reverseObjectModel[otype] + [sim_obj]))
         self.simulationObjects = simulation_objects
 
     def __make_simulation_net(self):
@@ -205,6 +209,7 @@ class SimulationInitializer:
     def __compute_delays(self, otype):
         training_frame = self.training_data[otype]
         training_frame["delay"] = 0
+        training_frame["lastact"] = "START_" + otype
         training_frame["int:timestamp"] = training_frame \
             .apply(lambda row: int(row["time:timestamp"].timestamp()), axis=1
                    )
@@ -216,8 +221,10 @@ class SimulationInitializer:
             index, line = nextline
             if line["case:concept:name"] == lastline["case:concept:name"]:
                 # Update DELAY
+                last_act = lastline["concept:name"]
                 delay = line["int:timestamp"] - lastline["int:timestamp"]
-                training_frame.at[lastindex, 'delay'] = delay
+                training_frame.at[index, 'delay'] = delay
+                training_frame.at[index, 'lastact'] = last_act
             lastline, lastindex = line, index
             nextline = next(iterator, None)
         self.training_data[otype] = training_frame

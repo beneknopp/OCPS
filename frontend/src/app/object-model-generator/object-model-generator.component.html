@@ -8,20 +8,27 @@
             </div>
             <div>
                 <button class="card card-small"
-                    [disabled]="!configValid || !initialized || !objectModelInfo.selectedSeedType"
+                    [disabled]="!configValid || !generatorInitialized || !objectModelInfo.selectedSeedType || objectModelInfo.numberOfObjects == 0"
                     (click)="onClickStart()" tabindex="0">
                     <span>Start Generation</span>
                 </button>
-                <!--<div class="object-model-form-field">
-                    <label>Name of Object Set</label><br>
+                <div class="object-model-form-field" style="margin-left: 10px">
+                    <label>Name of Object Model</label><br>
                     <div style="margin-top: 20px">
-                        <input type="text" placeholder="" [(ngModel)]="objectModelInfo.markingName">
+                        <input [disabled]="!responseValid" type="text" placeholder=""
+                            [(ngModel)]="objectModelInfo.name">
                     </div>
-                </div>-->
-                <button [disabled]="!responseValid" class="card card-small"
+                </div>
+                <button [disabled]="!responseValid || objectModelInfo.name.length == 0" class="card card-small"
                     (click)="onClickSave()" tabindex="0">
                     <span>Save Objects</span>
                 </button>
+                <div style="margin-left: 15px" *ngIf="savedObjectModels.length > 0">
+                    <label>Existing Object Models:</label><br>
+                    <div style="margin-top: 20px">
+                        <span *ngFor="let om of savedObjectModels">{{om}}<br></span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -44,7 +51,7 @@
         <div class="object-model-form-field">
             <label>Object Type</label>
             <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.selectedSeedType" [multiple]="false"
-                (click)="onChangeSelectedSeedType()" [disabled]="!initialized">
+                (change)="onChangeSelectedSeedType()" [disabled]="!generatorInitialized">
                 <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
                 </ng-option>
             </ng-select>
@@ -53,18 +60,9 @@
             <label>Number of Objects</label><br>
             <div style="margin-top: 20px">
                 <input type="number" placeholder="0" [(ngModel)]="objectModelInfo.numberOfObjects"
-                    [disabled]="!initialized">
+                    [disabled]="!generatorInitialized || !objectModelInfo.selectedSeedType">
             </div>
         </div>
-
-        <!--<div class="object-model-form-field">
-            <label>Non-Emitting Types</label>
-            <ng-select class="custom-ng-select" [(ngModel)]="objectModelInfo.nonEmittingTypes" [multiple]="true"
-                (click)="onChangeNonEmittingTypes()">
-                <ng-option *ngFor="let otype of objectModelInfo.otypes" [value]="otype">{{otype}}
-                </ng-option>
-            </ng-select>
-        </div>-->
         <div *ngIf="omgResponse">
             <br>
             <h4>Number of Generated Objects:</h4>
@@ -134,10 +132,6 @@
                             [disabled]="!trainingSelectionMap[attribute]" [(ngModel)]="parameterMap[attribute]"
                             (click)="onTouchParameters(attribute)">
                             </textarea>
-                        <!--<div *ngIf="trainingModelMap[attribute] == 'Custom'" >
-                            <label>Mean Shift</label>
-                            <input type="number" style="width: 180px;"  [(ngModel)]="meanShift[attribute]" [disabled]="!trainingSelectionMap[attribute]">
-                        </div>-->
                     </div>
                 </div>
             </div>

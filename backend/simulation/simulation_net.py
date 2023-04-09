@@ -2,11 +2,11 @@ import os
 import pickle
 
 from input_ocel_processing.process_config import ProcessConfig
-from object_model_generation.object_instance import ObjectInstance
+from object_model_generation.object_instance import ObjectInstance, ScheduledActivity
 from object_model_generation.object_model import ObjectModel
-from ocpn_discovery.net_utils import Place, NetProjections
+from ocpn_discovery.net_utils import Place, NetProjections, Transition
 from .sim_utils import Token, Marking
-from .simulation_object_instance import SimulationObjectInstance
+from object_model_generation.object_instance import SimulationObjectInstance
 from .state_space_computer import StateSpaceComputer
 
 
@@ -42,7 +42,7 @@ class SimulationNet:
         with open(simulation_net_path, "wb") as write_file:
             pickle.dump(self, write_file)
 
-    def fire(self, transition_name, objects, delays: dict):
+    def fire(self, transition_name, objects):
         obj: ObjectInstance
         otypes = {obj.otype for obj in objects}
         bound_objects_by_otype = {otype: set() for otype in otypes}
@@ -50,7 +50,14 @@ class SimulationNet:
             bound_objects_by_otype[obj.otype].add(obj)
         preset_indices_by_otype = {}
         postset_indices_by_otype = {}
+        currentScheduledActivity: ScheduledActivity
+        if transition_name in self.acts:
+            leading_type = self.processConfig.activityLeadingTypes[transition_name]
+            leading_obj = list(filter(lambda obj: obj.otype == leading_type, objects))[0]
+            leading_sim_obj: SimulationObjectInstance = self.simulationObjects[leading_obj.oid]
+            currentScheduledActivity = leading_sim_obj.nextActivity
         token: Token
+        transition: Transition
         for otype in otypes:
             # Check binding validity and determine pre- and postsets
             projected_net = self.netProjections.get_otype_projection(otype)
@@ -71,7 +78,6 @@ class SimulationNet:
                                              + " missing at place '" + place.id + "'.")
             preset_indices_by_otype[otype] = preset_indices
             postset_indices_by_otype[otype] = postset_indices
-        firing_time = -1
         for otype in otypes:
             # deduct tokens from preset and find maximal time of bound tokens
             projected_net = self.netProjections.get_otype_projection(otype)
@@ -84,27 +90,33 @@ class SimulationNet:
                     old_preset = self.marking.tokensByPlaces[place]
                     obj_in_old_preset = list(filter(lambda token: token.oid == obj.oid, old_preset))
                     bound_token: Token = obj_in_old_preset[0]
-                    firing_time = bound_token.time if bound_token.time > firing_time else firing_time
                     bound_tokens.append(bound_token)
                     self.marking.remove_token(place, bound_token)
+        firing_time = 0
         for otype in otypes:
             # add tokens to postsets with object-type specific delays
             projected_net = self.netProjections.get_otype_projection(otype)
             places = projected_net.places
             for obj in bound_objects_by_otype[otype]:
                 place: Place
-                new_tokens_time = firing_time + delays[obj.oid]
+                simulation_object: SimulationObjectInstance = self.simulationObjects[obj.oid]
+                simulation_object.active = False
+                delay = 0
+                if transition_name in self.acts:
+                    simulation_object.lastActivity = transition_name
+                    simulation_object.nextActivity = None
+                    delay = currentScheduledActivity.delays[simulation_object]
+                new_tokens_time = simulation_object.time + delay
+                firing_time += new_tokens_time
                 for postset_index in postset_indices_by_otype[otype]:
                     place = places[postset_index]
                     new_token = Token(obj.oid, otype, new_tokens_time, place)
                     self.marking.add_token(new_token)
-                simulation_object: SimulationObjectInstance = self.simulationObjects[obj.oid]
                 if otype not in self.processConfig.nonEmittingTypes:
                     self.marking.update_object_time(obj.oid, new_tokens_time)
                     simulation_object.time = new_tokens_time
-                    if transition_name in self.acts:
-                        simulation_object.lastActivity = transition_name
                 obj.time = new_tokens_time
+        firing_time = int(round(float(firing_time / len(objects))))
         return firing_time
 
     def get_all_running_emitting_tokens(self):

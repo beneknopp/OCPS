@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import pickle
+import sys
+
 import numpy as np
 import pm4py
 from flask import Flask, flash, request, send_from_directory, current_app
@@ -34,7 +36,6 @@ app.config['RUNTIME_RESOURCE_FOLDER'] = RUNTIME_RESOURCE_FOLDER
 def hello_world():  # put application's code here
     return {"ping": "Hello World!"}
 
-
 @app.route('/upload-ocel', methods=['GET', 'POST'])
 @cross_origin()
 def upload_ocel():
@@ -63,7 +64,6 @@ def upload_ocel():
         }
     return Response.get(False)
 
-
 @app.route('/ocel-config', methods=['GET', 'POST'])
 @cross_origin()
 def ocel_config():
@@ -79,6 +79,14 @@ def ocel_config():
     postprocessed_ocel = postprocessor.postprocess()
     #OriginalMarkingMaker(postprocessed_ocel, process_config)
     return Response.get(True)
+
+@app.route('/object-model-names', methods=['GET'])
+@cross_origin()
+def objectModelNames():
+    session_path = get_session_path(request)
+    oms_path = os.path.join(session_path, "objects")
+    names = list(os.walk(oms_path))[0][1]
+    return Response.get(names)
 
 @app.route('/initialize-object-generator', methods=['POST'])
 @cross_origin()
@@ -179,6 +187,15 @@ def generate_object_model():
     response = object_model_generator.get_response()
     return response
 
+@app.route('/name-objects', methods=['GET'])
+@cross_origin()
+def nameObjects():
+    args = request.args
+    session_path = get_session_path(request)
+    name = args["name"]
+    ObjectModelGenerator.name(session_path, name)
+    return Response.get({})
+
 @app.route('/discover-ocpn', methods=['GET', 'POST'])
 @cross_origin()
 def discover_ocpn():
@@ -248,18 +265,18 @@ def arrival_stats():
         }
     return Response.get(resp)
 
-
 @app.route('/initialize-simulation', methods=['GET'])
 @cross_origin()
 def initialize_simulation():
     args = request.args
     session_key = args["sessionKey"]
     use_original_marking = args["useOriginalMarking"] == "true"
+    object_model_name = args["objectModelName"] if not use_original_marking else ""
     session_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
     ProcessConfig.update_use_original_marking(session_path, use_original_marking)
     start_logging(session_path)
     simulation_initializer = SimulationInitializer(session_path)
-    simulation_initializer.load()
+    simulation_initializer.load(object_model_name)
     simulation_initializer.initialize()
     simulation_initializer.save()
     del simulation_initializer
@@ -276,7 +293,6 @@ def simulation_eval():
     args = request.args
     session_key = args["sessionKey"]
     session_path = get_session_path(request)
-    print(session_key)
     simulation_evaluator = SimulationEvaluator(session_path)
     simulation_evaluator.evaluate()
     response = simulation_evaluator.export()
@@ -288,7 +304,10 @@ def simulate():
     args = request.args
     steps = int(args['steps'])
     session_path = get_session_path(request)
+    start_logging(session_path)
     simulator = Simulator.load(session_path)
+    # debug hotfix if all is inactive
+    #simulator.schedule_next_activity()
     simulator.run_steps(steps)
     state = simulator.export_current_state()
     simulator.save()
@@ -318,14 +337,13 @@ def make_session():
     except FileNotFoundError:
         os.mkdir(app.config['RUNTIME_RESOURCE_FOLDER'])
         os.mkdir(session_path)
+    os.mkdir(os.path.join(session_path, "objects"))
     start_logging(session_path)
     return session_key, session_path
-
 
 def start_logging(session_path):
     logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
                         encoding='utf-8', level=logging.DEBUG)
-
 
 def get_session_path(request):
     args = request.args
@@ -333,16 +351,14 @@ def get_session_path(request):
     session_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
     return session_path
 
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 # TODO: delete existing resources for new OCEL to work on
 def clear_state():
     pass
 
-
 if __name__ == '__main__':
+    app.debug = True
     app.run()

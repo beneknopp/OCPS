@@ -1,5 +1,6 @@
 import logging
 
+from ocpn_discovery.net_utils import Transition
 from utils.support_distribution import SupportDistribution
 from object_model_generation.generator_parametrization import AttributeParameterization
 
@@ -10,6 +11,7 @@ class ObjectInstance:
     executionModelEvaluationDepth: int
     supportDistributions: dict
     attributes: dict
+    simulationObjectInstance: any
 
     @classmethod
     def set_(cls, otypes, execution_model_paths, execution_model_depth, execution_model_evaluation_depth, schema_distributions):
@@ -128,3 +130,44 @@ class ObjectInstance:
 
     def assign_attribute(self, attribute, value):
         self.attributes[attribute] = value
+
+
+class ScheduledActivity:
+    transition: Transition
+    paths: dict  # object id -> firing sequence
+    delays: dict
+    time: int  # time of execution as maximal time of involvedObjects
+    def __init__(self, transition, paths, delays, time):
+        self.transition = transition
+        self.paths = paths
+        self.delays = delays
+        self.time = time
+
+
+class SimulationObjectInstance:
+    objectInstance: ObjectInstance
+    oid: str
+    otype: str
+    time: int
+    tokens: list  # of Token
+    directObjectModel: dict # of SimulationObjectInstance
+    reverseObjectModel: dict
+    active: bool # next activity is clear
+    lastActivity: str
+    nextActivity: ScheduledActivity
+
+    def set_inactive(self):
+        self.active = False
+        self.nextActivity = None
+
+    def __init__(self, obj_instance: ObjectInstance, tokens):
+        self.objectInstance = obj_instance
+        obj_instance.simulationObjectInstance = self
+        self.oid = obj_instance.oid
+        self.otype = obj_instance.otype
+        self.time = obj_instance.time
+        self.tokens = tokens
+        self.active = False
+        self.directObjectModel = dict()
+        self.reverseObjectModel = dict()
+        self.lastActivity = "START_" + obj_instance.otype

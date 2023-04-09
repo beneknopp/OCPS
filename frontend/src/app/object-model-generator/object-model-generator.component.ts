@@ -14,7 +14,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
   objectModelInfo: ObjectModelInfo = new ObjectModelInfo()
   configValid = true
-  initialized = false
+  generatorInitialized = false
   reloadStats = false
   responseValid = false;
   selectedSeedType = undefined
@@ -33,13 +33,8 @@ export class ObjectModelGeneratorComponent implements OnInit {
   parameterMap: { [attribute: string]: string } = {}
   load: boolean = true
 
-  public barChartData: { [otype: string]: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] } = {
-    'orders': [
-      { data: [0.0, 0.2, 0.4, 0.3, 0.1, 0.0, 0.0], label: 'Log-Based' },
-      { data: [0.0, 0.15, 0.25, 0.25, 0.2, 0.15, 0], label: 'Simulated' }
-    ]
-  };
-  public mbarChartLabels: { [otype: string]: string[] } = { 'orders': ['0', '1', '2', '3', '4', '5', '6'] };
+  public barChartData: { [otype: string]: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] } = {};
+  public mbarChartLabels: { [otype: string]: string[] } = {};
   public barChartType: string = 'bar';
   public barChartOptions: any = {
     scaleShowVerticalLines: false,
@@ -65,6 +60,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
   ];
   omgResponse: ObjectModelGenerationResponse | undefined;
   attributes: string[] = [];
+  savedObjectModels: string[] = [];
 
 
   constructor(
@@ -74,8 +70,11 @@ export class ObjectModelGeneratorComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.onInit()
+  }
+
+  onInit() {
     this.sessionKey = this.domService.getSessionKey()
-    // TODO
     this.domService.objectModelInfo$.subscribe(object_model_info => {
       this.domService.otypeLocalModels$.subscribe(otype_local_models => {
         this.domService.activitySelectedTypes$.subscribe((activity_selected_types) => {
@@ -84,6 +83,20 @@ export class ObjectModelGeneratorComponent implements OnInit {
           })
         })
       })
+    })
+    this.getObjectModelNames()
+    this.omgResponse = undefined
+    this.barChartData = {}
+    this.attributes = []
+    this.generatorInitialized = false
+  }
+
+  getObjectModelNames() {
+    if (!this.sessionKey) {
+      return;
+    }
+    this.appService.getObjectModelNames(this.sessionKey).subscribe((res: { "resp": string[], "err": any }) => {
+      this.savedObjectModels = res["resp"]
     })
   }
 
@@ -162,7 +175,11 @@ export class ObjectModelGeneratorComponent implements OnInit {
       });
   }
 
-  onChangeSelectedSeedType() { }
+  onChangeSelectedSeedType() {
+    if (!this.objectModelInfo.selectedSeedType) {
+      this.objectModelInfo.numberOfObjects = 0
+    }
+  }
 
   onChangeNonEmittingTypes() { }
 
@@ -251,7 +268,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
 
   onClickInitialize() {
-    if (!this.sessionKey){ // && this.objectModelInfo.selectedSeedType)) {
+    if (!this.sessionKey) { // && this.objectModelInfo.selectedSeedType)) {
       return
     }
     const formData = new FormData();
@@ -277,13 +294,17 @@ export class ObjectModelGeneratorComponent implements OnInit {
         if (!this.selectedObjectType) {
           this.selectedObjectType = this.objectModelInfo.otypes[0]
         }
+        /*
+        if (!this.objectModelInfo.selectedSeedType) {
+          this.objectModelInfo.selectedSeedType = this.objectModelInfo.otypes[0]
+        } */
         if (!this.selectedParameterType) {
           this.selectedParameterType = this.statsTypes[0]
         }
         this.cachedSelectedObjectType = undefined
         this.cachedselectedParameterType = undefined
         this.onChangeStatsInput()
-        this.initialized = true
+        this.generatorInitialized = true
       });
   }
 
@@ -297,13 +318,19 @@ export class ObjectModelGeneratorComponent implements OnInit {
   }
 
   onClickSave() {
+    if (!this.sessionKey) {
+      return
+    }
     this.domService.setObjectModelValid(true)
     this.domService.setUseOriginalMarking(false)
-    if (this.domService.netConfigValid) {
+    this.appService.setObjectModelName(this.sessionKey, this.objectModelInfo.name).subscribe(_ => {
+      this.onInit()
+    })
+    /*if (this.domService.netConfigValid) {
       this.router.navigate(['simulate_process'])
     } else {
       this.router.navigate(['discover_ocpn'])
-    }
+    }*/
   }
 
   onSelectForTraining(attribute: string) {

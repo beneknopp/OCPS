@@ -653,3 +653,8 @@ class ObjectModelGenerator:
             "mean": mean,
             "stdev": stdev
         }
+
+    @classmethod
+    def name(cls, session_path, name):
+        generated_object_model: ObjectModel = ObjectModel.load(session_path, use_original=False)
+        generated_object_model.save(use_original=False, name=name)

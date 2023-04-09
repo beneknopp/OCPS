@@ -15,7 +15,7 @@ from ocpn_discovery.net_utils import Transition, TransitionType
 from simulation.ocel_maker import OcelMaker
 from simulation.sim_utils import Token, Predictors, SimulationStateExport, NextActivityCandidate
 from simulation.simulation_net import SimulationNet
-from simulation.simulation_object_instance import SimulationObjectInstance, ScheduledActivity
+from object_model_generation.object_instance import SimulationObjectInstance, ScheduledActivity
 from utils.cumulative_distribution import CumulativeDistribution
 from eval.evaluators import ocel_to_ocel
 
@@ -69,71 +69,77 @@ class Simulator:
                 break
         self.__write_ocel()
 
-    def __initialize_predictions(self):
-        simulation_objects = list(self.simulationNet.get_all_simulation_objects().values())
-        simulation_objects.sort(key=lambda so: so.time)
-        simulation_object: SimulationObjectInstance
-        simulation_objects = [simulation_object for simulation_object in simulation_objects
-                              if simulation_object.oid not in self.terminatedObjects]
-        for simulation_object in simulation_objects:
-            self.__predict_leading_activity(simulation_object)
+    def __get_delay_prediction(self, sim_obj: SimulationObjectInstance, next_activity: str):
+        otype = sim_obj.otype
+        predictor = self.predictors.mean_delays_act_to_act[otype]
+        numerical_features = self.objectFeatures[otype][sim_obj.oid]
+        numerical_features_vector = [numerical_features[ofen] for ofen in self.objectFeatureNames]
+        target_features_vector = [sim_obj.lastActivity, next_activity]
+        features_vector = tuple(numerical_features_vector + target_features_vector)
+        if features_vector not in predictor:
+            delay = self.__get_nearest_delay_prediction(otype, numerical_features_vector, target_features_vector, next_activity)
+        else:
+            delay = predictor[features_vector]
+        sim_obj.nextDelay = delay
+        return delay
 
     def __predict_leading_activity(self, simulation_object: SimulationObjectInstance):
         predicted_transition : Transition = self.__make_feature_based_leading_prediction(simulation_object)
         if predicted_transition is None:
-            simulation_object.active = False
-            simulation_object.nextActivity = None
-            return
+            return False
             # the prediction is feature-based and does not respect the marking
             # now, if the marking allows to realize the prediction, then schedule
             # is this correct? TODO
-        execution_objects = [simulation_object]
+        next_activity = predicted_transition.label
+        bound_simulation_objects = [simulation_object]
         if predicted_transition.transitionType == TransitionType.FINAL:
             # only terminate if parent objects have terminated
             if not self.__ready_for_termination(simulation_object):
-                simulation_object.active = False
-                simulation_object.nextActivity = None
-                return
+                return False
         else:
             direct_om = simulation_object.directObjectModel
             for any_otype in self.processConfig.otypes:
-                execution_objects += direct_om[any_otype] if any_otype in direct_om else []
+                bound_simulation_objects += direct_om[any_otype] if any_otype in direct_om else []
         any_sim_obj: SimulationObjectInstance
         paths = dict()
-        for any_sim_obj in execution_objects:
+        delays = {
+            any_sim_obj: self.__get_delay_prediction(any_sim_obj, next_activity)
+            for any_sim_obj in bound_simulation_objects
+        }
+        execution_time = max(map(lambda any_sim_obj: delays[any_sim_obj] + any_sim_obj.time, bound_simulation_objects))
+        for any_sim_obj in bound_simulation_objects:
             obj_instance: ObjectInstance = any_sim_obj.objectInstance
-            path_from_obj = self.simulationNet.compute_path(obj_instance, predicted_transition.label)
+            path_from_obj = self.simulationNet.compute_path(obj_instance, next_activity)
             if path_from_obj is None:
-                simulation_object.active = False
-                simulation_object.nextActivity = None
-                return
+                return False
             paths[obj_instance] = path_from_obj
-        execution_time = max(map(lambda obj : obj.time, execution_objects))
-        scheduled_activity = ScheduledActivity(predicted_transition, paths, execution_time)
+        scheduled_activity = ScheduledActivity(predicted_transition, paths, delays, execution_time)
         simulation_object.active = True
         simulation_object.nextActivity = scheduled_activity
+        return True
+
 
     def __get_execution_probability(self, candidate_activity, bound_objects):
         obj: ObjectInstance
         p = 0
         #p = 1
         n = 0
+        obj: ObjectInstance
         for obj in bound_objects:
             otype = obj.otype
             #if otype in self.processConfig.nonEmittingTypes :
              #   continue
             n = n + 1
             features_by_object = self.objectFeatures[otype][obj.oid]
-            object_features = tuple(
-                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
+            numerical_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
             next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if object_features in next_act_predictor:
-                if candidate_activity in next_act_predictor[object_features]:
-                    probability = next_act_predictor[object_features][candidate_activity]
+            if numerical_features in next_act_predictor:
+                if candidate_activity in next_act_predictor[numerical_features]:
+                    probability = next_act_predictor[numerical_features][candidate_activity]
                 else:
-                    probability = 0
+                    probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features, candidate_activity)
             else:
-                probability = self.__get_nearest_prediction(next_act_predictor, object_features, candidate_activity)
+                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features, candidate_activity)
             p += probability
         if n == 0:
             return 0
@@ -150,31 +156,55 @@ class Simulator:
                 continue
             n = n + 1
             features_by_object = self.objectFeatures[otype][obj.oid]
-            object_features = tuple(
-                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
+            numerical_features = list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames))
             next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if object_features in next_act_predictor and candidate_activity in next_act_predictor[object_features]:
-                probability = next_act_predictor[object_features][candidate_activity]
+            if numerical_features in next_act_predictor and candidate_activity in next_act_predictor[numerical_features]:
+                probability = next_act_predictor[numerical_features][candidate_activity]
             else:
                 #return 0
-                probability = self.__get_nearest_prediction(next_act_predictor, object_features, candidate_activity)
+                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features, candidate_activity)
             p = min(probability, p)
         if n == 0:
             return 0
         return float(p)#/float(n)
 
-    def __get_nearest_prediction(self, next_act_predictor, object_features, candidate_activity):
-        domain = list(next_act_predictor.keys())
-        # TODO: make more efficient
-        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x)-np.array(object_features))), domain))
+    def __get_nearest_activity_prediction(self, predictor, features, candidate):
+        domain = list(predictor.keys())
+        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x)-np.array(features))), domain))
         min_dist = min(domain_with_distances, key=lambda x: x[1])[1]
         nearest_neighbors = [neighbor[0] for neighbor in filter(lambda x: x[1] == min_dist, domain_with_distances)]
         total_probability = 0
         for neighbor in nearest_neighbors:
-            if candidate_activity not in next_act_predictor[neighbor]:
+            if candidate not in predictor[neighbor]:
                 continue
-            total_probability += next_act_predictor[neighbor][candidate_activity]
+            total_probability += predictor[neighbor][candidate]
         return total_probability / float(len(nearest_neighbors))
+
+    def __get_nearest_delay_prediction(self, otype, numerical_features, previous_act, candidate_next_act):
+        predictor = self.predictors.mean_delays_act_to_act[otype]
+        target_features = [previous_act, candidate_next_act]
+        domain = list(predictor.keys())
+        domain_support = list(filter(lambda key: list(key)[-2:] == target_features, domain))
+        domain_support_numerical_features = map(lambda key: tuple(list(key)[:-2]), domain_support)
+        if len(domain_support) < 1:
+            predictor = self.predictors.mean_delays_independent[otype]
+            target_features = [candidate_next_act]
+            domain = list(predictor.keys())
+            domain_support = list(filter(lambda key: list(key)[-1:] == target_features, domain))
+            domain_support_numerical_features = map(lambda key: tuple(list(key)[:-1]), domain_support)
+        if len(domain_support) < 1:
+            return 0
+        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x)-np.array(numerical_features))),
+            domain_support_numerical_features))
+        min_dist = min(domain_with_distances, key=lambda x: x[1])[1]
+        nearest_neighbors = [neighbor[0] for neighbor in filter(lambda x: x[1] == min_dist, domain_with_distances)]
+        total_delay = 0
+        for neighbor in nearest_neighbors:
+            key = tuple(list(neighbor) + target_features)
+            if key not in predictor:
+                continue
+            total_delay += predictor[key]
+        return int(round(total_delay / float(len(nearest_neighbors))))
 
     def __make_feature_based_leading_prediction(self, simulation_object: SimulationObjectInstance):
         oid = simulation_object.oid
@@ -183,40 +213,47 @@ class Simulator:
         features_by_object = self.objectFeatures[otype][oid]
         object_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
         next_act_predictor = self.predictors.next_activity_predictors[otype]
-        if object_features in next_act_predictor:
+        # TODO: reconsider the way an activity is predicted in case the current features are not supported by the predictor
+        if object_features not in next_act_predictor:
+            predictions = {}
+            acts = [act for act in self.processConfig.acts if self.processConfig.activityLeadingTypes[act] == otype] + ["END_" + otype]
+            for act in acts:
+                prob = self.__get_nearest_activity_prediction(next_act_predictor, object_features, act)
+                predictions[act] = prob
+        else:
             predictions = next_act_predictor[object_features]
-            execution_probabilities = dict()
-            if predictions:
-                max_prob = 0
-                activity_leading_types = self.processConfig.activityLeadingTypes
-                for candidate_activity, p in predictions.items():
-                    if candidate_activity[:4] == "END_":
-                        execution_probabilities[candidate_activity] = p
-                        max_prob = max(p, max_prob)
-                    else:
-                        leading_type = activity_leading_types[candidate_activity]
-                        try:
-                            leading_obj = obj if leading_type == otype else \
-                                list(obj.reverse_object_model[leading_type])[0]
-                        except:
-                            continue
-                        execution_model = [leading_obj]
-                        #execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
-                        execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
-                        execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
-                        execution_probabilities[candidate_activity] = execution_probability
-                        max_prob = max(max_prob, execution_probability)
-                total_prob = sum(list(execution_probabilities.values()))
-                inact = 1 - total_prob
-                if inact > 0:
-                    execution_probabilities["INACT"] = inact
-                if total_prob > 0:
-                    cum_dist = CumulativeDistribution(execution_probabilities)
-                    prediction: str = cum_dist.sample()
-                    if prediction != "INACT":
-                        transition = self.__get_transition(prediction)
-                        if transition.transitionType == TransitionType.FINAL or activity_leading_types[prediction] == otype:
-                            return transition
+        execution_probabilities = dict()
+        if predictions:
+            max_prob = 0
+            activity_leading_types = self.processConfig.activityLeadingTypes
+            for candidate_activity, p in predictions.items():
+                if candidate_activity[:4] == "END_":
+                    execution_probabilities[candidate_activity] = p
+                    max_prob = max(p, max_prob)
+                else:
+                    leading_type = activity_leading_types[candidate_activity]
+                    try:
+                        leading_obj = obj if leading_type == otype else \
+                            list(obj.reverse_object_model[leading_type])[0]
+                    except:
+                        continue
+                    execution_model = [leading_obj]
+                    #execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
+                    execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
+                    execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
+                    execution_probabilities[candidate_activity] = execution_probability
+                    max_prob = max(max_prob, execution_probability)
+            total_prob = sum(list(execution_probabilities.values()))
+            inact = 1 - total_prob
+            if inact > 0:
+                execution_probabilities["INACT"] = inact
+            if total_prob > 0:
+                cum_dist = CumulativeDistribution(execution_probabilities)
+                prediction: str = cum_dist.sample()
+                if prediction != "INACT":
+                    transition = self.__get_transition(prediction)
+                    if transition.transitionType == TransitionType.FINAL or activity_leading_types[prediction] == otype:
+                        return transition
 
     def schedule_next_activity(self):
         active_simulation_objects = self.simulationNet.get_all_active_simulation_objects()
@@ -249,7 +286,8 @@ class Simulator:
             for any_obj in total_om:
                 if any_obj in self.terminatedObjects:
                     continue
-                sim_obj = self.simulationNet.simulationObjects[any_obj.oid]
+                sim_obj: SimulationObjectInstance = self.simulationNet.simulationObjects[any_obj.oid]
+                sim_obj.set_inactive()
                 rescheduled_objects.add(sim_obj)
         for any_obj in rescheduled_objects:
             self.__predict_leading_activity(any_obj)
@@ -304,6 +342,7 @@ class Simulator:
         self.predictors = Predictors.load(self.sessionPath)
 
     def __execute_step(self):
+        self.steps += 1
         (obj_id, transition_id) = self.enabledBindings[0]
         self.enabledBindings = self.enabledBindings[1:]
         object_ids = [obj_id]
@@ -332,13 +371,10 @@ class Simulator:
             return True
         # put next transition to be executed in front
         self.__sort_bindings()
+        return False
 
     def __fire(self, transition_id, objects):
-        if transition_id in self.processConfig.acts:
-            delays = self.__get_delay_predictions(transition_id, objects)
-        else:
-            delays = {obj.oid: 0 for obj in objects}
-        timestamp = self.simulationNet.fire(transition_id, objects, delays)
+        timestamp = self.simulationNet.fire(transition_id, objects)
         return timestamp
 
     def __init_finit_procedure(self, transition_name, object_ids):
@@ -349,25 +385,6 @@ class Simulator:
             if len(self.terminatedObjects) == self.totalNumberOfObjects:
                 return True
         return False
-
-    def __get_delay_predictions(self, next_act, objects):
-        delays = {}
-        delay_ws = []
-        for obj in objects:
-            otype = obj.otype
-            features_by_object =  self.objectFeatures[otype][obj.oid]
-            object_features_and_act = tuple(
-                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)) + [next_act])
-            predictors = self.predictors.delay_predictors[otype]
-            if object_features_and_act in predictors:
-                delays_for_obj = predictors[object_features_and_act]
-                cum_dist = CumulativeDistribution(delays_for_obj)
-                delay = cum_dist.sample()
-            else:
-                delay = self.predictors.get_mean_act_delay(otype, next_act)
-            delays[obj.oid] = delay
-            delay_ws.append(str(obj) + ":" + str(delay))
-        return delays
 
     def __ready_for_termination(self, sim_obj: SimulationObjectInstance):
         obj = sim_obj.objectInstance
@@ -452,6 +469,15 @@ class Simulator:
             otype = self.objectModel.objectsById[obj].otype
             feature = "act:" + transition_name
             self.objectFeatures[otype][obj][feature] = self.objectFeatures[otype][obj][feature] + 1
+
+    def __initialize_predictions(self):
+        simulation_objects = list(self.simulationNet.get_all_simulation_objects().values())
+        simulation_objects.sort(key=lambda so: so.time)
+        simulation_object: SimulationObjectInstance
+        simulation_objects = [simulation_object for simulation_object in simulation_objects
+                              if simulation_object.oid not in self.terminatedObjects]
+        for simulation_object in simulation_objects:
+            self.__predict_leading_activity(simulation_object)
 
     def __write_ocel(self):
         self.ocelMaker.write_ocel()

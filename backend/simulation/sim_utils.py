@@ -99,7 +99,8 @@ class Predictors:
         return pickle.load(open(predictors_path, "rb"))
 
     next_activity_predictors: dict
-    delay_predictors: dict
+    mean_delays_act_to_act: dict
+    mean_delays_independent: dict
 
     def __init__(self, otypes, object_feature_names, session_path):
         self.otypes = otypes
@@ -158,43 +159,33 @@ class Predictors:
         return mean, stdev
 
     def get_mean_act_delay(self, otype, next_act):
-        return self.mean_act_delays[otype][next_act]
+        return self.mean_delays_independent[otype][next_act]
 
     def initialize_delay_prediction_function(self):
-        delay_predictors = {}
-        self.mean_act_delays = {}
+        mean_delays_act_to_act = {}
+        mean_delays_independent = {}
         for otype in self.otypes:
             training_data = self.trainingData[otype]
-            delays_by_features = training_data[self.object_feature_names + ["concept:name"] + ["delay"]]\
-                .groupby(self.object_feature_names + ["concept:name"])["delay"] \
-                .value_counts()
-            stats_dict = dict(delays_by_features)
-            delay_freqs_by_features = {}
-            for key in stats_dict:
-                features = key[:-1]
-                delay = key[-1]
-                freq = stats_dict[key]
-                if features not in delay_freqs_by_features:
-                    delay_freqs_by_features[features] = []
-                delay_freqs_by_features[features].append((delay, freq))
-            ot_delay_predictors = dict()
-            for features, delay_freqs in delay_freqs_by_features.items():
-                total = sum(list(map(lambda delay_freq: delay_freq[1], delay_freqs)))
-                probabilities = {
-                    delay_freq[0]: float(delay_freq[1]) / float(total)
-                    for delay_freq in delay_freqs
-                }
-                ot_delay_predictors[features] = probabilities
-            delay_predictors[otype] = ot_delay_predictors
-            mean_training_frame = training_data[["concept:name"] + ["delay"]]
-            stats = mean_training_frame.groupby(["concept:name"]).mean()
-            stats_dict = dict(stats.to_dict()["delay"])
-            stats_dict = {
-                key: round(value) if otype not in self.processConfig.nonEmittingTypes else 0
-                for key, value in stats_dict.items()
+            delays_by_features_a2a = training_data[
+                self.object_feature_names + ["concept:name"] + ["delay"] + ["lastact"]]
+            delays_by_features_indie = training_data[
+                self.object_feature_names + ["concept:name"] + ["delay"]]
+            stats_a2a = delays_by_features_a2a.groupby(self.object_feature_names + ["lastact", "concept:name"]).mean()
+            stats_indie = delays_by_features_indie.groupby(self.object_feature_names + ["concept:name"]).mean()
+            stats_dict_a2a = dict(stats_a2a.to_dict()["delay"])
+            stats_dict_indie = dict(stats_indie.to_dict()["delay"])
+            stats_dict_a2a = {
+                key: int(round(value))
+                for key, value in stats_dict_a2a.items()
             }
-            self.mean_act_delays[otype] = stats_dict
-        self.delay_predictors = delay_predictors
+            stats_dict_indie = {
+                key: round(value)
+                for key, value in stats_dict_indie.items()
+            }
+            mean_delays_act_to_act[otype] = stats_dict_a2a
+            mean_delays_independent[otype] = stats_dict_indie
+        self.mean_delays_act_to_act = mean_delays_act_to_act
+        self.mean_delays_independent = mean_delays_independent
 
     def save(self):
         predictors_path = os.path.join(self.session_path, "predictors.pkl")
@@ -236,6 +227,8 @@ class SimulationStateExport:
             return
         (next_obj, next_transition_id) = bindings[0]
         next_active_tokens = self.__get_active_tokens(next_obj, next_transition_id)
+        if len(next_active_tokens) == 0:
+            print(2)
         self.activeTokens += next_active_tokens
         for obj_id, transition_id in bindings[1:]:
             self.activeTokens += self.__get_active_tokens(obj_id, transition_id)
