@@ -19,18 +19,20 @@ from object_model_generation.object_instance import SimulationObjectInstance
 
 class SimulationInitializer:
 
-    def __init__(self, session_path):
+    def __init__(self, session_path, use_original_marking, object_model_name):
         logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
                             encoding='utf-8', level=logging.DEBUG)
         self.sessionPath = session_path
+        self.objectModelName = object_model_name
         ocel_path = os.path.join(session_path, "postprocessed_input.jsonocel")
         self.ocel = pm4py.read_ocel(ocel_path)
+        self.useOriginalMarking = use_original_marking
         self.processConfig: ProcessConfig = ProcessConfig.load(session_path)
         self.otypes = self.processConfig.otypes
 
-    def load(self, object_model_name = ""):
+    def load_net_and_objects(self):
         self.__load_net()
-        self.__load_object_model(object_model_name)
+        self.__load_object_model(self.objectModelName)
 
     def initialize(self):
         self.__make_initial_marking()
@@ -44,10 +46,10 @@ class SimulationInitializer:
         self.__initialize_ocel()
 
     def save(self):
-        features_path = os.path.join(self.sessionPath, "object_features.pkl")
+        features_path = os.path.join(self.sessionPath, "object_features_" + self.objectModelName + ".pkl")
         with open(features_path, "wb") as write_file:
             pickle.dump(self.objectFeatures, write_file)
-        feature_names_path = os.path.join(self.sessionPath, "object_feature_names.pkl")
+        feature_names_path = os.path.join(self.sessionPath, "object_feature_names_" + self.objectModelName + ".pkl")
         with open(feature_names_path, "wb") as write_file:
             pickle.dump(self.objectFeatureNames, write_file)
         self.simulationNet.save()
@@ -73,21 +75,17 @@ class SimulationInitializer:
         for act in self.processConfig.acts:
             features["act:" + act] = 0
         for any_otype in self.otypes:
-           features["otype:" + any_otype] = len(obj.total_local_model[any_otype])
+            features["otype:" + any_otype] = len(obj.total_local_model[any_otype])
         # TOOO. how to incorporate non-categorical features?
-        #for key, value in obj.attributes.items():
+        # for key, value in obj.attributes.items():
         #    features["attr:" + key] = value
         self.objectFeatures[obj.otype][obj.oid] = features
 
     def __load_net(self):
         self.netProjections = NetProjections.load(self.sessionPath)
 
-    def __load_object_model(self, name = ""):
-        path = self.sessionPath
-        if len(name) > 0:
-            path = os.path.join(path, "objects")
-            path = os.path.join(path, name)
-        self.objectModel = ObjectModel.load(path, self.processConfig.useOriginalMarking)
+    def __load_object_model(self, name=""):
+        self.objectModel = ObjectModel.load(self.sessionPath, self.processConfig.useOriginalMarking, name)
 
     def __make_initial_marking(self):
         self.tokens = []
@@ -121,11 +119,13 @@ class SimulationInitializer:
                         sim_obj.directObjectModel[any_otype].append(any_sim_obj)
                         if otype not in any_sim_obj.directObjectModel:
                             any_sim_obj.reverseObjectModel[otype] = []
-                        any_sim_obj.reverseObjectModel[otype] = list(set(any_sim_obj.reverseObjectModel[otype] + [sim_obj]))
+                        any_sim_obj.reverseObjectModel[otype] = list(
+                            set(any_sim_obj.reverseObjectModel[otype] + [sim_obj]))
         self.simulationObjects = simulation_objects
 
     def __make_simulation_net(self):
-        self.simulationNet = SimulationNet(self.sessionPath, self.netProjections, self.marking, self.simulationObjects)
+        self.simulationNet = SimulationNet(self.sessionPath, self.netProjections, self.marking, self.simulationObjects,
+                                           self.objectModelName)
 
     def __load_training_object_model(self):
         self.trainingModelPreprocessor = TrainingModelPreprocessor.load(self.sessionPath)
@@ -209,10 +209,11 @@ class SimulationInitializer:
     def __compute_delays(self, otype):
         training_frame = self.training_data[otype]
         training_frame["delay"] = 0
+        training_frame["lastdelay"] = 0
         training_frame["lastact"] = "START_" + otype
+        training_frame["nextact"] = "END_" + otype
         training_frame["int:timestamp"] = training_frame \
-            .apply(lambda row: int(row["time:timestamp"].timestamp()), axis=1
-                   )
+            .apply(lambda row: int(row["time:timestamp"].timestamp()), axis=1)
         iterator = training_frame.iterrows()
         index, line = next(iterator, None)
         lastline, lastindex = line, index
@@ -222,15 +223,18 @@ class SimulationInitializer:
             if line["case:concept:name"] == lastline["case:concept:name"]:
                 # Update DELAY
                 last_act = lastline["concept:name"]
+                act = line["concept:name"]
                 delay = line["int:timestamp"] - lastline["int:timestamp"]
-                training_frame.at[index, 'delay'] = delay
+                training_frame.at[lastindex, 'delay'] = delay
+                training_frame.at[index, 'lastdelay'] = delay
+                training_frame.at[lastindex, 'nextact'] = act
                 training_frame.at[index, 'lastact'] = last_act
             lastline, lastindex = line, index
             nextline = next(iterator, None)
         self.training_data[otype] = training_frame
 
     def __make_predictors(self):
-        predictors = Predictors(self.otypes, self.objectFeatureNames, self.sessionPath)
+        predictors = Predictors(self.otypes, self.objectFeatureNames, self.sessionPath, self.objectModelName)
         predictors.initialize_activity_prediction_function()
         logging.info("Initializing Delay Prediction Function...")
         predictors.initialize_delay_prediction_function()
@@ -242,4 +246,5 @@ class SimulationInitializer:
         timestamp_offset = min(df["ocel:timestamp"]).timestamp()
         for oid, obj in self.objectModel.objectsById.items():
             objects[oid] = {"ocel:type": obj.otype, "ocel:ovmap": {}}
-        self.ocelMaker = OcelMaker(self.sessionPath, objects, {}, timestamp_offset)
+        self.ocelMaker = OcelMaker(self.sessionPath, self.objectModelName, self.useOriginalMarking, objects, {},
+                                   timestamp_offset)

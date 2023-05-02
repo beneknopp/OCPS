@@ -1,7 +1,7 @@
 import os
 import pickle
 
-
+# TODO: factor out or make marking specific
 class ProcessConfig:
     otypes: list
     acts: list
@@ -12,6 +12,7 @@ class ProcessConfig:
     useOriginalMarking: bool
     simulCount : int
     simulTypeCount: dict
+    clockOffset: int
 
     @classmethod
     def load(cls, session_path):

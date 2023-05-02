@@ -250,6 +250,7 @@ class AttributeParameterization():
     parameterType: ParameterType
     includeModeled: bool
     includeSimulated: bool
+    fittingModel: str = "---"
     # log_based statistics & model curve (if included) & simulated curve (if included)
     xAxis: []
     yAxes: dict
@@ -272,6 +273,7 @@ class AttributeParameterization():
         modeler = Modeler(model_type, data_type)
         modeler.fit_data(self.data)
         self.modeler = modeler
+        self.fittingModel = modeler.modelType
 
     def __fit_initial_model_type(self):
         return ModelType.CUSTOM
@@ -316,6 +318,13 @@ class AttributeParameterization():
         self.yAxes[ParameterMode.MODELED] = mapped_x_axis
 
     def export(self):
+        fitting_model = self.fittingModel
+        if fitting_model == ModelType.CUSTOM:
+            fitting_model = "Custom"
+        elif fitting_model == ModelType.NORMAL:
+            fitting_model = "Normal"
+        elif fitting_model == ModelType.EXPONENTIAL:
+            fitting_model = "Exponential"
         json_export = {}
         #json_export["label"] = self.label
         json_export["xAxis"] = [str(i) for i in self.xAxis]
@@ -326,6 +335,7 @@ class AttributeParameterization():
         json_export["includeModeled"] = self.includeModeled
         json_export["includeSimulated"] = self.includeSimulated
         json_export["parameters"] = self.modeler.parameters
+        json_export["fittingModel"] = fitting_model
         return json_export
 
     def switch_model_type(self, model_type):

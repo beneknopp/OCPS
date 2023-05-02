@@ -138,6 +138,8 @@ class ObjectModelGenerator:
         total_objects = {otype: [] for otype in self.otypes}
         buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
         self.enforcements = 0
+        total_nof_objects = 1
+        total_nof_closed_objects = 0
         while len(buffer) > 0:
             current_obj = buffer[0]
             buffer = buffer[1:]
@@ -148,6 +150,8 @@ class ObjectModelGenerator:
                     current_obj, neighbor_types, open_objects, oid)
                 if prediction.predict:
                     selected_neighbor = prediction.selected_neighbor
+                    if prediction.mode == PredictionMode.NEW:
+                        total_nof_objects += 1
                     predicted_type = prediction.predicted_type
                     reverse = prediction.reverse
                     merge_map = prediction.mergeMap
@@ -164,7 +168,10 @@ class ObjectModelGenerator:
                     open_objects[current_otype] = list(
                         set([x for x in open_objects[current_otype] if not x == current_obj]))
                     closed_objects[current_otype].append(current_obj)
-            if len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects:
+                    total_nof_closed_objects += 1
+            if float(total_nof_closed_objects) / total_nof_objects > 0.99 and len(closed_objects[seed_type]) > number_of_objects:
+                break
+            if (len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects):
                 buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
         self.generatedObjects = total_objects
 
@@ -656,5 +663,5 @@ class ObjectModelGenerator:
 
     @classmethod
     def name(cls, session_path, name):
-        generated_object_model: ObjectModel = ObjectModel.load(session_path, use_original=False)
+        generated_object_model: ObjectModel = ObjectModel.load(session_path, use_original=False, object_model_name="")
         generated_object_model.save(use_original=False, name=name)

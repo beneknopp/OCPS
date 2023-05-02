@@ -49,12 +49,20 @@ export class AppService {
     ).pipe(
       tap(_ => this.log('object model names queried')),
       catchError(this.handleError<String>('getObjectModelNames', ""))
-    )  }
+    )
+  }
 
   initializeObjectGenerator(session_key: string, formData: FormData) {
     return this.http.post<any>(this.backendUrl + 'initialize-object-generator?sessionKey=' + session_key, formData).pipe(
       tap(_ => this.log('object generator initialized')),
       catchError(this.handleError<String>('initializeObjectGenerator', ""))
+    )
+  }
+
+  setObjectModelName(session_key: string, name: string) {
+    return this.http.get<any>(this.backendUrl + 'name-objects?sessionKey=' + session_key + '&name=' + name).pipe(
+      tap(_ => this.log('objects named')),
+      catchError(this.handleError<String>('startSimulation', ""))
     )
   }
 
@@ -155,7 +163,7 @@ export class AppService {
 
   initializeSimulation(session_key: string, use_original_marking: boolean, object_model_name = "") {
     let useOriginalMarking_str = String(use_original_marking)
-    let url = this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key 
+    let url = this.backendUrl + 'initialize-simulation?&sessionKey=' + session_key
       + "&useOriginalMarking=" + useOriginalMarking_str
       + "&objectModelName=" + object_model_name
     return this.http.get<any>(url).pipe(
@@ -164,22 +172,40 @@ export class AppService {
     )
   }
 
-  startSimulation(steps: number, session_key: string) {
-    return this.http.get<any>(this.backendUrl + 'simulate?steps=' + steps + "&sessionKey=" + session_key).pipe(
+  startSimulation(steps: number, session_key: string, use_original_marking: boolean, object_model_name: string = "") {
+    let useOriginalMarking_str = String(use_original_marking)
+    return this.http.get<any>(this.backendUrl + 'simulate?steps=' + steps
+      + "&sessionKey=" + session_key
+      + "&useOriginalMarking=" + useOriginalMarking_str
+      + "&objectModelName=" + object_model_name
+    ).pipe(
       tap(_ => this.log('simulation ran')),
       catchError(this.handleError<String>('startSimulation', ""))
     )
   }
 
-  setObjectModelName(session_key: string, name: string) {
-    return this.http.get<any>(this.backendUrl + 'name-objects?sessionKey=' + session_key + '&name=' + name).pipe(
-      tap(_ => this.log('objects named')),
-      catchError(this.handleError<String>('startSimulation', ""))
+  getAvailableSimulationsObjectModels(sessionKey: string) {
+    return this.http.get<any>(this.backendUrl + 'available-simulated-models?sessionKey=' + sessionKey).pipe(
+      tap(_ => this.log('simulated models queried')),
+      catchError(this.handleError<String>('getAvailableSimulationsObjectModels', ""))
     )
   }
 
-  getEvaluation(session_key: string) {
-    return this.http.get<any>(this.backendUrl + "eval-simulation?sessionKey=" + session_key).pipe(
+  updateEvaluationSelectedObjectModels(session_key: string, selected_object_models: string[]) {
+    const form_data = new FormData();
+    form_data.append("selectedObjectModels", JSON.stringify(selected_object_models));
+    return this.http.post<any>(this.backendUrl + 'update-evaluation-selected-object-models?sessionKey=' + session_key, form_data).pipe(
+      tap(_ => this.log('evaluation selected models updated')),
+      catchError(this.handleError<String>('updateEvaluationSelectedObjectModels', ""))
+    )
+  }
+
+
+  getEvaluation(session_key: string, stats_type: string, otype: string) {
+    return this.http.get<any>(this.backendUrl + "evaluate?sessionKey=" + session_key
+      + "&statsType=" + stats_type
+      + "&otype=" + otype
+    ).pipe(
       tap(_ => this.log('got evaluation')),
       catchError(this.handleError<String>('startSimulation', "")))
   }

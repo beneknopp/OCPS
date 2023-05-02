@@ -30,7 +30,7 @@ export class DOMService {
   objectModelValid = false
   useOriginalMarking = true
   netConfigValid = false;
-  evaluationEnabled = false  
+  evaluationEnabled = false
   public step = 1;
 
   get activitySelectedTypes$() {
@@ -109,58 +109,76 @@ export class DOMService {
     arcs: Arc[],
     otypes: string[],
     activityLeadingTypes: { [act: string]: string }
-  ): [OcpnGraphNode[], OcpnGraphLink[]] {
+  ): [OcpnGraphNode[], OcpnGraphLink[], { [otype: string]: OcpnGraphNode[] }, { [otype: string]: OcpnGraphLink[] }] {
     let nodes: OcpnGraphNode[] = []
     let links: OcpnGraphLink[] = []
+    let flatNodes: { [otype: string]: OcpnGraphNode[] } = {}
+    let flatLinks: { [otype: string]: OcpnGraphLink[] } = {}
     let col_codes: { [otype: string]: string } = {}
     otypes.forEach(otype => {
       col_codes[otype] = this.getOtypeColor(otype, otypes)
+      flatNodes[otype] = []
+      flatLinks[otype] = []
     })
     places.forEach(place => {
-      nodes = nodes.concat({
+      let otype = place.otype
+      let node = {
         id: place.id,
-        label: place.isInitial ? place.otype : place.id,
+        label: place.isInitial ? otype : place.id,
         type: 'PLACE',
-        color: col_codes[place.otype],
+        color: col_codes[otype],
         x: 20.0,
         y: 312.0
-      })
+      }
+      flatNodes[otype] = flatNodes[otype].concat(node)
+      nodes = nodes.concat({...node})
     })
     transitions.forEach(transition => {
       let leading_type: string | undefined = ""
+      let adjacentArcs = arcs.filter(arc => arc.source == transition.id || arc.target == transition.id)
+      let adjacentNodes = adjacentArcs.map(arc => arc.source).concat(adjacentArcs.map(arc => arc.target))
+      let adjacentPlaces = places.filter(place => adjacentNodes.find(node => node == place.id))
+      let adjacentOtypes = adjacentPlaces.map(place => place.otype)
+      let otypes = [...new Set(adjacentOtypes)]
       if (transition.transitionType == 'ACTIVITY') {
         leading_type = activityLeadingTypes[transition.id]
       } else {
-        let any_arc = arcs.find(arc => arc.source == transition.id || arc.target == transition.id)
-        let any_place_id = any_arc?.source == transition.id ? any_arc.target : any_arc?.source
-        let any_place = places.find(place => place.id == any_place_id)
-        leading_type = any_place?.otype
+        leading_type = otypes[0]
       }
-      let color = leading_type ? col_codes[leading_type] : '#000000'
-      nodes = nodes.concat({
-        id: transition.id,
-        label: transition.label,
-        type: 'TRANSITION',
-        transitionType: transition.transitionType,
-        color: color,
-        x: 20.0,
-        y: 312.0
+      //let color = col_codes[leading_type]
+      otypes.forEach(otype => {
+        let color = col_codes[otype]
+        let node = {
+          id: transition.id,
+          label: transition.label,
+          type: 'TRANSITION',
+          transitionType: transition.transitionType,
+          color: color,
+          x: 20.0,
+          y: 312.0
+        }
+        flatNodes[otype] = flatNodes[otype].concat(node)
+        if (otype == leading_type) {
+          nodes = nodes.concat({...node})
+        }
       })
     })
     arcs.forEach(arc => {
       let try_source_place = places.find(p => p.id == arc.source)
       let arc_place = try_source_place ? try_source_place : places.find(p => p.id == arc.target)
       let arc_otype = arc_place ? arc_place.otype : ""
-      links = links.concat({
+      let link: OcpnGraphLink = {
         source: arc.source,
         target: arc.target,
         label: "",
         otype: arc_otype,
         isVariableArc: arc.isVariableArc,
         color: col_codes[arc_otype]
-      })
+      }
+      flatLinks[arc_otype] = flatLinks[arc_otype].concat(link)
+      links = links.concat({...link})
     })
-    return [nodes, links]
+    return [nodes, links, flatNodes, flatLinks]
   }
 
   getColor(index: number) {

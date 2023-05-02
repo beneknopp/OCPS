@@ -29,6 +29,6 @@ class InputOCELPostprocessor:
             pm4py.write_xes(flog, flat_path)
         return postprocessed_ocel
 
-    def make_default_distributions(self):
-        self.__
-        pass
+    #TODO
+    def get_clock_offset(self):
+        return int(min(self.ocel.get_extended_table()["ocel:timestamp"].values))

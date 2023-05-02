@@ -47,6 +47,7 @@ def upload_ocel():
     if file and allowed_file(file.filename):
         clear_state()
         session_key, session_path = make_session()
+
         xml = OcelFileFormat.XML
         jsonocel = OcelFileFormat.JSONOCEL
         file_format = xml if file.filename.endswith('xml') else jsonocel
@@ -74,9 +75,11 @@ def ocel_config():
     config_bytes = request.files["ocelInfo"].read()
     config_dto = json.loads(config_bytes)
     process_config = ProcessConfig(config_dto, session_path)
-    process_config.save()
     postprocessor = InputOCELPostprocessor(session_path, process_config)
     postprocessed_ocel = postprocessor.postprocess()
+    clock_offset = postprocessor.get_clock_offset()
+    process_config.clockOffset = clock_offset
+    process_config.save()
     #OriginalMarkingMaker(postprocessed_ocel, process_config)
     return Response.get(True)
 
@@ -275,43 +278,69 @@ def initialize_simulation():
     session_path = os.path.join(app.config['RUNTIME_RESOURCE_FOLDER'], session_key)
     ProcessConfig.update_use_original_marking(session_path, use_original_marking)
     start_logging(session_path)
-    simulation_initializer = SimulationInitializer(session_path)
-    simulation_initializer.load(object_model_name)
+    simulation_initializer = SimulationInitializer(session_path, use_original_marking, object_model_name)
+    simulation_initializer.load_net_and_objects()
     simulation_initializer.initialize()
     simulation_initializer.save()
     del simulation_initializer
-    simulator = Simulator(session_path, use_original_marking)
+    simulator = Simulator(session_path, use_original_marking, object_model_name)
     simulator.initialize()
     simulator.schedule_next_activity()
     state = simulator.export_current_state()
     simulator.save()
     return Response.get(state)
 
-@app.route('/eval-simulation', methods=['GET'])
-@cross_origin()
-def simulation_eval():
-    args = request.args
-    session_key = args["sessionKey"]
-    session_path = get_session_path(request)
-    simulation_evaluator = SimulationEvaluator(session_path)
-    simulation_evaluator.evaluate()
-    response = simulation_evaluator.export()
-    return Response.get(response)
-
 @app.route('/simulate', methods=['GET'])
 @cross_origin()
 def simulate():
     args = request.args
+    use_original_marking = args["useOriginalMarking"] == "true"
+    object_model_name = args["objectModelName"] if not use_original_marking else ""
     steps = int(args['steps'])
     session_path = get_session_path(request)
     start_logging(session_path)
-    simulator = Simulator.load(session_path)
+    simulator: Simulator = Simulator.load(session_path, object_model_name)
     # debug hotfix if all is inactive
     #simulator.schedule_next_activity()
     simulator.run_steps(steps)
     state = simulator.export_current_state()
     simulator.save()
     return Response.get(state)
+
+@app.route('/available-simulated-models', methods=['GET'])
+@cross_origin()
+def available_simulated_models():
+    session_path = get_session_path(request)
+    oms_path = os.path.join(session_path, "simulated_logs")
+    names = list(os.walk(oms_path))[0][1]
+    return Response.get(names)
+
+@app.route('/update-evaluation-selected-object-models', methods=['POST'])
+@cross_origin()
+def update_evaluation_selected_object_models():
+    session_path = get_session_path(request)
+    form = request.form
+    selected_object_models_str = form["selectedObjectModels"]
+    selected_object_models = json.loads(selected_object_models_str)
+    path = os.path.join(session_path, "evaluation")
+    path = os.path.join(path, "selected_object_models.pkl")
+    with open(path, "wb") as write_file:
+        pickle.dump(selected_object_models, write_file)
+    simulation_evaluator = SimulationEvaluator(session_path, selected_object_models)
+    simulation_evaluator.evaluate()
+    simulation_evaluator.save()
+    return Response.get(selected_object_models)
+
+@app.route('/evaluate', methods=['GET'])
+@cross_origin()
+def evaluate():
+    args = request.args
+    stats_type = args["statsType"]
+    otype = args["otype"]
+    session_path = get_session_path(request)
+    simulation_evaluator: SimulationEvaluator = SimulationEvaluator.load(session_path)
+    response = simulation_evaluator.get(otype, stats_type)
+    return Response.get(response)
 
 @app.route('/ocel-export', methods=['GET'])
 @cross_origin()
@@ -338,6 +367,8 @@ def make_session():
         os.mkdir(app.config['RUNTIME_RESOURCE_FOLDER'])
         os.mkdir(session_path)
     os.mkdir(os.path.join(session_path, "objects"))
+    os.mkdir(os.path.join(session_path, "simulated_logs"))
+    os.mkdir(os.path.join(session_path, "evaluation"))
     start_logging(session_path)
     return session_key, session_path
 

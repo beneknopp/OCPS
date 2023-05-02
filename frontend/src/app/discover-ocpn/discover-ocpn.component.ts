@@ -21,8 +21,13 @@ export class DiscoverOcpnComponent implements OnInit {
   activityLeadingTypes: { [act: string]: string } = {}
   activitySelectedTypes: { [act: string]: string[] } = {}
   sessionKey: string | undefined;
+  
   nodes: OcpnGraphNode[] = []
   links: OcpnGraphLink[] = []
+
+  flatNodes: { [otype:string]: OcpnGraphNode[]} = {}
+  flatLinks: { [otype:string]: OcpnGraphLink[]} = {}
+
   otypes: string[] = []
   curve: any = shape.curveBasis
   places: Place[] = [];
@@ -91,6 +96,8 @@ export class DiscoverOcpnComponent implements OnInit {
       let ocpn_graph = this.domService.makeOcpnGraph(places, transitions, arcs, this.otypes, this.activityLeadingTypes)
       this.nodes = ocpn_graph[0]
       this.links = ocpn_graph[1]
+      this.flatNodes = ocpn_graph[2]
+      this.flatLinks = ocpn_graph[3]
       this.precision = resp.precision
       this.fitness = resp.fitness
       this.ocpnDiscovered = true
@@ -122,6 +129,10 @@ export class DiscoverOcpnComponent implements OnInit {
     let precision = this.precision ? this.precision + "" : "- - - - -"
     let fitness = this.fitness ? this.fitness + "" : "- - - - -"
     return "Evaluation against Input Log - Object-Centric Precision: " + precision + "; Object-Centric Fitness: " + fitness
+  }
+
+  isLastOtype(otype: string) {
+    return this.otypes.indexOf(otype) == this.otypes.length - 1
   }
 
 }

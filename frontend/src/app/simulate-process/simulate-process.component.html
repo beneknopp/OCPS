@@ -4,29 +4,38 @@
         <div class="simulation-controls" style="margin-bottom: 15px;">
             <div style="display: inline-block; margin-bottom: -15px;">
                 <div><label> <input type="checkbox" [(ngModel)]="useOriginalMarking"
-                            [disabled]="!domService.objectModelValid"
-                            (change)="useGeneratedMarking = !useGeneratedMarking">
+                            [disabled]="!domService.objectModelValid || initialized"
+                            (change)="onClickUseOriginalMarking()">
                         Use Original Marking
                     </label></div>
                 <div><label> <input type="checkbox" [(ngModel)]="useGeneratedMarking"
-                            [disabled]="!domService.objectModelValid"
-                            (change)="useOriginalMarking = !useOriginalMarking">
+                            [disabled]="!domService.objectModelValid || initialized"
+                            (change)="onClickUseGeneratedMarking()">
                         Use Generated Marking
                     </label></div>
+                <div class="object-model-form-field" style="margin-left: 5px;">
+                    <br>
+                    <label>Name of Object Model</label>
+                    <ng-select class="custom-ng-select" [(ngModel)]="objectModelName" [multiple]="false"
+                        [disabled]="useOriginalMarking || initialized" (change)="onChangeObjectModel()">
+                        <ng-option *ngFor="let om of savedObjectModels" [value]="om">{{om}}
+                        </ng-option>
+                    </ng-select>
+                </div>
             </div>
         </div>
 
         <div class="simulation-controls" style="margin-bottom: 15px;">
             <div style="display: inline-block; margin-bottom: -15px;">
                 <button class="card card-normal" [disabled]="initialized" (click)="onClickInitialize()" tabindex="0">
-                    <span>Initialize Model</span>
+                    <span>Initialize Simulation Model</span>
                 </button>
             </div>
         </div>
 
         <div class="simulation-controls">
             <div style="display: inline-block;">
-                <button class="card card-normal" [disabled]="!initialized && false" (click)="onClickStartSimulation(1)"
+                <button class="card card-normal" [disabled]="!initialized" (click)="onClickStartSimulation(1)"
                     tabindex="0">
                     <span>Execute Single Step</span>
                 </button>
@@ -49,7 +58,7 @@
         <div class="simulation-controls" style="margin-top: 15px;">
             <div style="display: inline-block;">
                 <button class="card card-normal" [disabled]="!initialized" (click)="onClickAbort()" tabindex="0">
-                    <span>Abort</span>
+                    <span>Abort / Finish</span>
                 </button>
                 <button class="card card-normal" style="margin-bottom: 0px;" [disabled]="!initialized"
                     (click)="onClickOCELExport()" tabindex="0">

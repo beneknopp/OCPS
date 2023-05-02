@@ -29,10 +29,12 @@ export class SimulateProcessComponent implements OnInit {
   steps = "---"
   footer_info = "Waiting for Initialization"
   initialized = false
-  simulationState: SimulationStateDto | undefined;
-  placeTooltips: { [place_id: string]: string } = {};
+  simulationState: SimulationStateDto | undefined
+  placeTooltips: { [place_id: string]: string } = {}
   useOriginalMarking = true
   useGeneratedMarking = false
+  savedObjectModels: string[] = ["dfa"]
+  objectModelName: string | undefined
 
   startTransitionIcon = faPlay
 
@@ -60,6 +62,42 @@ export class SimulateProcessComponent implements OnInit {
         })
       })
     })
+    let session_key = this.domService.getSessionKey()
+    if (!session_key) {
+      return
+    }    
+    this.appService.getObjectModelNames(session_key).subscribe((res: {"resp": string[], "err": any}) => {
+      let names = res["resp"]
+      this.savedObjectModels = names 
+      if(names.length > 0){
+        this.objectModelName = names[0]
+      }
+    })
+  }
+  
+  onClickUseOriginalMarking() {
+    this.useGeneratedMarking = !this.useGeneratedMarking
+    this.onChangeMarking()
+  }
+
+  onClickUseGeneratedMarking() {
+    this.useOriginalMarking = !this.useOriginalMarking
+    this.onChangeMarking()
+  }
+
+  onChangeMarking() {
+    if(this.useGeneratedMarking) {
+      this.objectModelName = this.savedObjectModels[0]
+    } else {
+      this.objectModelName = undefined
+    }
+  }
+
+  onChangeObjectModel() {
+    if (!this.objectModelName) {
+      this.useOriginalMarking = true
+      this.useGeneratedMarking = false
+    }
   }
 
   onClickInitialize() {
@@ -67,10 +105,11 @@ export class SimulateProcessComponent implements OnInit {
     if (!session_key) {
       return
     }
-    let useOriginalMarking = this.useOriginalMarking
+    let use_original_marking = this.useOriginalMarking
+    let object_model_name = use_original_marking ? "" : this.objectModelName
     // TODO: something about this
-    this.domService.setUseOriginalMarking(useOriginalMarking)
-    this.appService.initializeSimulation(session_key, useOriginalMarking).subscribe((resp) => {
+    this.domService.setUseOriginalMarking(use_original_marking)
+    this.appService.initializeSimulation(session_key, use_original_marking, object_model_name).subscribe((resp) => {
       this.simulationState = new SimulationStateDto(resp.resp)
       this.makeTooltips()
       this.initialized = true
@@ -82,7 +121,7 @@ export class SimulateProcessComponent implements OnInit {
     if (!session_key) {
       throw Error("Simulation started without valid session key")
     }
-    this.appService.startSimulation(steps, session_key).subscribe((resp) => {
+    this.appService.startSimulation(steps, session_key, this.useOriginalMarking, this.objectModelName).subscribe((resp) => {
       this.simulationState = new SimulationStateDto(resp.resp)
       this.makeTooltips()
       this.domService.enableEvaluation()
@@ -216,10 +255,6 @@ export class SimulateProcessComponent implements OnInit {
     } 
     if (node.type == 'PLACE') {
       return node.label
-      //let place = this.places.find(p => p.id == node.id)
-      //if (place && place?.isInitial) {
-      //   return place.otype
-      //}
     }
     return ""
   }

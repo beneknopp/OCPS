@@ -13,23 +13,25 @@ from .state_space_computer import StateSpaceComputer
 class SimulationNet:
 
     @classmethod
-    def load(cls, session_path):
-        simulation_net_path = os.path.join(session_path, "simulation_net.pkl")
+    def load(cls, session_path, object_model_name):
+        simulation_net_path = os.path.join(session_path, "simulation_net_ " + object_model_name + ".pkl")
         return pickle.load(open(simulation_net_path, "rb"))
 
     marking: Marking
     netProjections: NetProjections
     stateSpaceComputer: StateSpaceComputer
     objects: ObjectModel
+    objectModelName: str
     terminatingObjects: set
     processConfig: ProcessConfig
 
-    def __init__(self, session_path, net_projections, marking, simulation_objects):
+    def __init__(self, session_path, net_projections, marking, simulation_objects, object_model_name: str = ""):
         self.processConfig = ProcessConfig.load(session_path)
+        self.objectModelName = object_model_name
         self.netProjections = net_projections
         self.marking = marking
         self.simulationObjects = simulation_objects
-        self.objects = ObjectModel.load(session_path, self.processConfig.useOriginalMarking)
+        self.objects = ObjectModel.load(session_path, self.processConfig.useOriginalMarking, object_model_name)
         self.stateSpaceComputer = StateSpaceComputer(self.processConfig, net_projections)
         self.sessionPath = session_path
         self.otypes = self.processConfig.otypes
@@ -38,7 +40,7 @@ class SimulationNet:
         self.terminatingObjects = set()
 
     def save(self):
-        simulation_net_path = os.path.join(self.sessionPath, "simulation_net.pkl")
+        simulation_net_path = os.path.join(self.sessionPath, "simulation_net_ " + self.objectModelName + ".pkl")
         with open(simulation_net_path, "wb") as write_file:
             pickle.dump(self, write_file)
 
@@ -93,11 +95,13 @@ class SimulationNet:
                     bound_tokens.append(bound_token)
                     self.marking.remove_token(place, bound_token)
         firing_time = 0
+        aobj: None
         for otype in otypes:
             # add tokens to postsets with object-type specific delays
             projected_net = self.netProjections.get_otype_projection(otype)
             places = projected_net.places
             for obj in bound_objects_by_otype[otype]:
+                aobj = obj
                 place: Place
                 simulation_object: SimulationObjectInstance = self.simulationObjects[obj.oid]
                 simulation_object.active = False
@@ -106,7 +110,8 @@ class SimulationNet:
                     simulation_object.lastActivity = transition_name
                     simulation_object.nextActivity = None
                     delay = currentScheduledActivity.delays[simulation_object]
-                new_tokens_time = simulation_object.time + delay
+                old_tokens_time = simulation_object.time
+                new_tokens_time = old_tokens_time + delay
                 firing_time += new_tokens_time
                 for postset_index in postset_indices_by_otype[otype]:
                     place = places[postset_index]
@@ -117,6 +122,7 @@ class SimulationNet:
                     simulation_object.time = new_tokens_time
                 obj.time = new_tokens_time
         firing_time = int(round(float(firing_time / len(objects))))
+        print("Firing " + transition_name + " at " + str(firing_time) + ", order: " + str(aobj.oid) + ", delay: " + str(delay))
         return firing_time
 
     def get_all_running_emitting_tokens(self):

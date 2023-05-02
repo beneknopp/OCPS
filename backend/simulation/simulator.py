@@ -23,8 +23,8 @@ from eval.evaluators import ocel_to_ocel
 class Simulator:
 
     @classmethod
-    def load(cls, session_path):
-        simulator_path = os.path.join(session_path, "simulator.pkl")
+    def load(cls, session_path, object_model_name: str = ""):
+        simulator_path = os.path.join(session_path, "simulator_" + object_model_name + ".pkl")
         return pickle.load(open(simulator_path, "rb"))
 
     processConfig: ProcessConfig
@@ -37,12 +37,13 @@ class Simulator:
     verbose = True
     enabledBindings: list
 
-    def __init__(self, session_path, use_original_marking):
+    def __init__(self, session_path, use_original_marking, object_model_name: str = ""):
         logging.basicConfig(filename=os.path.join(session_path, "ocps_session.log"),
                             encoding='utf-8', level=logging.DEBUG)
         self.sessionPath = session_path
+        self.objectModelName = object_model_name
         self.processConfig = ProcessConfig.load(session_path)
-        self.objectModel = ObjectModel.load(session_path, use_original_marking)
+        self.objectModel = ObjectModel.load(session_path, use_original_marking, object_model_name)
         self.totalNumberOfObjects = len(self.objectModel.objectsById)
         self.initializedObjects = set()
         self.terminatedObjects = set()
@@ -61,10 +62,6 @@ class Simulator:
         while step_count != steps:
             terminated = self.__execute_step()
             step_count = step_count + 1
-            if step_count % 500 == 0:
-                print(step_count)
-            if step_count % 1000 == 0:
-                self.__write_ocel()
             if terminated:
                 break
         self.__write_ocel()
@@ -77,14 +74,15 @@ class Simulator:
         target_features_vector = [sim_obj.lastActivity, next_activity]
         features_vector = tuple(numerical_features_vector + target_features_vector)
         if features_vector not in predictor:
-            delay = self.__get_nearest_delay_prediction(otype, numerical_features_vector, target_features_vector, next_activity)
+            delay = self.__get_nearest_delay_prediction(otype, numerical_features_vector, target_features_vector,
+                                                        next_activity)
         else:
             delay = predictor[features_vector]
         sim_obj.nextDelay = delay
         return delay
 
     def __predict_leading_activity(self, simulation_object: SimulationObjectInstance):
-        predicted_transition : Transition = self.__make_feature_based_leading_prediction(simulation_object)
+        predicted_transition: Transition = self.__make_feature_based_leading_prediction(simulation_object)
         if predicted_transition is None:
             return False
             # the prediction is feature-based and does not respect the marking
@@ -118,36 +116,38 @@ class Simulator:
         simulation_object.nextActivity = scheduled_activity
         return True
 
-
     def __get_execution_probability(self, candidate_activity, bound_objects):
         obj: ObjectInstance
         p = 0
-        #p = 1
+        # p = 1
         n = 0
         obj: ObjectInstance
         for obj in bound_objects:
             otype = obj.otype
-            #if otype in self.processConfig.nonEmittingTypes :
-             #   continue
+            # if otype in self.processConfig.nonEmittingTypes :
+            #   continue
             n = n + 1
             features_by_object = self.objectFeatures[otype][obj.oid]
-            numerical_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
+            numerical_features = tuple(
+                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
             next_act_predictor = self.predictors.next_activity_predictors[otype]
             if numerical_features in next_act_predictor:
                 if candidate_activity in next_act_predictor[numerical_features]:
                     probability = next_act_predictor[numerical_features][candidate_activity]
                 else:
-                    probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features, candidate_activity)
+                    probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
+                                                                         candidate_activity)
             else:
-                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features, candidate_activity)
+                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
+                                                                     candidate_activity)
             p += probability
         if n == 0:
             return 0
-        return float(p)/float(n)
+        return float(p) / float(n)
 
     def __ALT_get_execution_probability(self, candidate_activity, bound_objects):
         obj: ObjectInstance
-        #p = 0
+        # p = 0
         p = 1
         n = 0
         for obj in bound_objects:
@@ -158,19 +158,21 @@ class Simulator:
             features_by_object = self.objectFeatures[otype][obj.oid]
             numerical_features = list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames))
             next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if numerical_features in next_act_predictor and candidate_activity in next_act_predictor[numerical_features]:
+            if numerical_features in next_act_predictor and candidate_activity in next_act_predictor[
+                numerical_features]:
                 probability = next_act_predictor[numerical_features][candidate_activity]
             else:
-                #return 0
-                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features, candidate_activity)
+                # return 0
+                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
+                                                                     candidate_activity)
             p = min(probability, p)
         if n == 0:
             return 0
-        return float(p)#/float(n)
+        return float(p)  # /float(n)
 
     def __get_nearest_activity_prediction(self, predictor, features, candidate):
         domain = list(predictor.keys())
-        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x)-np.array(features))), domain))
+        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x) - np.array(features))), domain))
         min_dist = min(domain_with_distances, key=lambda x: x[1])[1]
         nearest_neighbors = [neighbor[0] for neighbor in filter(lambda x: x[1] == min_dist, domain_with_distances)]
         total_probability = 0
@@ -194,8 +196,8 @@ class Simulator:
             domain_support_numerical_features = map(lambda key: tuple(list(key)[:-1]), domain_support)
         if len(domain_support) < 1:
             return 0
-        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x)-np.array(numerical_features))),
-            domain_support_numerical_features))
+        domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x) - np.array(numerical_features))),
+                                         domain_support_numerical_features))
         min_dist = min(domain_with_distances, key=lambda x: x[1])[1]
         nearest_neighbors = [neighbor[0] for neighbor in filter(lambda x: x[1] == min_dist, domain_with_distances)]
         total_delay = 0
@@ -216,7 +218,8 @@ class Simulator:
         # TODO: reconsider the way an activity is predicted in case the current features are not supported by the predictor
         if object_features not in next_act_predictor:
             predictions = {}
-            acts = [act for act in self.processConfig.acts if self.processConfig.activityLeadingTypes[act] == otype] + ["END_" + otype]
+            acts = [act for act in self.processConfig.acts if self.processConfig.activityLeadingTypes[act] == otype] + [
+                "END_" + otype]
             for act in acts:
                 prob = self.__get_nearest_activity_prediction(next_act_predictor, object_features, act)
                 predictions[act] = prob
@@ -238,8 +241,9 @@ class Simulator:
                     except:
                         continue
                     execution_model = [leading_obj]
-                    #execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
-                    execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
+                    # execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
+                    execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for
+                                                         any_obj in sl]
                     execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
                     execution_probabilities[candidate_activity] = execution_probability
                     max_prob = max(max_prob, execution_probability)
@@ -314,7 +318,7 @@ class Simulator:
         transitions = self.simulationNet.getAllTransitions()
         state_export = SimulationStateExport(
             self.clock,
-            self.processConfig.otypes,
+            self.processConfig,
             self.simulationNet.marking,
             self.enabledBindings,
             self.steps,
@@ -324,25 +328,31 @@ class Simulator:
         return state_export.toJSON()
 
     def save(self):
-        simulator_path = os.path.join(self.sessionPath, "simulator.pkl")
+        simulator_path = os.path.join(self.sessionPath, "simulator_" + self.objectModelName + ".pkl")
         with open(simulator_path, "wb") as write_file:
             pickle.dump(self, write_file)
 
     def __load_simulation_net(self):
-        self.simulationNet = SimulationNet.load(self.sessionPath)
+        self.simulationNet = SimulationNet.load(self.sessionPath, self.objectModelName)
 
     def __load_ocel_maker(self):
-        self.ocelMaker = OcelMaker.load(self.sessionPath)
+        self.ocelMaker = OcelMaker.load(self.sessionPath, self.objectModelName)
 
     def __load_features(self):
-        self.objectFeatures = pickle.load(open(os.path.join(self.sessionPath, "object_features.pkl"), "rb"))
-        self.objectFeatureNames = pickle.load(open(os.path.join(self.sessionPath, "object_feature_names.pkl"), "rb"))
+        self.objectFeatures = pickle.load(
+            open(os.path.join(self.sessionPath, "object_features_" + self.objectModelName + ".pkl"), "rb"))
+        self.objectFeatureNames = pickle.load(
+            open(os.path.join(self.sessionPath, "object_feature_names_" + self.objectModelName + ".pkl"), "rb"))
 
     def __load_predictors(self):
-        self.predictors = Predictors.load(self.sessionPath)
+        self.predictors = Predictors.load(self.sessionPath, self.objectModelName)
 
     def __execute_step(self):
         self.steps += 1
+        if len(self.enabledBindings) == 0:
+            self.__initialize_predictions()
+            if len(self.enabledBindings) == 0:
+                return True
         (obj_id, transition_id) = self.enabledBindings[0]
         self.enabledBindings = self.enabledBindings[1:]
         object_ids = [obj_id]
@@ -460,7 +470,7 @@ class Simulator:
         omap = [str(obj) for obj in objects]
         timestamp = str(timestamp)
         vmap = {}
-        self.ocelMaker.add_event(activity, timestamp, omap, vmap)
+        self.ocelMaker.add_event(activity, timestamp, omap, vmap, self.steps)
 
     def __update_features(self, transition_name, objects):
         for obj in objects:
@@ -481,16 +491,3 @@ class Simulator:
 
     def __write_ocel(self):
         self.ocelMaker.write_ocel()
-
-    def __evaluate(self):
-        # TODO: get ocel in the right format from class variable without loading it from fs
-        original_log_file_path = os.path.join(self.sessionPath, "input.jsonocel")
-        original_ocel = ocel_import_factory.apply(file_path=original_log_file_path)
-        simulated_log_file_path = os.path.join(self.sessionPath, "simulated_ocel.jsonocel")
-        simulated_ocel = ocel_import_factory.apply(file_path=simulated_log_file_path)
-        allowed_types = [col for col in simulated_ocel.object_types if not col.startswith("LEAD_")]
-        filtered_simulated_ocel = pm4py.filter_ocel_object_types(simulated_ocel, allowed_types)
-        precision, fitness = ocel_to_ocel(original_ocel=original_ocel, simulated_ocel=filtered_simulated_ocel)
-        eval_path = os.path.join(self.sessionPath, "ocim_eval.txt")
-        with open(eval_path, "w") as wf:
-            wf.write("precision=" + str(precision) + ";fitness=" + str(fitness))

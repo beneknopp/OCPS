@@ -86,6 +86,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     })
     this.getObjectModelNames()
     this.omgResponse = undefined
+    this.responseValid = false
     this.barChartData = {}
     this.attributes = []
     this.generatorInitialized = false
@@ -227,10 +228,11 @@ export class ObjectModelGeneratorComponent implements OnInit {
         "resp": {
           [attribute: string]: {
             //label: string // == attribute
-            xAxis: string[]
+            xAxis: string[],
             yAxes: ObjectModelStats,
             includeModeled: boolean,
             includeSimulated: boolean,
+            fittingModel: string
           }
         },
       }) => {
@@ -241,10 +243,12 @@ export class ObjectModelGeneratorComponent implements OnInit {
         so.sort((a, b) => a.length - b.length)
         so.forEach(attribute => {
           let params = resp[attribute]
+          let fitting_model = params.fittingModel
+          let include_modeled = params.includeModeled
           this.attributes = this.attributes.concat(attribute)
           this.touchedParameters[attribute] = false
-          this.trainingSelectionMap[attribute] = params.includeModeled
-          this.trainingModelMap[attribute] = "---"
+          this.trainingSelectionMap[attribute] = include_modeled
+          this.trainingModelMap[attribute] = include_modeled ? fitting_model : "---"
           // TODO
           this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Exponential"]
           let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [

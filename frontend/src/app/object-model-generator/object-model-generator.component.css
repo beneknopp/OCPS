@@ -15,12 +15,6 @@
     margin-bottom: -17.5px;
 }
 
-.stats-plot-box {
-    width: 1000px;
-    height: 600px;
-    overflow-y: auto;
-}
-
 .custom-ng-select {
     max-width: 200px;
 }

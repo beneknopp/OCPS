@@ -1,3 +1,4 @@
+from datetime import datetime
 import math
 import os
 import pickle
@@ -94,16 +95,18 @@ class Marking:
 class Predictors:
 
     @classmethod
-    def load(cls, session_path):
-        predictors_path = os.path.join(session_path, "predictors.pkl")
+    def load(cls, session_path, object_model_name: str = ""):
+        predictors_path = os.path.join(session_path, "predictors_" + object_model_name + ".pkl")
         return pickle.load(open(predictors_path, "rb"))
 
+    objectModelName: str
     next_activity_predictors: dict
     mean_delays_act_to_act: dict
     mean_delays_independent: dict
 
-    def __init__(self, otypes, object_feature_names, session_path):
+    def __init__(self, otypes, object_feature_names, session_path, object_model_name: str = ""):
         self.otypes = otypes
+        self.objectModelName = object_model_name
         self.trainingData = dict()
         for otype in self.otypes:
             training_path = os.path.join(session_path, otype + "_training_data.csv")
@@ -163,38 +166,49 @@ class Predictors:
 
     def initialize_delay_prediction_function(self):
         mean_delays_act_to_act = {}
+        mean_delays_act = {}
         mean_delays_independent = {}
         for otype in self.otypes:
             training_data = self.trainingData[otype]
             delays_by_features_a2a = training_data[
-                self.object_feature_names + ["concept:name"] + ["delay"] + ["lastact"]]
-            delays_by_features_indie = training_data[
+                self.object_feature_names + ["concept:name"] + ["lastdelay"] + ["lastact"]]
+            delays_by_features_a = training_data[
                 self.object_feature_names + ["concept:name"] + ["delay"]]
+            delays_independent = training_data[["concept:name"] + ["delay"]]
             stats_a2a = delays_by_features_a2a.groupby(self.object_feature_names + ["lastact", "concept:name"]).mean()
-            stats_indie = delays_by_features_indie.groupby(self.object_feature_names + ["concept:name"]).mean()
-            stats_dict_a2a = dict(stats_a2a.to_dict()["delay"])
+            stats_a = delays_by_features_a.groupby(self.object_feature_names + ["concept:name"]).mean()
+            stats_indie = delays_independent.groupby(["concept:name"]).mean()
+            stats_dict_a2a = dict(stats_a2a.to_dict()["lastdelay"])
+            stats_dict_a = dict(stats_a.to_dict()["delay"])
             stats_dict_indie = dict(stats_indie.to_dict()["delay"])
             stats_dict_a2a = {
                 key: int(round(value))
                 for key, value in stats_dict_a2a.items()
+            }
+            stats_dict_a = {
+                key: round(value)
+                for key, value in stats_dict_a.items()
             }
             stats_dict_indie = {
                 key: round(value)
                 for key, value in stats_dict_indie.items()
             }
             mean_delays_act_to_act[otype] = stats_dict_a2a
+            mean_delays_act[otype] = stats_dict_a
             mean_delays_independent[otype] = stats_dict_indie
         self.mean_delays_act_to_act = mean_delays_act_to_act
+        self.mean_delays_act = mean_delays_act
         self.mean_delays_independent = mean_delays_independent
 
     def save(self):
-        predictors_path = os.path.join(self.session_path, "predictors.pkl")
+        predictors_path = os.path.join(self.session_path, "predictors_" + self.objectModelName + ".pkl")
         with open(predictors_path, "wb") as write_file:
             pickle.dump(self, write_file)
 
 
 class SimulationStateExport:
     clock: int
+    dateClock: str
     steps: int
     activeTokens: list
     bindings: list
@@ -203,9 +217,11 @@ class SimulationStateExport:
     totalObjects: dict
     markingInfo: dict
 
-    def __init__(self, old_clock, otypes, marking: Marking, bindings, steps, transitions):
+    def __init__(self, old_clock, process_config: ProcessConfig, marking: Marking, bindings, steps, transitions):
         self.steps = steps
         self.marking = marking
+        self.processConfig = process_config
+        otypes = process_config.otypes
         self.transitions = transitions
         self.bindings = bindings
         self.objectsInitialized = {otype: 0 for otype in otypes}
@@ -224,11 +240,10 @@ class SimulationStateExport:
         self.clock = max(map(lambda t: t.time, marking.tokens))
         self.activeTokens = []
         if len(bindings) == 0:
+            self.__make_date_clock()
             return
         (next_obj, next_transition_id) = bindings[0]
         next_active_tokens = self.__get_active_tokens(next_obj, next_transition_id)
-        if len(next_active_tokens) == 0:
-            print(2)
         self.activeTokens += next_active_tokens
         for obj_id, transition_id in bindings[1:]:
             self.activeTokens += self.__get_active_tokens(obj_id, transition_id)
@@ -242,6 +257,7 @@ class SimulationStateExport:
             self.clock = max(map(lambda t: t.time, self.activeTokens))
         if old_clock > self.clock:
             self.clock = old_clock
+        self.__make_date_clock()
         self.activeTokens = list(set(self.activeTokens))
         self.activeTokens.sort(key=lambda t: t.time)
 
@@ -255,7 +271,7 @@ class SimulationStateExport:
 
     def toJSON(self):
         return {
-            "clock": self.clock,
+            "clock": self.dateClock,
             "steps": self.steps,
             "objectsInitialized": self.objectsInitialized,
             "objectsTerminated": self.objectsTerminated,
@@ -268,6 +284,15 @@ class SimulationStateExport:
             "bindings": self.bindings,
             "markingInfo": self.markingInfo
         }
+
+    # TODO!!!
+    def __make_date_clock(self):
+        intClock= self.clock
+        clockOffset = self.processConfig.clockOffset
+        clockOffset = clockOffset / 1000000000
+        timestamp = datetime.fromtimestamp(clockOffset + intClock)
+        time_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        self.dateClock = time_str
 
 
 class NextActivityCandidate:

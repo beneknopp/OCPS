@@ -79,6 +79,8 @@ class SupportDistribution:
             support_i1 = 1 - pi / support_product
             support_product = support_i1 * support_product
             support_steps[i + 1] = support_i1
+            if support_i1 < 0.00001:
+                break
         return support_steps
 
     def __make_support_steps_for_single_value(self, mean):

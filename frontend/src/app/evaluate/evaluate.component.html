@@ -1,0 +1,59 @@
+<div class="component-box">
+    <div class="evaluation-action-box">
+        <div class="evaluation-controls" style="margin-bottom: 15px">
+            <div style="display: inline-block; margin-bottom: -15px;">
+                <div class="evaluation-ng-select">
+                    <label>Selected Object Models</label>
+                    <ng-select [(ngModel)]="selectedObjectModels" [multiple]="true">
+                        <ng-option *ngFor="let model of availableSimulationsObjectModels" [value]="model">{{model}}
+                        </ng-option>
+                    </ng-select>
+                </div>
+            </div>
+        </div>
+        <div class="evaluation-controls" style="margin-bottom: 15px;">
+            <div style="display: inline-block; margin-bottom: -15px;">
+                <button class="card card-small" [disabled]="selectedObjectModels.length == 0"
+                    (click)="onConfirmModelSelection()" tabindex="0">
+                    <span>Confirm Selection</span>
+                </button>
+            </div>
+        </div>
+        <div class="evaluation-controls" style="margin-bottom: 15px">
+            <div style="display: inline-block; margin-bottom: -15px;">
+                <div style="margin-left: 10px; width: 100%">
+                    <label>Type of Statistics</label>
+                    <ng-select class="custom-ng-select" [(ngModel)]="selectedStatisticsType" [multiple]="false"
+                        style="width: 200px;" (change)="onChangeStatsInput()">
+                        <ng-option *ngFor="let statsType of statsTypes" [value]="statsType">{{statsType}}
+                        </ng-option>
+                    </ng-select>
+                </div>
+            </div>
+        </div>
+        <div class="evaluation-controls" style="margin-bottom: 15px">
+            <div style="display: inline-block; margin-bottom: -15px;">
+                <div style="margin-left: 10px; width: 100%">
+                    <label>Object Type</label>
+                    <ng-select class="custom-ng-select" [(ngModel)]="selectedObjectType" [multiple]="false"
+                        (change)="onChangeStatsInput()" style="width: 200px">
+                        <ng-option *ngFor="let otype of otypes" [value]="otype">{{otype}}
+                        </ng-option>
+                    </ng-select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="stats-plot-box" *ngIf="showStats">
+        <h4>{{statsHeader}}</h4>
+        <h5>{{statsAxesDescription}}</h5>
+        <div class="evaluation-chart" *ngFor="let attribute of attributes">
+            <h5>{{attribute}}</h5>
+            <div>
+                <canvas baseChart [datasets]="barChartData[attribute]" [labels]="mbarChartLabels[attribute]"
+                    [options]="barChartOptions" [legend]="true">
+                </canvas>
+            </div>
+        </div>
+    </div>    
+</div>

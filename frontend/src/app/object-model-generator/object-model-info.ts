@@ -20,8 +20,8 @@ export class ObjectModelInfo {
   nonEmittingTypes: string[] = []
   numberOfObjects: number = 0
   name: string
-  executionModelDepth: number = 1
-  executionModelEvaluationDepth: number = 1
+  executionModelDepth: number = 2
+  executionModelEvaluationDepth: number = 2
   activitySelectedTypes: { [act: string]: string[] }
   activityLeadingTypes: { [act: string]: string | undefined }
 
@@ -31,8 +31,8 @@ export class ObjectModelInfo {
     nonEmittingTypes: string[] = [],
     numberOfObjects: number = 0,
     name: string = "",
-    executionModelDepth: number = 1,
-    executionModelEvaluationDepth: number = 1,
+    executionModelDepth: number = 2,
+    executionModelEvaluationDepth: number = 2,
     activitySelectedTypes: { [act: string]: string[] } = {},
     activityLeadingTypes: { [act: string]: string | undefined } = {}
   ) {
