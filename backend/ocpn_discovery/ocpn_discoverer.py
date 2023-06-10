@@ -35,9 +35,7 @@ class OCPN_Discoverer:
             for otype in otypes
         }
         #ocel = pm4py.filter_ocel_object_types_allowed_activities(ocel, types_selected_activity)
-        ocel = ocel_import_factory.apply(file_path=self.file_path)
-        ocel: OCEL
-        pm4py.ocel
+        ocel: OCEL = ocel_import_factory.apply(file_path=self.file_path)
         ocpn = ocpn_discovery_factory.apply(ocel, parameters={"debug": False})
         #ocpn_dict = pm4py.discover_oc_petri_net(ocel)
         self.ocpn_dict = ocpn
@@ -207,11 +205,17 @@ class OCPN_Discoverer:
 
     def __count_unique_otype_occurrences(self, series):
         count = series.count()
-        return float(len(series[series == 1])) / count if count > 0 else 0
+        try:
+            return float(len(series[series == 1])) / count
+        except:
+            return 0
 
     def __count_any_otype_occurrences(self, series):
         count = series.count()
-        return float(len(series[series > 0])) / count if count > 0 else 0
+        try:
+            float(len(series[series > 0])) / count
+        except:
+            return 0
 
     def __make_projections(self):
         self.netProjections = NetProjections(self.places, self.otypes)

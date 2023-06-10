@@ -18,15 +18,15 @@ class SimulationRunEvaluation:
     simulatedActivityDelays: dict
     simulatedA2ADelays: dict
     simulatedCycleTimes: dict
-    earthMoversConformances: dict
+    earthMoversDistances: dict
 
     def __init__(self, otype: str, simulated_activity_delays, simulated_a2a_delays, simulated_cycle_times,
-                 earth_movers_conformances):
+                 earth_movers_distances):
         self.otype = otype
         self.simulatedActivityDelays = simulated_activity_delays
         self.simulatedA2ADelays = simulated_a2a_delays
         self.simulatedCycleTimes = simulated_cycle_times
-        self.earthMoversConformances = earth_movers_conformances
+        self.earthMoversDistances = earth_movers_distances
 
     def get(self, stats_type):
         if stats_type == "actdelays":
@@ -34,7 +34,7 @@ class SimulationRunEvaluation:
         if stats_type == "cycletimes":
             return self.simulatedCycleTimes
         if stats_type == "earthmovers":
-            return self.earthMoversConformances
+            return self.earthMoversDistances
         raise AttributeError()
 
 
@@ -180,28 +180,24 @@ class SimulationEvaluator:
             frame = log.get_extended_table()
             max_step = max(map(lambda step: int(step), frame["STEPS"].values))
             # TODO
-            #granularity = 10.0 if max_step < 250 else 100.0
             tick_width =  round((float(max_step) / float(self.GRID)))
             ticks = [0]
             for i in range(1, self.GRID):
                 ticks.append(round(i * tick_width))
-            # ticks.append(max_step)
             self.stepTicks[model] = ticks
 
-    def __compute_emd_conformance(self, otype, model, simulated_flog, step_ticks):
+    def __compute_emd(self, otype, model, simulated_flog, step_ticks):
         simulated_flog_formatted = pm4py.convert_to_event_log(simulated_flog)
         original_language = self.originalLanguages[otype]
-        emconfs = {}
+        emds = {}
         if len(step_ticks) == 0:
             raise AttributeError()
         for tick in [step_ticks[1]] + [step_ticks[-1]]:
-            # for tick in step_ticks[1:]:
             log_prefix = pm4py.filter_event_attribute_values(simulated_flog_formatted, "STEPS", [str(i) for i in range(tick)])
             simulated_language = variants_module.get_language(log_prefix)
-            emdist = emd_evaluator.apply(simulated_language, original_language)
-            emconf = 1 - emdist
-            emconfs[tick] = emconf
-        return emconfs
+            emd = emd_evaluator.apply(simulated_language, original_language)
+            emds[tick] = emd
+        return emds
 
     def __load_flog_and_frame(self, original: bool, otype: str, model=""):
         if original:
@@ -246,14 +242,17 @@ class SimulationEvaluator:
             self.originalCycleTimes[otype] = cycle_times_stats
         model_evals = {}
         self.__make_step_ticks()
+        print("Computing Earth Mover's distances")
         for model in self.selectedObjectModels:
             step_ticks = self.stepTicks[model]
             otype_evals = {}
             for otype in self.otypes:
+                print(otype + "...")
                 flog, frame = self.__load_flog_and_frame(original=False, otype=otype, model=model)
                 act_delays, a2a_delays, cycle_times = self.__compute_delays(frame, otype, step_ticks)
-                emconf = self.__compute_emd_conformance(otype, model, flog, step_ticks)
-                otype_eval = SimulationRunEvaluation(otype, act_delays, a2a_delays, cycle_times, emconf)
+                # TODO: fix bug
+                emd = 0.0#self.__compute_emd(otype, model, flog, step_ticks)
+                otype_eval = SimulationRunEvaluation(otype, act_delays, a2a_delays, cycle_times, emd)
                 otype_evals[otype] = otype_eval
             model_evals[model] = otype_evals
         self.simulationRunEvaluations = model_evals

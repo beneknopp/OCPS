@@ -117,7 +117,7 @@ class SimulationInitializer:
                         if any_otype not in sim_obj.directObjectModel:
                             sim_obj.directObjectModel[any_otype] = []
                         sim_obj.directObjectModel[any_otype].append(any_sim_obj)
-                        if otype not in any_sim_obj.directObjectModel:
+                        if otype not in any_sim_obj.reverseObjectModel:
                             any_sim_obj.reverseObjectModel[otype] = []
                         any_sim_obj.reverseObjectModel[otype] = list(
                             set(any_sim_obj.reverseObjectModel[otype] + [sim_obj]))
@@ -191,7 +191,8 @@ class SimulationInitializer:
         end_event = self.__create_end_event(otype, new_index, eid, log_frame.loc[lastindex], inherited_attributes)
         end_events.append(end_event)
         log_frame = log_frame[all_attributes]
-        log_frame = log_frame.append(end_events, ignore_index=False)
+        for row in end_events:
+            log_frame.loc[len(log_frame)] = row
         log_frame = log_frame.sort_values(['case:concept:name', 'time:timestamp'], ascending=[True, True])
         self.training_data[otype] = log_frame
 
@@ -201,7 +202,11 @@ class SimulationInitializer:
             row[attr] = last_event[attr]
         # TODO
         # +1 : just make the end event right after the last event.
-        row["time:timestamp"] = datetime.utcfromtimestamp(last_event["time:timestamp"].timestamp() + 1)
+        #row["time:timestamp"] = datetime.utcfromtimestamp(last_event["time:timestamp"].timestamp() + 1)
+        lasttimestamp = last_event["time:timestamp"]
+        lasttime = lasttimestamp.timestamp()
+        timezone = lasttimestamp.tzname()
+        row["time:timestamp"] = pd.Timestamp(lasttime + 1, unit="s", tz=timezone)
         last_act = last_event["concept:name"]
         row["act:" + last_act] = row["act:" + last_act] + 1
         return pd.Series(data=row, name=index)

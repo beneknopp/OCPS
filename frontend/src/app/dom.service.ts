@@ -99,6 +99,12 @@ export class DOMService {
     this.sessionKey = sessionKey
   }
 
+  getOgraphGenParameterTypeColor(parameter_type: string){
+    // TODO
+    let parameter_types = ["Log-Based", "Modeled", "Simulated"]
+    return this.object_color_set[parameter_types.indexOf(parameter_type)]
+  }
+
   getOtypeColor(otype: string, otypes: string[]) {
     return this.object_color_set[otypes.indexOf(otype) % this.object_color_set.length]
   }

@@ -163,6 +163,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
 
     const upload$ = this.appService.postObjectModelGeneration(this.sessionKey, formData).subscribe(
       (resp) => {
+        debugger
         let omgResponse = new ObjectModelGenerationResponse(resp)
         this.responseValid = true
         this.omgResponse = omgResponse
@@ -251,17 +252,18 @@ export class ObjectModelGeneratorComponent implements OnInit {
           this.trainingModelMap[attribute] = include_modeled ? fitting_model : "---"
           // TODO
           this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Exponential"]
-          let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
-            { data: params.yAxes.LOG_BASED, label: 'Log-Based' },
+          // TODO: refactor options 
+          let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated', backgroundColor?: string }[] = [
+            { data: params.yAxes.LOG_BASED, label: 'Log-Based', backgroundColor: this.domService.getOgraphGenParameterTypeColor("Log-Based") },
           ]
           if (params.includeModeled) {
             label_data = label_data.concat([
-              { data: params.yAxes.MODELED, label: 'Modeled' },
+              { data: params.yAxes.MODELED, label: 'Modeled', backgroundColor: this.domService.getOgraphGenParameterTypeColor("Modeled") },
             ])
           }
           if (params.includeSimulated) {
             label_data = label_data.concat([
-              { data: params.yAxes.SIMULATED, label: 'Simulated' },
+              { data: params.yAxes.SIMULATED, label: 'Simulated', backgroundColor: this.domService.getOgraphGenParameterTypeColor("Simulated") },
             ])
           }
           this.barChartData[attribute] = label_data
@@ -398,17 +400,17 @@ export class ObjectModelGeneratorComponent implements OnInit {
     }
     let y_axes = attribute_parameters.yAxes
     // TODO
-    let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated' }[] = [
-      { data: y_axes.LOG_BASED, label: 'Log-Based' },
+    let label_data: { data: number[], label: 'Log-Based' | 'Modeled' | 'Simulated', backgroundColor? : string }[] = [
+      { data: y_axes.LOG_BASED, label: 'Log-Based', backgroundColor: this.domService.getOgraphGenParameterTypeColor("Log-based") },
     ]
     if (include_modeled) {
       label_data = label_data.concat([
-        { data: y_axes.MODELED, label: 'Modeled' },
+        { data: y_axes.MODELED, label: 'Modeled', backgroundColor: this.domService.getOgraphGenParameterTypeColor("Modeled") },
       ])
     }
     if (include_simulated) {
       label_data = label_data.concat([
-        { data: y_axes.SIMULATED, label: 'Simulated' },
+        { data: y_axes.SIMULATED, label: 'Simulated', backgroundColor: this.domService.getOgraphGenParameterTypeColor("Simulated") },
       ])
     }
     this.barChartData[attribute] = label_data
@@ -423,13 +425,17 @@ export class ObjectModelGeneratorComponent implements OnInit {
     if (!this.omgResponse) {
       return ""
     }
-    if (!this.omgResponse.stats) {
+    if (!(otype in this.omgResponse.stats.numberOfObjects)) {
       return ""
     }
-    if (!(otype in this.omgResponse.stats)) {
+    return this.omgResponse.stats.numberOfObjects[otype]
+  }
+
+  getObjectEMC(depth: number){
+    if (!this.omgResponse || !(depth in this.omgResponse.stats.earthMoversConformance)){
       return ""
     }
-    return this.omgResponse.stats[otype]["number_of_objects"]
+    return this.omgResponse.stats.earthMoversConformance[depth]
   }
 
   getOtherTypes(otype: string) {

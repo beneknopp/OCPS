@@ -102,6 +102,7 @@ class Predictors:
     objectModelName: str
     next_activity_predictors: dict
     mean_delays_act_to_act: dict
+    mean_delays_act: dict
     mean_delays_independent: dict
 
     def __init__(self, otypes, object_feature_names, session_path, object_model_name: str = ""):

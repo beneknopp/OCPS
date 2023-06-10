@@ -295,7 +295,6 @@ class AttributeParameterization():
         return DataType.CATEGORICAL
 
     def __initialize_chart_data(self):
-        yAxes = {}
         data = self.data
         if len(data) == 0:
             raise ValueError("Empty list of attribute values")
@@ -307,11 +306,22 @@ class AttributeParameterization():
             min_val = math.floor(min(data))
             max_val = math.ceil(max(data)) + 1
             x_axis = range(min_val, max_val + 1)
-        mapped_x_axis = self.modeler.map_axis(x_axis)
-        yAxes[ParameterMode.LOG_BASED] = mapped_x_axis
         self.xAxis = x_axis
-        self.yAxes = yAxes
+        self.yAxes = {}
+        self.__set_log_based_chart_data()
         self.__set_model_chart_data()
+
+    def __set_log_based_chart_data(self):
+        vals = set(self.data)
+        total = len(self.data)
+        freqs = {val: self.data.count(val) for val in vals}
+        mapped_x_axis = []
+        for tick in self.xAxis:
+            if tick in vals:
+                mapped_x_axis.append(float(freqs[tick]) / total)
+            else:
+                mapped_x_axis.append(0)
+        self.yAxes[ParameterMode.LOG_BASED] = mapped_x_axis
 
     def __set_model_chart_data(self):
         mapped_x_axis = self.modeler.map_axis(self.xAxis)
@@ -358,12 +368,20 @@ class AttributeParameterization():
         }
         return dist
 
+    def update_XAxis(self, new_ticks):
+        min_tick = min(min(self.xAxis), min(new_ticks))
+        max_tick = max(max(self.xAxis), max((new_ticks)))
+        self.xAxis = range(min_tick, max_tick+1)
+        self.__set_log_based_chart_data()
+        self.__set_model_chart_data()
+
     def update_simulated_data(self, simulated_data):
         values = list(simulated_data.keys())
         total = sum(simulated_data.values())
         if len(values) == 0:
             raise ValueError("Empty list of attribute values")
         mapped_x_axis =[]
+        self.update_XAxis(simulated_data.keys())
         for tick in self.xAxis:
             if tick in values:
                 mapped_x_axis.append(float(simulated_data[tick])/total)

@@ -70,6 +70,12 @@
                 <br>
                 {{otype}}: {{getNumberOfGeneratedObjects(otype)}}
             </div>
+            <br>
+            <h4>EMC for ORMDs:</h4>
+            <div *ngFor="let depth of [1,2,3]">
+                <br>
+                {{depth}}: {{getObjectEMC(depth)}}
+            </div>            
         </div>
     </div>
     <div class="">

@@ -59,6 +59,9 @@ class Simulator:
 
     def run_steps(self, steps):
         step_count = 0
+        self.__initialize_predictions()
+        if step_count == 0:
+            return
         while step_count != steps:
             terminated = self.__execute_step()
             step_count = step_count + 1
@@ -68,7 +71,9 @@ class Simulator:
 
     def __get_delay_prediction(self, sim_obj: SimulationObjectInstance, next_activity: str):
         otype = sim_obj.otype
+        # TODO (after 1st paper maybe): use act_to_act delays for more precise timing
         predictor = self.predictors.mean_delays_act_to_act[otype]
+        #predictor = self.predictors.mean_delays_act[otype]
         numerical_features = self.objectFeatures[otype][sim_obj.oid]
         numerical_features_vector = [numerical_features[ofen] for ofen in self.objectFeatureNames]
         target_features_vector = [sim_obj.lastActivity, next_activity]
@@ -82,6 +87,8 @@ class Simulator:
         return delay
 
     def __predict_leading_activity(self, simulation_object: SimulationObjectInstance):
+        #if simulation_object.active:
+            #return False
         predicted_transition: Transition = self.__make_feature_based_leading_prediction(simulation_object)
         if predicted_transition is None:
             return False
@@ -112,7 +119,8 @@ class Simulator:
                 return False
             paths[obj_instance] = path_from_obj
         scheduled_activity = ScheduledActivity(predicted_transition, paths, delays, execution_time)
-        simulation_object.active = True
+        for any_sim_obj in bound_simulation_objects:
+            any_sim_obj.active = True
         simulation_object.nextActivity = scheduled_activity
         return True
 
@@ -245,6 +253,8 @@ class Simulator:
                     execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for
                                                          any_obj in sl]
                     execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
+                    if candidate_activity == "create package":
+                        print("create probability:" + str(execution_probability))
                     execution_probabilities[candidate_activity] = execution_probability
                     max_prob = max(max_prob, execution_probability)
             total_prob = sum(list(execution_probabilities.values()))
@@ -254,6 +264,8 @@ class Simulator:
             if total_prob > 0:
                 cum_dist = CumulativeDistribution(execution_probabilities)
                 prediction: str = cum_dist.sample()
+                if prediction == "create package":
+                    print("haleogehjo")
                 if prediction != "INACT":
                     transition = self.__get_transition(prediction)
                     if transition.transitionType == TransitionType.FINAL or activity_leading_types[prediction] == otype:

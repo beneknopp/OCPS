@@ -4,10 +4,12 @@ import os
 import pickle
 import random
 
+import numpy as np
 import pandas as pd
 import pm4py
+from pyemd import emd
 
-from object_model_generation.generator_parametrization import ParameterType, AttributeParameterization
+from object_model_generation.generator_parametrization import ParameterType, AttributeParameterization, ParameterMode
 from object_model_generation.initial_seed_maker import InitialSeedMaker
 from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_link_prediction import PredictionMode, ObjectLinkPrediction
@@ -60,7 +62,7 @@ class ObjectModelGenerator:
                 obj_inst.time = time
                 original_objs_dict[str(oid)] = obj_inst
         for otype, objs in self.trainingModelPreprocessor.directObjectModel.items():
-            full_otype_model = []
+            full_otype_model = {}
             for oid, adj_objs in objs.items():
                 obj_inst = original_objs_dict[oid]
                 all_adj_objs = []
@@ -72,7 +74,7 @@ class ObjectModelGenerator:
                         obj_inst.total_local_model[any_otype].add(any_obj_inst)
                         any_obj_inst.total_local_model[otype].add(obj_inst)
                         all_adj_objs.append(any_obj_inst)
-                full_otype_model.append(obj_inst)
+                full_otype_model[obj_inst] = all_adj_objs
             original_model.addModel( otype, full_otype_model)
         for otype, objs in self.generatedObjects.items():
             otype_model = {
@@ -336,8 +338,6 @@ class ObjectModelGenerator:
             # try new instance for that otype
             supported_objs[neighbor_otype] = []
             new_obj = ObjectInstance(neighbor_otype, oid.get())
-            # choice: decide action based on direct support
-            direct_support = self.__compute_emit_support(obj, new_obj)
             local_support, dls, rls, merge_map = self.__compute_global_support(obj, new_obj)
             max_support = local_support
             new_objs.append(new_obj)
@@ -358,8 +358,8 @@ class ObjectModelGenerator:
                 if global_support > max_support:
                     max_support = global_support
             rnd = random.random()
-            # if rnd > max_support:
-            if rnd > direct_support:
+            direct_support = self.__compute_emit_support(obj, new_obj)
+            if rnd > max_support and direct_support < 0.99:
                 obj.close_type(neighbor_otype)
                 continue
             if not sum(list(map(lambda x: x[1], supported_objs[neighbor_otype]))) > 0:
@@ -599,35 +599,60 @@ class ObjectModelGenerator:
         ot2 = new_obj.otype
         depth = 1
         if existing_obj in new_obj.global_model[depth][tuple([ot2, ot1])]:
-            if new_obj not in existing_obj.global_model[depth][str(tuple([ot1, ot2]))]:
-                raise ValueError("How can it be?")
             return 1.0
-        support_events = 0
         support_for_new_at_old = 1.0
         nof_new_at_old = len(existing_obj.global_model[depth][tuple([ot1, ot2])])
         if str(tuple([ot1, ot2])) in ObjectInstance.supportDistributions[ot1]:
             support_for_new_at_old = ObjectInstance.supportDistributions[ot1][str(tuple([ot1, ot2]))].get_support(
                 nof_new_at_old + 1)
-            support_events += 1
-        else:
-            return 0
         support_for_old_at_new = 1.0
         nof_old_at_new = len(new_obj.global_model[depth][tuple([ot2, ot1])])
         if str(tuple([ot2, ot1])) in ObjectInstance.supportDistributions[ot2]:
             support_for_old_at_new = ObjectInstance.supportDistributions[ot2][str(tuple([ot2, ot1]))].get_support(
                 nof_old_at_new + 1)
-            support_events += 1
-        if support_events < 1:
-            raise ValueError("Undefined support for object connection")
         return (min(support_for_old_at_new, support_for_new_at_old))
 
+    def __get_distance_matrix(self, n):
+        matrix = []
+        for i in range(n):
+            row = []
+            for j in range(n):
+                row.append(float(abs(i-j)))
+            matrix.append(row)
+        return np.array(matrix)
+
+
+    def __get_object_graph_emc(self, depth):
+        avg_emc = 0
+        total = 0
+        for otype in self.otypes:
+            attr_params = self.generatorParametrization.parameters[otype][ParameterType.CARDINALITY].items()
+            for key, attr_param in attr_params:
+                if not (len(key.split("', '")) == depth + 1):
+                    continue
+                total += 1
+                attr_param: AttributeParameterization
+                log_based = attr_param.yAxes[ParameterMode.LOG_BASED]
+                sim = attr_param.yAxes[ParameterMode.SIMULATED]
+                n = len(log_based)
+                distance_matrix = self.__get_distance_matrix(n)
+                emc = emd(np.array(log_based), np.array(sim), distance_matrix)
+                avg_emc += emc
+        if total == 0:
+            return 0
+        return avg_emc / total
 
     def get_response(self):
         response_dict = dict()
+        response_dict["numberOfObjects"] = {}
         for ot in self.otypes:
-            response_dict[ot] = dict()
             generated_objects = self.generatedObjects[ot]
-            response_dict[ot]["number_of_objects"] = len(generated_objects)
+            response_dict["numberOfObjects"][ot] = len(generated_objects)
+        response_dict["earthMoversConformance"] = {}
+        # TODO
+        for depth in range(1, 4):
+            object_graph_emc = self.__get_object_graph_emc(depth)
+            response_dict["earthMoversConformance"][depth] = object_graph_emc
         return response_dict
 
     def __get_relation_mean_stdev(self, objs, otype):

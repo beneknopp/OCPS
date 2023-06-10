@@ -210,11 +210,9 @@ def discover_ocpn():
     ocpn_discoverer = OCPN_Discoverer(session_path)
     activity_selected_types = RequestParamsParser.parse_activity_selected_types(form)
     ocpn_discoverer.discover(activity_selected_types)
-    #ocpn_discoverer.evaluate()
     ocpn_discoverer.save()
     ocpn_dto = ocpn_discoverer.export()
     return ocpn_dto
-
 
 @app.route('/simulation-state', methods=['GET'])
 @cross_origin()
@@ -300,8 +298,6 @@ def simulate():
     session_path = get_session_path(request)
     start_logging(session_path)
     simulator: Simulator = Simulator.load(session_path, object_model_name)
-    # debug hotfix if all is inactive
-    #simulator.schedule_next_activity()
     simulator.run_steps(steps)
     state = simulator.export_current_state()
     simulator.save()

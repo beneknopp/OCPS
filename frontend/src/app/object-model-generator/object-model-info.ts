@@ -50,9 +50,15 @@ export class ObjectModelInfo {
 }
 
 export class ObjectModelGenerationResponse {
-  stats: { [otype: string]: { "number_of_objects": number } }
+  stats: { 
+    "numberOfObjects": {[otype: string]: number},
+    "earthMoversConformance": {[depth: number]: number}
+  }
 
-  constructor(stats: { [otype: string]: { "number_of_objects": number } }) {
+  constructor(  stats: { 
+    "numberOfObjects": {[otype: string]: number},
+    "earthMoversConformance": {[depth: number]: number}
+  }) {
     this.stats = stats
   }
 }

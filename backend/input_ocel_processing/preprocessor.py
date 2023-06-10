@@ -144,11 +144,16 @@ class InputOCELPreprocessor:
 
     def __count_otype_occurrences(self, series):
         count = series.count()
-        return float(len(series[series > 0])) / count if count > 0 else 0
-
+        try:
+            return float(len(series[series > 0])) / count
+        except:
+            return 0
     def __count_unique_otype_occurrences(self, series):
         count = series.count()
-        return float(len(series[series == 1])) / count if count > 0 else 0
+        try:
+            return float(len(series[series == 1])) / count
+        except:
+            return 0
 
     def get_otypes(self):
         return self.otypes

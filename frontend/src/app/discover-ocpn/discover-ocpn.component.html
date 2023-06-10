@@ -10,55 +10,100 @@
                 <button [disabled]="!ocpnDiscovered" class="card card-small" (click)="onConfirm()" tabindex="0">
                     <span>Confirm</span>
                 </button>
-            </div>            
+            </div>
         </div>
     </div>
-    <div class="ocpn-graph-box">
-        <div>
-            <h4 style="margin: 8px 8px; height: 9%; border-radius: 5px;">Object-Centric Petri Net</h4>
-        </div>
-        <div class="chart-container">
-            <ngx-graph [showMiniMap]="false" [curve]="curve" [panningEnabled]="true" 
-                [nodes]="nodes" [links]="links" [draggingEnabled]="false">
 
-                <ng-template ngFor let-otype [ngForOf]="otypes">
-                    <svg:marker [id]="getMarkerEndId(otype)" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4"
-                        markerHeight="4" orient="auto" [attr.fill]="getColor(otype)">
-                        <svg:path d="M0,-5L10,0L0,5" class="arrow-head" [attr.stroke]="getColor(otype)" />
-                    </svg:marker>
-                </ng-template>
+    <div class="graphs-wrapper">
+        <div class="pns-graph-box">
+            <div>
+                <h4 style="margin: 8px 8px; height: 9%; border-radius: 5px;">Petri Nets by Object Type</h4>
+            </div>
+            
+            <div class="pn-container" *ngFor="let otype of otypes" [ngClass]="isLastOtype(otype) ? '' : 'not-last-pn-container'">
+                <h5>{{otype}}</h5>
+                <div>
+                    <ngx-graph [showMiniMap]="false" [curve]="curve" [panningEnabled]="true" [nodes]="flatNodes[otype]"
+                        [links]="flatLinks[otype]" [draggingEnabled]="false">
 
-                <ng-template #nodeTemplate let-node>
-                    <!--<svg:g class="node">-->
-                    <svg:g class="node" 
-                    [attr.transform]="node.type=='PLACE' ? 'translate(20 10)'
+                        <ng-template>
+                            <svg:marker [id]="getMarkerEndId(otype)" viewBox="0 -5 10 10" refX="8" refY="0"
+                                markerWidth="4" markerHeight="4" orient="auto" [attr.fill]="getColor(otype)">
+                                <svg:path d="M0,-5L10,0L0,5" class="arrow-head" [attr.stroke]="getColor(otype)" />
+                            </svg:marker>
+                        </ng-template>
+
+                        <ng-template #nodeTemplate let-node>
+                            <!--<svg:g class="node">-->
+                            <svg:g class="node" [attr.transform]="node.type=='PLACE' ? 'translate(20 10)'
                                         : 'translate(30 0)'">
-                        <ng-container [ngSwitch]="node.type">
-                            <svg:rect *ngSwitchCase="'TRANSITION'" [attr.width]="30" [attr.height]="30"
-                                [attr.fill]="node.color" />
-                            <svg:circle *ngSwitchCase="'PLACE'" cx="0" cy="0" r="15" stroke="black" stroke-width="0"
-                                [attr.fill]="node.color" />
-                        </ng-container>
-                        <svg:text alignment-baseline="central" 
-                        [attr.x]="node.type == 'PLACE'? -15 : -15"
-                        [attr.y]="node.type == 'PLACE'? 30 : 45"
-                        >
-                            {{ node.label }}
-                        </svg:text>
-                    </svg:g>
-                </ng-template>
+                                <ng-container [ngSwitch]="node.type">
+                                    <svg:rect *ngSwitchCase="'TRANSITION'" [attr.width]="30" [attr.height]="30"
+                                        [attr.fill]="node.color" />
+                                    <svg:circle *ngSwitchCase="'PLACE'" cx="0" cy="0" r="15" stroke="black"
+                                        stroke-width="0" [attr.fill]="node.color" />
+                                </ng-container>
+                                <svg:text alignment-baseline="central" [attr.x]="node.type == 'PLACE'? -15 : -15"
+                                    [attr.y]="node.type == 'PLACE'? 30 : 45">
+                                    {{ node.label }}
+                                </svg:text>
+                            </svg:g>
+                        </ng-template>
 
-                <ng-template #linkTemplate let-link>
-                    <svg:g class="edge">
-                        <svg:path class="line" [attr.stroke-width]="link.isVariableArc ? 4 : 2"
-                            [attr.stroke]="link.color" [attr.marker-end]="getMarkerUrl(link.otype)">
-                        </svg:path>
-                    </svg:g>
-                </ng-template>
-            </ngx-graph>
+                        <ng-template #linkTemplate let-link>
+                            <svg:g class="edge">
+                                <svg:path class="line" [attr.stroke-width]="link.isVariableArc ? 4 : 2"
+                                    [attr.stroke]="link.color" [attr.marker-end]="getMarkerUrl(link.otype)">
+                                </svg:path>
+                            </svg:g>
+                        </ng-template>
+                    </ngx-graph>
+                </div>
+                
+            </div>
         </div>
-        <div class="box-footer">
-            {{getFooter()}}
-        </div>        
+
+        <div class="ocpn-graph-box">
+            <div>
+                <h4 style="margin: 8px 8px; height: 9%; border-radius: 5px;">Object-Centric Petri Net</h4>
+            </div>
+            <div class="chart-container">
+                <ngx-graph [showMiniMap]="false" [curve]="curve" [panningEnabled]="true" [nodes]="nodes" [links]="links"
+                    [draggingEnabled]="false">
+
+                    <ng-template ngFor let-otype [ngForOf]="otypes">
+                        <svg:marker [id]="getMarkerEndId(otype)" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4"
+                            markerHeight="4" orient="auto" [attr.fill]="getColor(otype)">
+                            <svg:path d="M0,-5L10,0L0,5" class="arrow-head" [attr.stroke]="getColor(otype)" />
+                        </svg:marker>
+                    </ng-template>
+
+                    <ng-template #nodeTemplate let-node>
+                        <!--<svg:g class="node">-->
+                        <svg:g class="node" [attr.transform]="node.type=='PLACE' ? 'translate(20 10)'
+                                        : 'translate(30 0)'">
+                            <ng-container [ngSwitch]="node.type">
+                                <svg:rect *ngSwitchCase="'TRANSITION'" [attr.width]="30" [attr.height]="30"
+                                    [attr.fill]="node.color" />
+                                <svg:circle *ngSwitchCase="'PLACE'" cx="0" cy="0" r="15" stroke="black" stroke-width="0"
+                                    [attr.fill]="node.color" />
+                            </ng-container>
+                            <svg:text alignment-baseline="central" [attr.x]="node.type == 'PLACE'? -15 : -15"
+                                [attr.y]="node.type == 'PLACE'? 30 : 45">
+                                {{ node.label }}
+                            </svg:text>
+                        </svg:g>
+                    </ng-template>
+
+                    <ng-template #linkTemplate let-link>
+                        <svg:g class="edge">
+                            <svg:path class="line" [attr.stroke-width]="link.isVariableArc ? 4 : 2"
+                                [attr.stroke]="link.color" [attr.marker-end]="getMarkerUrl(link.otype)">
+                            </svg:path>
+                        </svg:g>
+                    </ng-template>
+                </ngx-graph>
+            </div>
+        </div>
     </div>
 </div>
