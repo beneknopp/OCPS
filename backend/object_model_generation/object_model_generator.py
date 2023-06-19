@@ -1,7 +1,5 @@
 import logging
 import math
-import os
-import pickle
 import random
 
 import numpy as np
@@ -126,7 +124,6 @@ class ObjectModelGenerator:
             schema_distributions=schema_distributions
         )
 
-
     def __run_generation(self):
         logging.info("Running Generation of Object Model...")
         object_model_parameters = self.objectModelParameters
@@ -177,7 +174,6 @@ class ObjectModelGenerator:
                 buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
         self.generatedObjects = total_objects
 
-
     def __evaluate_local_closure(self, obj_a, obj_b):
         ot_a = obj_a.otype
         ot_b = obj_b.otype
@@ -191,7 +187,6 @@ class ObjectModelGenerator:
         # if direct_support_b == 0:
         # if rnd > direct_support_b:
         #   obj_b.close_type(ot_a)
-
 
     def __sort_buffer(self, buffer):
         obj: ObjectInstance
@@ -214,7 +209,6 @@ class ObjectModelGenerator:
             for obj in generated_objects[otype]:
                 obj.oid = index
                 index = index + 1
-
 
     def __make_prior_arrival_times_distributions2(self):
         arrival_times_distributions = {}
@@ -251,7 +245,8 @@ class ObjectModelGenerator:
         # TODO: make this more safe (assumption that all relative arrival rate distributions for neighboring types exist)
         for otype in self.otypes:
             related_time_dists[otype] = {}
-            time_dists = self.trainingModelPreprocessor.generatorParametrization.get_parameters(otype, ParameterType.TIMING.value)
+            time_dists = self.trainingModelPreprocessor.generatorParametrization.get_parameters(
+                otype, ParameterType.TIMING.value)
             for any_type in self.otypes:
                 attr = "Arrival Rates (relative to '" + any_type + "')"
                 if attr in time_dists:
@@ -275,6 +270,8 @@ class ObjectModelGenerator:
                 if related_type != seed_type:
                     relative_arrival_time = round(related_time_dists[related_type][current_otype].draw())
                     related_obj.time = current_obj.time + relative_arrival_time
+                    #related_obj.time = running_timestamps[related_type] + relative_arrival_time
+                    #running_timestamps[related_type] = running_timestamps[related_type] + relative_arrival_time
                 handled_objs.add(related_obj)
                 buffer = buffer + [related_obj]
             if len(buffer) == 0 and len(handled_objs) != len(all_objects):
@@ -285,7 +282,7 @@ class ObjectModelGenerator:
             raise ValueError("Not all objects have been assigned an arrival time")
         min_time = min(map(lambda obj: obj.time, all_objects))
         for obj in all_objects:
-            obj.time = obj.time - min_time
+            obj.time = obj.time# - min_time
         seed_objects.sort(key=lambda x: x.time)
 
 

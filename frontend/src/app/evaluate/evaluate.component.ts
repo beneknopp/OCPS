@@ -13,7 +13,7 @@ export class EvaluateComponent implements OnInit {
   originalCycleTimes: { [otype: string]: { "mean": number, "stdev": number } } = {}
   simulatedCycleTimes: { [otype: string]: { "mean": number, "stdev": number } } = {}
   earthMoversConformances: { [otype: string]: number } = {}
-  availableSimulationsObjectModels: string[] = []
+  availableSimulationsObjectModels: string[] = ["ORIGINAL"]
   selectedObjectModels: string[] = []
 
   otypes: string[] = []
@@ -46,7 +46,7 @@ export class EvaluateComponent implements OnInit {
       }
       this.appService.getAvailableSimulationsObjectModels(this.sessionKey).subscribe((res: { "resp": string[], "err": any }) => {
         let availableModels = res["resp"]
-        this.availableSimulationsObjectModels = availableModels
+        this.availableSimulationsObjectModels = availableModels.concat(["ORIGINAL"])
       })
     })
   }

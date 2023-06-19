@@ -80,7 +80,11 @@ class SimulationNet:
                                              + " missing at place '" + place.id + "'.")
             preset_indices_by_otype[otype] = preset_indices
             postset_indices_by_otype[otype] = postset_indices
+        token_removals_by_place = {}
+        token_removals_by_otype = {}
+        token_removals = []
         for otype in otypes:
+            token_removals_by_otype[otype] = []
             # deduct tokens from preset and find maximal time of bound tokens
             projected_net = self.netProjections.get_otype_projection(otype)
             places = projected_net.places
@@ -93,7 +97,12 @@ class SimulationNet:
                     obj_in_old_preset = list(filter(lambda token: token.oid == obj.oid, old_preset))
                     bound_token: Token = obj_in_old_preset[0]
                     bound_tokens.append(bound_token)
-                    self.marking.remove_token(place, bound_token)
+                    if place not in token_removals:
+                        token_removals_by_place[place] =[]
+                    token_removals.append(bound_token)
+                    token_removals_by_place[place].append(bound_token)
+                    token_removals_by_otype[otype].append(bound_token)
+        self.marking.remove_tokens(token_removals, token_removals_by_place, token_removals_by_otype)
         firing_time = 0
         aobj: None
         for otype in otypes:
@@ -122,7 +131,11 @@ class SimulationNet:
                     simulation_object.time = new_tokens_time
                 obj.time = new_tokens_time
         firing_time = int(round(float(firing_time / len(objects))))
-        print("Firing " + transition_name + " at " + str(firing_time) + ", order: " + str(aobj.oid) + ", delay: " + str(delay))
+        #for otype in otypes:
+         #   for obj in bound_objects_by_otype[otype]:
+          #      obj.time = obj.time
+                #obj.time = firing_time
+        print("Firing " + transition_name + " at " + str(firing_time) + ", object: " + str(aobj.otype) + " "+ str(aobj.oid) + ", delay: " + str(delay))
         return firing_time
 
     def get_all_running_emitting_tokens(self):

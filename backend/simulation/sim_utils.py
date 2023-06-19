@@ -73,10 +73,18 @@ class Marking:
         tokens = self.__remove_one_token(tokens, token)
         self.tokens = tokens
 
+    def remove_tokens(self, token_removals, token_removals_by_place, token_removals_by_otype):
+        self.tokensByPlaces = {
+            place: [t for t in tokens if not (place in token_removals_by_place.keys() and t in token_removals_by_place[place])]
+            for place, tokens in self.tokensByPlaces.items()
+        }
+        self.tokensByOtype = {
+            otype: [t for t in tokens if not (otype in token_removals_by_otype.keys() and t in token_removals_by_otype[otype])]
+            for otype, tokens in self.tokensByOtype.items()
+        }
+        self.tokens = [t for t in self.tokens if not t in token_removals]
+
     def __remove_one_token(self, some_list, token):
-        token_in_list = list(filter(lambda t: t == token, some_list))
-        if len(token_in_list) > 1:
-            raise ValueError("Token found more than one time. Tokens must be unique by reference.")
         some_list = list(filter(lambda t: t != token, some_list))
         return some_list
 
@@ -169,22 +177,31 @@ class Predictors:
         mean_delays_act_to_act = {}
         mean_delays_act = {}
         mean_delays_independent = {}
+        mean_delays_act_to_act_independent = {}
         for otype in self.otypes:
             training_data = self.trainingData[otype]
             delays_by_features_a2a = training_data[
-                self.object_feature_names + ["concept:name"] + ["lastdelay"] + ["lastact"]]
+                self.object_feature_names + ["concept:name"] + ["delay_to"] + ["last_act"]]
+            delays_by_features_a2a_independent = training_data[
+                ["concept:name"] + ["delay_to"] + ["last_act"]]
             delays_by_features_a = training_data[
-                self.object_feature_names + ["concept:name"] + ["delay"]]
-            delays_independent = training_data[["concept:name"] + ["delay"]]
-            stats_a2a = delays_by_features_a2a.groupby(self.object_feature_names + ["lastact", "concept:name"]).mean()
+                self.object_feature_names + ["concept:name"] + ["delay_to"]]
+            delays_independent = training_data[["concept:name"] + ["delay_to"]]
+            stats_a2a = delays_by_features_a2a.groupby(self.object_feature_names + ["last_act", "concept:name"]).mean()
+            stats_a2a_independent = delays_by_features_a2a_independent.groupby(["last_act", "concept:name"]).mean()
             stats_a = delays_by_features_a.groupby(self.object_feature_names + ["concept:name"]).mean()
             stats_indie = delays_independent.groupby(["concept:name"]).mean()
-            stats_dict_a2a = dict(stats_a2a.to_dict()["lastdelay"])
-            stats_dict_a = dict(stats_a.to_dict()["delay"])
-            stats_dict_indie = dict(stats_indie.to_dict()["delay"])
+            stats_dict_a2a = dict(stats_a2a.to_dict()["delay_to"])
+            stats_dict_a2a_independent = dict(stats_a2a_independent["delay_to"])
+            stats_dict_a = dict(stats_a.to_dict()["delay_to"])
+            stats_dict_indie = dict(stats_indie.to_dict()["delay_to"])
             stats_dict_a2a = {
                 key: int(round(value))
                 for key, value in stats_dict_a2a.items()
+            }
+            stats_dict_a2a_independent = {
+                key: int(round(value))
+                for key, value in stats_dict_a2a_independent.items()
             }
             stats_dict_a = {
                 key: round(value)
@@ -197,9 +214,11 @@ class Predictors:
             mean_delays_act_to_act[otype] = stats_dict_a2a
             mean_delays_act[otype] = stats_dict_a
             mean_delays_independent[otype] = stats_dict_indie
+            mean_delays_act_to_act_independent[otype] = stats_dict_a2a_independent
         self.mean_delays_act_to_act = mean_delays_act_to_act
         self.mean_delays_act = mean_delays_act
         self.mean_delays_independent = mean_delays_independent
+        self.mean_delays_act_to_act_independent = mean_delays_act_to_act_independent
 
     def save(self):
         predictors_path = os.path.join(self.session_path, "predictors_" + self.objectModelName + ".pkl")

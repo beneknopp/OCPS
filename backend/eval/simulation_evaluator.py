@@ -172,9 +172,10 @@ class SimulationEvaluator:
 
     def __make_step_ticks(self):
         self.stepTicks = {}
-        logs_path = os.path.join(self.sessionPath, "simulated_logs")
+        path = os.path.join(self.sessionPath, "simulated_logs")
         for model in self.selectedObjectModels:
-            path = os.path.join(logs_path, model)
+            if not (model == "ORIGINAL"):
+                path = os.path.join(path, model)
             path = os.path.join(path, "simulated_ocel.jsonocel")
             log = pm4py.read_ocel(path)
             frame = log.get_extended_table()
@@ -182,8 +183,9 @@ class SimulationEvaluator:
             # TODO
             tick_width =  round((float(max_step) / float(self.GRID)))
             ticks = [0]
-            for i in range(1, self.GRID):
+            for i in range(1, self.GRID + 1):
                 ticks.append(round(i * tick_width))
+            ticks.append(max_step)
             self.stepTicks[model] = ticks
 
     def __compute_emd(self, otype, model, simulated_flog, step_ticks):
@@ -205,7 +207,8 @@ class SimulationEvaluator:
         else:
             flog_fname = 'flattened_' + otype + '_simulated.xes'
             flog_path = os.path.join(self.sessionPath, "simulated_logs")
-            flog_path = os.path.join(flog_path, model)
+            if not (model == "ORIGINAL"):
+                flog_path = os.path.join(flog_path, model)
             flog_path = os.path.join(flog_path, flog_fname)
         flog = pm4py.read_xes(flog_path)
         frame = pm4py.convert_to_dataframe(flog)
@@ -251,7 +254,7 @@ class SimulationEvaluator:
                 flog, frame = self.__load_flog_and_frame(original=False, otype=otype, model=model)
                 act_delays, a2a_delays, cycle_times = self.__compute_delays(frame, otype, step_ticks)
                 # TODO: fix bug
-                emd = 0.0#self.__compute_emd(otype, model, flog, step_ticks)
+                emd = self.__compute_emd(otype, model, flog, step_ticks)
                 otype_eval = SimulationRunEvaluation(otype, act_delays, a2a_delays, cycle_times, emd)
                 otype_evals[otype] = otype_eval
             model_evals[model] = otype_evals
@@ -268,7 +271,7 @@ class SimulationEvaluator:
             for act1 in acts for act2 in acts
         }
         cycle_times = []
-        log["delay"] = 0
+        log["delay_to"] = 0
         log["int:timestamp"] = log.apply(lambda row: int(row["time:timestamp"].timestamp()), axis=1)
         if ticks is None:
             log["STEPS"] = -1
@@ -293,16 +296,16 @@ class SimulationEvaluator:
             if case == lastcase:
                 # Update DELAY
                 delay = time - lasttime
-                log.at[lastindex, 'delay'] = delay
-                activity_delays[lastact].append((delay, laststeps))
+                log.at[index, 'delay_to'] = delay
+                activity_delays[act].append((delay, steps))
                 a2a_delays[(lastact, act)].append((delay, laststeps))
             else:
-                activity_delays[lastact].append((0, laststeps))
-                a2a_delays[(lastact, act)].append((0, laststeps))
+                activity_delays[act].append((0, steps))
+                # TODO: why?
+                #a2a_delays[(lastact, act)].append((0, laststeps))
                 cycle_time = lasttime - firsttime
                 cycle_times.append((cycle_time, steps))
                 firsttime = line["int:timestamp"]
-            lastline, lastindex = line, index
             lastact = act
             lastcase = case
             laststeps = steps
@@ -382,14 +385,16 @@ class SimulationEvaluator:
                     new_delay_mean = (
                                                  delay_mean_total * nof_delays + nof_delays_delta * delay_mean_delta) / new_nof_delays
                     delay_stats_temp[to_tick][key] = (new_delay_mean, new_nof_delays)
-            delay_stats = {
-                tick: {
-                    act: delay
-                    for act, (delay, counter) in activity_delays.items()
-                }
-                for tick, activity_delays in delay_stats_temp.items()
+        delay_stats = {
+            tick: {
+                act: delay
+                for act, (delay, counter) in activity_delays.items()
             }
-            return delay_stats
+            for tick, activity_delays in delay_stats_temp.items()
+        }
+        # note that I spent 20-30 hours of work trying to figure out why timing behavior does not look nice
+        # and in the end it was this buddy here being not properly indented (in the loop)...
+        return delay_stats
 
     # TODO: safety for days with 3 digits and more beauty
     def __int_to_timedelta_str(self, int_timedelta_in_seconds):

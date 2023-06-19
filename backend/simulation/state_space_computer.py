@@ -166,8 +166,8 @@ class StateSpaceComputer:
             for start_place in complete_path.start_places
         }
         if any(len(ts) > 1 for ts in start_place_bound_tokens.values()):
-            raise ValueError("Warning: More than 1 token in 1 place for 1 object bound for a firing sequence."
-                             + "Are you sure this is correct, developer? Please assess & fix code.")
+            pass#raise ValueError("Warning: More than 1 token in 1 place for 1 object bound for a firing sequence."
+                 #            + "Are you sure this is correct, developer? Please assess & fix code.")
         complete_path.bound_tokens = start_place_bound_tokens
         return complete_path
 

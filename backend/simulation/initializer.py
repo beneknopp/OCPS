@@ -213,10 +213,10 @@ class SimulationInitializer:
 
     def __compute_delays(self, otype):
         training_frame = self.training_data[otype]
-        training_frame["delay"] = 0
-        training_frame["lastdelay"] = 0
-        training_frame["lastact"] = "START_" + otype
-        training_frame["nextact"] = "END_" + otype
+        training_frame["delay_to"] = 0
+        training_frame["delay_from"] = 0
+        training_frame["last_act"] = "START_" + otype
+        training_frame["next_act"] = "END_" + otype
         training_frame["int:timestamp"] = training_frame \
             .apply(lambda row: int(row["time:timestamp"].timestamp()), axis=1)
         iterator = training_frame.iterrows()
@@ -230,10 +230,10 @@ class SimulationInitializer:
                 last_act = lastline["concept:name"]
                 act = line["concept:name"]
                 delay = line["int:timestamp"] - lastline["int:timestamp"]
-                training_frame.at[lastindex, 'delay'] = delay
-                training_frame.at[index, 'lastdelay'] = delay
-                training_frame.at[lastindex, 'nextact'] = act
-                training_frame.at[index, 'lastact'] = last_act
+                training_frame.at[lastindex, 'delay_from'] = delay
+                training_frame.at[index, 'delay_to'] = delay
+                training_frame.at[lastindex, 'next_act'] = act
+                training_frame.at[index, 'last_act'] = last_act
             lastline, lastindex = line, index
             nextline = next(iterator, None)
         self.training_data[otype] = training_frame
