@@ -1,0 +1,6215 @@
+{
+    "1": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "2": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "495"
+            ]
+        }
+    },
+    "3": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "496"
+            ]
+        }
+    },
+    "4": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "497"
+            ]
+        }
+    },
+    "5": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "498"
+            ]
+        }
+    },
+    "6": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "7": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "500"
+            ]
+        }
+    },
+    "8": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "501"
+            ]
+        }
+    },
+    "9": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "10": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "11": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "504"
+            ]
+        }
+    },
+    "12": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "13": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "506"
+            ]
+        }
+    },
+    "14": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "15": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "508"
+            ]
+        }
+    },
+    "16": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "509"
+            ]
+        }
+    },
+    "17": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "510"
+            ]
+        }
+    },
+    "18": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "19": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "512"
+            ]
+        }
+    },
+    "20": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "21": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "22": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "23": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "24": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "25": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "26": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "27": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "520"
+            ]
+        }
+    },
+    "28": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "521"
+            ]
+        }
+    },
+    "29": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "30": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "31": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "32": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "525"
+            ]
+        }
+    },
+    "33": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "526"
+            ]
+        }
+    },
+    "34": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "35": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "36": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "37": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "38": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "531"
+            ]
+        }
+    },
+    "39": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "532"
+            ]
+        }
+    },
+    "40": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "533"
+            ]
+        }
+    },
+    "41": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "42": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "43": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "536"
+            ]
+        }
+    },
+    "44": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "45": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "46": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "539"
+            ]
+        }
+    },
+    "47": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "540"
+            ]
+        }
+    },
+    "48": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "541"
+            ]
+        }
+    },
+    "49": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "542"
+            ]
+        }
+    },
+    "50": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "51": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "544"
+            ]
+        }
+    },
+    "52": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "545"
+            ]
+        }
+    },
+    "53": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "546"
+            ]
+        }
+    },
+    "54": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "55": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "548"
+            ]
+        }
+    },
+    "56": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "57": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "58": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "551"
+            ]
+        }
+    },
+    "59": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "552"
+            ]
+        }
+    },
+    "60": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "553"
+            ]
+        }
+    },
+    "61": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "554"
+            ]
+        }
+    },
+    "62": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "63": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "556"
+            ]
+        }
+    },
+    "64": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "65": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "558"
+            ]
+        }
+    },
+    "66": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "67": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "68": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "69": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "562"
+            ]
+        }
+    },
+    "70": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "563"
+            ]
+        }
+    },
+    "71": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "72": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "73": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "74": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "567"
+            ]
+        }
+    },
+    "75": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "568"
+            ]
+        }
+    },
+    "76": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "77": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "570"
+            ]
+        }
+    },
+    "78": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "571"
+            ]
+        }
+    },
+    "79": {
+        "object_type": "GDSRCPT",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "80": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "81": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "82": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "83": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "84": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "85": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "494"
+            ]
+        }
+    },
+    "86": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "495"
+            ]
+        }
+    },
+    "87": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "495"
+            ]
+        }
+    },
+    "88": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "495"
+            ]
+        }
+    },
+    "89": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "495"
+            ]
+        }
+    },
+    "90": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "496"
+            ]
+        }
+    },
+    "91": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "496"
+            ]
+        }
+    },
+    "92": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "496"
+            ]
+        }
+    },
+    "93": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "496"
+            ]
+        }
+    },
+    "94": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "497"
+            ]
+        }
+    },
+    "95": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "497"
+            ]
+        }
+    },
+    "96": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "497"
+            ]
+        }
+    },
+    "97": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "497"
+            ]
+        }
+    },
+    "98": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "497"
+            ]
+        }
+    },
+    "99": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "498"
+            ]
+        }
+    },
+    "100": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "498"
+            ]
+        }
+    },
+    "101": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "498"
+            ]
+        }
+    },
+    "102": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "498"
+            ]
+        }
+    },
+    "103": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "498"
+            ]
+        }
+    },
+    "104": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "105": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "106": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "107": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "108": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "109": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "499"
+            ]
+        }
+    },
+    "110": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "500"
+            ]
+        }
+    },
+    "111": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "500"
+            ]
+        }
+    },
+    "112": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "500"
+            ]
+        }
+    },
+    "113": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "500"
+            ]
+        }
+    },
+    "114": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "501"
+            ]
+        }
+    },
+    "115": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "501"
+            ]
+        }
+    },
+    "116": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "501"
+            ]
+        }
+    },
+    "117": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "118": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "119": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "120": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "121": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "122": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "502"
+            ]
+        }
+    },
+    "123": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "124": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "125": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "126": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "127": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "128": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "503"
+            ]
+        }
+    },
+    "129": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "504"
+            ]
+        }
+    },
+    "130": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "504"
+            ]
+        }
+    },
+    "131": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "504"
+            ]
+        }
+    },
+    "132": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "504"
+            ]
+        }
+    },
+    "133": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "504"
+            ]
+        }
+    },
+    "134": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "135": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "136": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "137": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "138": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "139": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "140": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "505"
+            ]
+        }
+    },
+    "141": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "506"
+            ]
+        }
+    },
+    "142": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "506"
+            ]
+        }
+    },
+    "143": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "506"
+            ]
+        }
+    },
+    "144": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "145": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "146": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "147": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "148": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "149": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "507"
+            ]
+        }
+    },
+    "150": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "508"
+            ]
+        }
+    },
+    "151": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "508"
+            ]
+        }
+    },
+    "152": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "508"
+            ]
+        }
+    },
+    "153": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "509"
+            ]
+        }
+    },
+    "154": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "509"
+            ]
+        }
+    },
+    "155": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "509"
+            ]
+        }
+    },
+    "156": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "509"
+            ]
+        }
+    },
+    "157": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "510"
+            ]
+        }
+    },
+    "158": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "510"
+            ]
+        }
+    },
+    "159": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "510"
+            ]
+        }
+    },
+    "160": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "510"
+            ]
+        }
+    },
+    "161": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "510"
+            ]
+        }
+    },
+    "162": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "163": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "164": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "165": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "166": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "167": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "168": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "511"
+            ]
+        }
+    },
+    "169": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "512"
+            ]
+        }
+    },
+    "170": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "512"
+            ]
+        }
+    },
+    "171": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "512"
+            ]
+        }
+    },
+    "172": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "512"
+            ]
+        }
+    },
+    "173": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "512"
+            ]
+        }
+    },
+    "174": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "175": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "176": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "177": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "178": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "179": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "180": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "513"
+            ]
+        }
+    },
+    "181": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "182": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "183": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "184": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "185": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "186": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "514"
+            ]
+        }
+    },
+    "187": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "188": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "189": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "190": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "191": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "192": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "193": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "515"
+            ]
+        }
+    },
+    "194": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "195": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "196": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "197": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "198": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "199": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "200": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "516"
+            ]
+        }
+    },
+    "201": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "202": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "203": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "204": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "205": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "206": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "207": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "517"
+            ]
+        }
+    },
+    "208": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "209": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "210": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "211": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "212": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "213": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "518"
+            ]
+        }
+    },
+    "214": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "215": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "216": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "217": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "218": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "219": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "519"
+            ]
+        }
+    },
+    "220": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "520"
+            ]
+        }
+    },
+    "221": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "520"
+            ]
+        }
+    },
+    "222": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "520"
+            ]
+        }
+    },
+    "223": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "521"
+            ]
+        }
+    },
+    "224": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "521"
+            ]
+        }
+    },
+    "225": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "521"
+            ]
+        }
+    },
+    "226": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "521"
+            ]
+        }
+    },
+    "227": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "521"
+            ]
+        }
+    },
+    "228": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "229": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "230": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "231": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "232": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "233": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "522"
+            ]
+        }
+    },
+    "234": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "235": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "236": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "237": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "238": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "239": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "240": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "523"
+            ]
+        }
+    },
+    "241": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "242": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "243": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "244": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "245": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "246": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "524"
+            ]
+        }
+    },
+    "247": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "525"
+            ]
+        }
+    },
+    "248": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "525"
+            ]
+        }
+    },
+    "249": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "525"
+            ]
+        }
+    },
+    "250": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "525"
+            ]
+        }
+    },
+    "251": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "525"
+            ]
+        }
+    },
+    "252": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "526"
+            ]
+        }
+    },
+    "253": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "526"
+            ]
+        }
+    },
+    "254": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "526"
+            ]
+        }
+    },
+    "255": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "526"
+            ]
+        }
+    },
+    "256": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "257": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "258": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "259": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "260": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "261": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "262": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "527"
+            ]
+        }
+    },
+    "263": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "264": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "265": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "266": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "267": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "268": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "528"
+            ]
+        }
+    },
+    "269": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "270": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "271": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "272": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "273": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "274": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "529"
+            ]
+        }
+    },
+    "275": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "276": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "277": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "278": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "279": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "280": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "530"
+            ]
+        }
+    },
+    "281": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "531"
+            ]
+        }
+    },
+    "282": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "531"
+            ]
+        }
+    },
+    "283": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "531"
+            ]
+        }
+    },
+    "284": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "531"
+            ]
+        }
+    },
+    "285": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "532"
+            ]
+        }
+    },
+    "286": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "532"
+            ]
+        }
+    },
+    "287": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "532"
+            ]
+        }
+    },
+    "288": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "532"
+            ]
+        }
+    },
+    "289": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "532"
+            ]
+        }
+    },
+    "290": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "533"
+            ]
+        }
+    },
+    "291": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "533"
+            ]
+        }
+    },
+    "292": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "533"
+            ]
+        }
+    },
+    "293": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "533"
+            ]
+        }
+    },
+    "294": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "533"
+            ]
+        }
+    },
+    "295": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "296": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "297": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "298": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "299": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "300": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "301": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "534"
+            ]
+        }
+    },
+    "302": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "303": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "304": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "305": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "306": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "307": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "535"
+            ]
+        }
+    },
+    "308": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "536"
+            ]
+        }
+    },
+    "309": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "536"
+            ]
+        }
+    },
+    "310": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "536"
+            ]
+        }
+    },
+    "311": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "536"
+            ]
+        }
+    },
+    "312": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "536"
+            ]
+        }
+    },
+    "313": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "314": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "315": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "316": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "317": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "318": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "319": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "537"
+            ]
+        }
+    },
+    "320": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "321": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "322": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "323": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "324": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "325": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "538"
+            ]
+        }
+    },
+    "326": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "539"
+            ]
+        }
+    },
+    "327": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "539"
+            ]
+        }
+    },
+    "328": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "539"
+            ]
+        }
+    },
+    "329": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "539"
+            ]
+        }
+    },
+    "330": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "540"
+            ]
+        }
+    },
+    "331": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "540"
+            ]
+        }
+    },
+    "332": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "540"
+            ]
+        }
+    },
+    "333": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "540"
+            ]
+        }
+    },
+    "334": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "540"
+            ]
+        }
+    },
+    "335": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "541"
+            ]
+        }
+    },
+    "336": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "541"
+            ]
+        }
+    },
+    "337": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "541"
+            ]
+        }
+    },
+    "338": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "541"
+            ]
+        }
+    },
+    "339": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "542"
+            ]
+        }
+    },
+    "340": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "542"
+            ]
+        }
+    },
+    "341": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "542"
+            ]
+        }
+    },
+    "342": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "542"
+            ]
+        }
+    },
+    "343": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "344": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "345": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "346": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "347": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "348": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "349": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "543"
+            ]
+        }
+    },
+    "350": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "544"
+            ]
+        }
+    },
+    "351": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "544"
+            ]
+        }
+    },
+    "352": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "544"
+            ]
+        }
+    },
+    "353": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "545"
+            ]
+        }
+    },
+    "354": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "545"
+            ]
+        }
+    },
+    "355": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "545"
+            ]
+        }
+    },
+    "356": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "545"
+            ]
+        }
+    },
+    "357": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "546"
+            ]
+        }
+    },
+    "358": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "546"
+            ]
+        }
+    },
+    "359": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "546"
+            ]
+        }
+    },
+    "360": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "546"
+            ]
+        }
+    },
+    "361": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "546"
+            ]
+        }
+    },
+    "362": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "363": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "364": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "365": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "366": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "367": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "547"
+            ]
+        }
+    },
+    "368": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "548"
+            ]
+        }
+    },
+    "369": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "548"
+            ]
+        }
+    },
+    "370": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "548"
+            ]
+        }
+    },
+    "371": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "548"
+            ]
+        }
+    },
+    "372": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "373": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "374": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "375": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "376": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "377": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "549"
+            ]
+        }
+    },
+    "378": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "379": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "380": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "381": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "382": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "383": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "384": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "550"
+            ]
+        }
+    },
+    "385": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "551"
+            ]
+        }
+    },
+    "386": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "551"
+            ]
+        }
+    },
+    "387": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "551"
+            ]
+        }
+    },
+    "388": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "551"
+            ]
+        }
+    },
+    "389": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "552"
+            ]
+        }
+    },
+    "390": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "552"
+            ]
+        }
+    },
+    "391": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "552"
+            ]
+        }
+    },
+    "392": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "553"
+            ]
+        }
+    },
+    "393": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "553"
+            ]
+        }
+    },
+    "394": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "553"
+            ]
+        }
+    },
+    "395": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "553"
+            ]
+        }
+    },
+    "396": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "554"
+            ]
+        }
+    },
+    "397": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "554"
+            ]
+        }
+    },
+    "398": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "554"
+            ]
+        }
+    },
+    "399": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "554"
+            ]
+        }
+    },
+    "400": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "554"
+            ]
+        }
+    },
+    "401": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "402": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "403": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "404": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "405": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "406": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "555"
+            ]
+        }
+    },
+    "407": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "556"
+            ]
+        }
+    },
+    "408": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "556"
+            ]
+        }
+    },
+    "409": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "556"
+            ]
+        }
+    },
+    "410": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "556"
+            ]
+        }
+    },
+    "411": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "556"
+            ]
+        }
+    },
+    "412": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "413": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "414": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "415": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "416": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "417": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "557"
+            ]
+        }
+    },
+    "418": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "558"
+            ]
+        }
+    },
+    "419": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "558"
+            ]
+        }
+    },
+    "420": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "558"
+            ]
+        }
+    },
+    "421": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "558"
+            ]
+        }
+    },
+    "422": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "423": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "424": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "425": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "426": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "427": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "559"
+            ]
+        }
+    },
+    "428": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "429": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "430": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "431": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "432": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "433": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "560"
+            ]
+        }
+    },
+    "434": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "435": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "436": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "437": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "438": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "439": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "440": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "561"
+            ]
+        }
+    },
+    "441": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "562"
+            ]
+        }
+    },
+    "442": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "562"
+            ]
+        }
+    },
+    "443": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "562"
+            ]
+        }
+    },
+    "444": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "562"
+            ]
+        }
+    },
+    "445": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "562"
+            ]
+        }
+    },
+    "446": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "563"
+            ]
+        }
+    },
+    "447": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "563"
+            ]
+        }
+    },
+    "448": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "563"
+            ]
+        }
+    },
+    "449": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "450": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "451": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "452": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "453": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "454": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "455": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "564"
+            ]
+        }
+    },
+    "456": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "457": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "458": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "459": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "460": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "461": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "565"
+            ]
+        }
+    },
+    "462": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "463": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "464": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "465": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "466": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "467": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "566"
+            ]
+        }
+    },
+    "468": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "567"
+            ]
+        }
+    },
+    "469": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "567"
+            ]
+        }
+    },
+    "470": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "567"
+            ]
+        }
+    },
+    "471": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "568"
+            ]
+        }
+    },
+    "472": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "568"
+            ]
+        }
+    },
+    "473": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "568"
+            ]
+        }
+    },
+    "474": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "475": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "476": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "477": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "478": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "479": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "569"
+            ]
+        }
+    },
+    "480": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "570"
+            ]
+        }
+    },
+    "481": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "570"
+            ]
+        }
+    },
+    "482": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "570"
+            ]
+        }
+    },
+    "483": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "571"
+            ]
+        }
+    },
+    "484": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "571"
+            ]
+        }
+    },
+    "485": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "571"
+            ]
+        }
+    },
+    "486": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "571"
+            ]
+        }
+    },
+    "487": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "571"
+            ]
+        }
+    },
+    "488": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "489": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "490": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "491": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "492": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "493": {
+        "object_type": "MATERIAL",
+        "relations": {
+            "GDSRCPT": [],
+            "MATERIAL": [],
+            "PURCHORD": [
+                "572"
+            ]
+        }
+    },
+    "494": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "1"
+            ],
+            "MATERIAL": [
+                "84",
+                "80",
+                "85",
+                "82",
+                "83",
+                "81"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "495": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "2"
+            ],
+            "MATERIAL": [
+                "87",
+                "88",
+                "86",
+                "89"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "496": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "3"
+            ],
+            "MATERIAL": [
+                "91",
+                "90",
+                "92",
+                "93"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "497": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "4"
+            ],
+            "MATERIAL": [
+                "98",
+                "96",
+                "95",
+                "97",
+                "94"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "498": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "5"
+            ],
+            "MATERIAL": [
+                "102",
+                "99",
+                "100",
+                "103",
+                "101"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "499": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "6"
+            ],
+            "MATERIAL": [
+                "104",
+                "106",
+                "105",
+                "108",
+                "107",
+                "109"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "500": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "7"
+            ],
+            "MATERIAL": [
+                "111",
+                "110",
+                "113",
+                "112"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "501": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "8"
+            ],
+            "MATERIAL": [
+                "116",
+                "114",
+                "115"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "502": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "9"
+            ],
+            "MATERIAL": [
+                "117",
+                "118",
+                "119",
+                "122",
+                "121",
+                "120"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "503": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "10"
+            ],
+            "MATERIAL": [
+                "124",
+                "127",
+                "126",
+                "125",
+                "128",
+                "123"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "504": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "11"
+            ],
+            "MATERIAL": [
+                "132",
+                "131",
+                "133",
+                "129",
+                "130"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "505": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "12"
+            ],
+            "MATERIAL": [
+                "138",
+                "136",
+                "135",
+                "140",
+                "139",
+                "137",
+                "134"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "506": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "13"
+            ],
+            "MATERIAL": [
+                "141",
+                "143",
+                "142"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "507": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "14"
+            ],
+            "MATERIAL": [
+                "149",
+                "145",
+                "148",
+                "144",
+                "146",
+                "147"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "508": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "15"
+            ],
+            "MATERIAL": [
+                "152",
+                "151",
+                "150"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "509": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "16"
+            ],
+            "MATERIAL": [
+                "156",
+                "155",
+                "153",
+                "154"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "510": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "17"
+            ],
+            "MATERIAL": [
+                "159",
+                "157",
+                "158",
+                "160",
+                "161"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "511": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "18"
+            ],
+            "MATERIAL": [
+                "162",
+                "166",
+                "164",
+                "165",
+                "168",
+                "163",
+                "167"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "512": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "19"
+            ],
+            "MATERIAL": [
+                "172",
+                "169",
+                "173",
+                "170",
+                "171"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "513": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "20"
+            ],
+            "MATERIAL": [
+                "177",
+                "178",
+                "179",
+                "175",
+                "174",
+                "180",
+                "176"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "514": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "21"
+            ],
+            "MATERIAL": [
+                "184",
+                "181",
+                "185",
+                "186",
+                "182",
+                "183"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "515": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "22"
+            ],
+            "MATERIAL": [
+                "190",
+                "193",
+                "188",
+                "187",
+                "189",
+                "192",
+                "191"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "516": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "23"
+            ],
+            "MATERIAL": [
+                "198",
+                "194",
+                "195",
+                "199",
+                "197",
+                "200",
+                "196"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "517": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "24"
+            ],
+            "MATERIAL": [
+                "203",
+                "201",
+                "204",
+                "207",
+                "202",
+                "205",
+                "206"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "518": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "25"
+            ],
+            "MATERIAL": [
+                "210",
+                "208",
+                "212",
+                "213",
+                "211",
+                "209"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "519": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "26"
+            ],
+            "MATERIAL": [
+                "214",
+                "219",
+                "218",
+                "215",
+                "217",
+                "216"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "520": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "27"
+            ],
+            "MATERIAL": [
+                "220",
+                "221",
+                "222"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "521": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "28"
+            ],
+            "MATERIAL": [
+                "226",
+                "227",
+                "225",
+                "223",
+                "224"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "522": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "29"
+            ],
+            "MATERIAL": [
+                "230",
+                "228",
+                "229",
+                "232",
+                "231",
+                "233"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "523": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "30"
+            ],
+            "MATERIAL": [
+                "238",
+                "239",
+                "235",
+                "236",
+                "237",
+                "240",
+                "234"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "524": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "31"
+            ],
+            "MATERIAL": [
+                "245",
+                "244",
+                "243",
+                "241",
+                "242",
+                "246"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "525": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "32"
+            ],
+            "MATERIAL": [
+                "247",
+                "251",
+                "248",
+                "249",
+                "250"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "526": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "33"
+            ],
+            "MATERIAL": [
+                "252",
+                "254",
+                "255",
+                "253"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "527": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "34"
+            ],
+            "MATERIAL": [
+                "257",
+                "256",
+                "258",
+                "259",
+                "260",
+                "262",
+                "261"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "528": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "35"
+            ],
+            "MATERIAL": [
+                "265",
+                "267",
+                "268",
+                "263",
+                "264",
+                "266"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "529": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "36"
+            ],
+            "MATERIAL": [
+                "272",
+                "269",
+                "270",
+                "271",
+                "274",
+                "273"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "530": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "37"
+            ],
+            "MATERIAL": [
+                "277",
+                "279",
+                "280",
+                "276",
+                "275",
+                "278"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "531": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "38"
+            ],
+            "MATERIAL": [
+                "284",
+                "282",
+                "283",
+                "281"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "532": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "39"
+            ],
+            "MATERIAL": [
+                "289",
+                "288",
+                "285",
+                "287",
+                "286"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "533": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "40"
+            ],
+            "MATERIAL": [
+                "292",
+                "291",
+                "294",
+                "290",
+                "293"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "534": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "41"
+            ],
+            "MATERIAL": [
+                "295",
+                "301",
+                "298",
+                "299",
+                "296",
+                "300",
+                "297"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "535": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "42"
+            ],
+            "MATERIAL": [
+                "306",
+                "302",
+                "304",
+                "303",
+                "305",
+                "307"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "536": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "43"
+            ],
+            "MATERIAL": [
+                "308",
+                "310",
+                "311",
+                "309",
+                "312"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "537": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "44"
+            ],
+            "MATERIAL": [
+                "315",
+                "317",
+                "316",
+                "319",
+                "313",
+                "314",
+                "318"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "538": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "45"
+            ],
+            "MATERIAL": [
+                "324",
+                "323",
+                "321",
+                "325",
+                "322",
+                "320"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "539": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "46"
+            ],
+            "MATERIAL": [
+                "327",
+                "326",
+                "329",
+                "328"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "540": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "47"
+            ],
+            "MATERIAL": [
+                "332",
+                "333",
+                "330",
+                "334",
+                "331"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "541": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "48"
+            ],
+            "MATERIAL": [
+                "336",
+                "338",
+                "335",
+                "337"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "542": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "49"
+            ],
+            "MATERIAL": [
+                "341",
+                "339",
+                "340",
+                "342"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "543": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "50"
+            ],
+            "MATERIAL": [
+                "347",
+                "345",
+                "343",
+                "346",
+                "348",
+                "344",
+                "349"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "544": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "51"
+            ],
+            "MATERIAL": [
+                "351",
+                "352",
+                "350"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "545": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "52"
+            ],
+            "MATERIAL": [
+                "353",
+                "354",
+                "356",
+                "355"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "546": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "53"
+            ],
+            "MATERIAL": [
+                "361",
+                "360",
+                "357",
+                "358",
+                "359"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "547": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "54"
+            ],
+            "MATERIAL": [
+                "364",
+                "367",
+                "363",
+                "365",
+                "366",
+                "362"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "548": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "55"
+            ],
+            "MATERIAL": [
+                "368",
+                "370",
+                "369",
+                "371"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "549": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "56"
+            ],
+            "MATERIAL": [
+                "374",
+                "373",
+                "372",
+                "376",
+                "377",
+                "375"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "550": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "57"
+            ],
+            "MATERIAL": [
+                "381",
+                "382",
+                "384",
+                "383",
+                "378",
+                "379",
+                "380"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "551": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "58"
+            ],
+            "MATERIAL": [
+                "386",
+                "385",
+                "387",
+                "388"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "552": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "59"
+            ],
+            "MATERIAL": [
+                "391",
+                "389",
+                "390"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "553": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "60"
+            ],
+            "MATERIAL": [
+                "394",
+                "392",
+                "393",
+                "395"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "554": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "61"
+            ],
+            "MATERIAL": [
+                "399",
+                "396",
+                "397",
+                "398",
+                "400"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "555": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "62"
+            ],
+            "MATERIAL": [
+                "405",
+                "406",
+                "401",
+                "402",
+                "403",
+                "404"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "556": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "63"
+            ],
+            "MATERIAL": [
+                "410",
+                "409",
+                "408",
+                "407",
+                "411"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "557": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "64"
+            ],
+            "MATERIAL": [
+                "412",
+                "416",
+                "415",
+                "414",
+                "413",
+                "417"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "558": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "65"
+            ],
+            "MATERIAL": [
+                "419",
+                "418",
+                "420",
+                "421"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "559": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "66"
+            ],
+            "MATERIAL": [
+                "425",
+                "423",
+                "426",
+                "427",
+                "424",
+                "422"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "560": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "67"
+            ],
+            "MATERIAL": [
+                "431",
+                "432",
+                "428",
+                "430",
+                "429",
+                "433"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "561": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "68"
+            ],
+            "MATERIAL": [
+                "440",
+                "439",
+                "438",
+                "435",
+                "436",
+                "434",
+                "437"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "562": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "69"
+            ],
+            "MATERIAL": [
+                "442",
+                "445",
+                "441",
+                "444",
+                "443"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "563": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "70"
+            ],
+            "MATERIAL": [
+                "448",
+                "447",
+                "446"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "564": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "71"
+            ],
+            "MATERIAL": [
+                "451",
+                "455",
+                "452",
+                "450",
+                "453",
+                "449",
+                "454"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "565": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "72"
+            ],
+            "MATERIAL": [
+                "456",
+                "459",
+                "458",
+                "460",
+                "461",
+                "457"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "566": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "73"
+            ],
+            "MATERIAL": [
+                "462",
+                "466",
+                "467",
+                "465",
+                "463",
+                "464"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "567": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "74"
+            ],
+            "MATERIAL": [
+                "470",
+                "468",
+                "469"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "568": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "75"
+            ],
+            "MATERIAL": [
+                "473",
+                "471",
+                "472"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "569": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "76"
+            ],
+            "MATERIAL": [
+                "475",
+                "474",
+                "479",
+                "477",
+                "476",
+                "478"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "570": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "77"
+            ],
+            "MATERIAL": [
+                "480",
+                "482",
+                "481"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "571": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "78"
+            ],
+            "MATERIAL": [
+                "484",
+                "483",
+                "486",
+                "487",
+                "485"
+            ],
+            "PURCHORD": []
+        }
+    },
+    "572": {
+        "object_type": "PURCHORD",
+        "relations": {
+            "GDSRCPT": [
+                "79"
+            ],
+            "MATERIAL": [
+                "489",
+                "493",
+                "491",
+                "488",
+                "490",
+                "492"
+            ],
+            "PURCHORD": []
+        }
+    }
+}
