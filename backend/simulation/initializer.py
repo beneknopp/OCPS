@@ -75,7 +75,7 @@ class SimulationInitializer:
         for act in self.processConfig.acts:
             features["act:" + act] = 0
         for any_otype in self.otypes:
-            features["otype:" + any_otype] = len(obj.total_local_model[any_otype])
+            features["otype:" + any_otype] = len(obj.objectModel[any_otype])
         # TOOO. how to incorporate non-categorical features?
         # for key, value in obj.attributes.items():
         #    features["attr:" + key] = value
@@ -111,16 +111,16 @@ class SimulationInitializer:
                 oid = obj.oid
                 sim_obj = simulation_objects[oid]
                 for any_otype in self.otypes:
-                    for any_obj in obj.direct_object_model[any_otype]:
+                    for any_obj in obj.objectModel[any_otype]:
                         any_sim_obj = simulation_objects[any_obj.oid]
                         any_otype = any_sim_obj.otype
-                        if any_otype not in sim_obj.directObjectModel:
-                            sim_obj.directObjectModel[any_otype] = []
-                        sim_obj.directObjectModel[any_otype].append(any_sim_obj)
-                        if otype not in any_sim_obj.reverseObjectModel:
-                            any_sim_obj.reverseObjectModel[otype] = []
-                        any_sim_obj.reverseObjectModel[otype] = list(
-                            set(any_sim_obj.reverseObjectModel[otype] + [sim_obj]))
+                        if any_otype not in sim_obj.objectModel:
+                            sim_obj.objectModel[any_otype] = []
+                        sim_obj.objectModel[any_otype].append(any_sim_obj)
+                        if otype not in any_sim_obj.objectModel:
+                            any_sim_obj.objectModel[otype] = []
+                        any_sim_obj.objectModel[otype] = list(
+                            set(any_sim_obj.objectModel[otype] + [sim_obj]))
         self.simulationObjects = simulation_objects
 
     def __make_simulation_net(self):
@@ -156,7 +156,7 @@ class SimulationInitializer:
             log_frame["act:" + act] = 0
         for any_otype in self.otypes:
             log_frame["otype:" + any_otype] = log_frame["case:concept:name"].apply(
-                lambda obj: len(self.trainingModelPreprocessor.totalObjectModel[otype][obj][any_otype]))
+                lambda obj: len(self.trainingModelPreprocessor.objectModel[otype][obj][any_otype]))
         iterator = log_frame.iterrows()
         index, line = next(iterator, None)
         lastline, lastindex = line, index

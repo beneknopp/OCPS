@@ -97,7 +97,7 @@ class SimulationNet:
                     obj_in_old_preset = list(filter(lambda token: token.oid == obj.oid, old_preset))
                     bound_token: Token = obj_in_old_preset[0]
                     bound_tokens.append(bound_token)
-                    if place not in token_removals:
+                    if place not in token_removals_by_place:
                         token_removals_by_place[place] =[]
                     token_removals.append(bound_token)
                     token_removals_by_place[place].append(bound_token)

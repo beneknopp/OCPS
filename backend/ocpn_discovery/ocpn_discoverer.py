@@ -4,7 +4,7 @@ import os
 import pm4py
 from pm4py.objects.ocel.obj import OCEL
 
-from .net_utils import Place, Transition, TransitionType, Arc, NetProjections
+from .net_utils import Place, Transition, TransitionType, Arc, NetProjections, OtypeMultiplicityConfig
 
 from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
 from ocpa.visualization.oc_petri_net import factory as ocpn_vis_factory
@@ -62,6 +62,7 @@ class OCPN_Discoverer:
         self.__save_projections()
         # for debugging
         self.__save_json_export()
+        self.__save_otype_multiplicity_config()
 
     def __extract_net(self, ocpn_dict):
         self.places = dict()
@@ -213,7 +214,7 @@ class OCPN_Discoverer:
     def __count_any_otype_occurrences(self, series):
         count = series.count()
         try:
-            float(len(series[series > 0])) / count
+            return float(len(series[series > 0])) / count
         except:
             return 0
 
@@ -253,6 +254,25 @@ class OCPN_Discoverer:
         json_export["arcs"] = arcs
         with open(os.path.join(self.sessionPath, "ocpn_export.json"), "w") as write_file:
             json.dump(json_export, write_file, indent=4)
+
+    def __save_otype_multiplicity_config(self):
+        arc: Arc
+        otype_multiplicity_config: OtypeMultiplicityConfig = OtypeMultiplicityConfig(self.sessionPath)
+        for transition in self.transitions.values():
+            if transition.transitionType is not TransitionType.ACTIVITY:
+                continue
+            act = transition.label
+            for otype in self.otypes:
+                otype_arcs = [arc for arc in transition.incomingArcs if arc.placeEnd.otype == otype]
+                if len(otype_arcs) == 0:
+                    otype_multiplicity_config.add_none_config(act, otype)
+                    continue
+                arc = otype_arcs[0]
+                if arc.isVariableArc:
+                    otype_multiplicity_config.add_variable_config(act, otype)
+                else:
+                    otype_multiplicity_config.add_single_config(act, otype)
+        otype_multiplicity_config.save()
 
     def export(self):
         place: Place

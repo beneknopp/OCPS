@@ -31,28 +31,18 @@ class ObjectTypeGraph(Graph):
     def has_edge(self, source_name, target_name):
         return any(edge.source.name == source_name and edge.target.name == target_name for edge in self.edges)
 
-    def get_parents(self, node_name):
-        return list(map(lambda edge: edge.source,
-                        list(filter(lambda edge: edge.target.name == node_name, self.edges))))
-
-    def get_children(self, node_name):
-        return list(map(lambda edge: edge.target,
-                        list(filter(lambda edge: edge.source.name == node_name, self.edges))))
+    def get_neighbors(self, node_name):
+        return list(set(
+            list(map(lambda edge: edge.target.name,
+                    list(filter(lambda edge: edge.source.name == node_name, self.edges)))) +\
+            list(map(lambda edge: edge.source.name,
+                    list(filter(lambda edge: edge.target.name == node_name, self.edges))))
+        ))
 
     def __make_neighbor_otypes(self):
         self.neighborOtypes = dict()
         for otype in self.otypes:
-            self.neighborOtypes[otype] = {
-                "parents": list(map(lambda node: node.name, self.get_parents(otype))),
-                "children": list(map(lambda node: node.name, self.get_children(otype)))
-            }
-
-    def get_parent_and_child_otypes(self, otype):
-        return self.neighborOtypes[otype]
-
-    def get_neighbor_otypes(self, otype):
-        neighbors = self.neighborOtypes[otype]
-        return neighbors["parents"] + neighbors["children"]
+            self.neighborOtypes[otype] = self.get_neighbors(otype)
 
     def __make_shortest_paths(self):
         shortest_paths = {}
@@ -66,12 +56,9 @@ class ObjectTypeGraph(Graph):
                 buffer = buffer[1:]
                 if current_otype not in otype_shortest_paths:
                     otype_shortest_paths[current_otype] = current_path
-                    otype_parents = self.get_parents(current_otype)
-                    otype_children = self.get_children(current_otype)
-                    neighbor_names = list(map(lambda node: node.name,
-                                              otype_parents + otype_children))
-                    buffer += [(next_otype, current_path + [current_otype], current_level + 1) for next_otype in
-                               neighbor_names
+                    neighbor_names = self.get_neighbors(current_otype)
+                    buffer += [(next_otype, current_path + [current_otype], current_level + 1)
+                               for next_otype in neighbor_names
                                if not next_otype in otype_shortest_paths]
             shortest_paths[otype] = otype_shortest_paths
         self.shortest_paths = shortest_paths
@@ -83,7 +70,7 @@ class ObjectTypeGraph(Graph):
         self.componentSplits = {}
         for ot1 in self.otypes:
             neighbors = self.neighborOtypes[ot1]
-            for ot2 in neighbors["children"]:
+            for ot2 in neighbors:
                 ot1_side = []
                 ot2_side = []
                 for ot in [ot for ot in self.otypes if ot != ot1 and ot != ot2]:

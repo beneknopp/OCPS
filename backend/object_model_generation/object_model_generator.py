@@ -52,14 +52,14 @@ class ObjectModelGenerator:
             for otype in self.otypes
         }
         original_objs_dict = {}
-        for otype, objs in self.trainingModelPreprocessor.totalObjectModel.items():
+        for otype, objs in self.trainingModelPreprocessor.objectModel.items():
             arrival_times = dict(self.trainingModelPreprocessor.arrivalTimes[otype])
             for oid in objs:
                 obj_inst = ObjectInstance(otype, str(oid))
                 time = round(float(arrival_times[oid]))
                 obj_inst.time = time
                 original_objs_dict[str(oid)] = obj_inst
-        for otype, objs in self.trainingModelPreprocessor.directObjectModel.items():
+        for otype, objs in self.trainingModelPreprocessor.objectModel.items():
             full_otype_model = {}
             for oid, adj_objs in objs.items():
                 obj_inst = original_objs_dict[oid]
@@ -67,18 +67,16 @@ class ObjectModelGenerator:
                 for any_otype, any_objs in adj_objs.items():
                     for any_obj in any_objs:
                         any_obj_inst = original_objs_dict[str(any_obj)]
-                        obj_inst.direct_object_model[any_otype].add(any_obj_inst)
-                        any_obj_inst.reverse_object_model[otype].add(obj_inst)
-                        obj_inst.total_local_model[any_otype].add(any_obj_inst)
-                        any_obj_inst.total_local_model[otype].add(obj_inst)
+                        obj_inst.objectModel[any_otype].add(any_obj_inst)
+                        any_obj_inst.objectModel[otype].add(obj_inst)
                         all_adj_objs.append(any_obj_inst)
                 full_otype_model[obj_inst] = all_adj_objs
             original_model.addModel( otype, full_otype_model)
         for otype, objs in self.generatedObjects.items():
             otype_model = {
                 obj: [adj_obj
-                      for adj_type in obj.total_local_model
-                      for adj_obj in obj.total_local_model[adj_type]
+                      for adj_type in obj.objectModel
+                      for adj_obj in obj.objectModel[adj_type]
                       ]
                 for obj in objs
             }
@@ -143,7 +141,7 @@ class ObjectModelGenerator:
             current_obj = buffer[0]
             buffer = buffer[1:]
             current_otype = current_obj.otype
-            neighbor_types = object_type_graph.get_parent_and_child_otypes(current_otype)
+            neighbor_types = object_type_graph.get_neighbors(current_otype)
             if current_otype not in self.nonEmittingTypes:
                 prediction: ObjectLinkPrediction = self.__predict_neighbor(
                     current_obj, neighbor_types, open_objects, oid)
@@ -152,12 +150,8 @@ class ObjectModelGenerator:
                     if prediction.mode == PredictionMode.NEW:
                         total_nof_objects += 1
                     predicted_type = prediction.predicted_type
-                    reverse = prediction.reverse
                     merge_map = prediction.mergeMap
-                    if not reverse:
-                        ObjectInstance.merge(current_obj, selected_neighbor, merge_map)
-                    else:
-                        ObjectInstance.merge(selected_neighbor, current_obj, merge_map)
+                    ObjectInstance.merge(selected_neighbor, current_obj, merge_map)
                     if selected_neighbor not in total_objects[predicted_type]:
                         total_objects[predicted_type].append(selected_neighbor)
                     if selected_neighbor not in buffer:
@@ -168,7 +162,7 @@ class ObjectModelGenerator:
                         set([x for x in open_objects[current_otype] if not x == current_obj]))
                     closed_objects[current_otype].append(current_obj)
                     total_nof_closed_objects += 1
-            if float(total_nof_closed_objects) / total_nof_objects > 0.99 and len(closed_objects[seed_type]) > number_of_objects:
+            if float(total_nof_closed_objects) / total_nof_objects > 0.995 and len(closed_objects[seed_type]) > number_of_objects:
                 break
             if (len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects):
                 buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
@@ -261,7 +255,7 @@ class ObjectModelGenerator:
                 time = round(seed_type_time_dist.draw())
                 running_timestamps[current_otype] = running_timestamps[current_otype] + time
             open_local_model = {
-                obj for sl in current_obj.total_local_model.values()
+                obj for sl in current_obj.objectModel.values()
                 for obj in sl
                 if obj not in handled_objs
             }
@@ -282,53 +276,12 @@ class ObjectModelGenerator:
             raise ValueError("Not all objects have been assigned an arrival time")
         min_time = min(map(lambda obj: obj.time, all_objects))
         for obj in all_objects:
-            obj.time = obj.time# - min_time
+            obj.time = obj.time - min_time
         seed_objects.sort(key=lambda x: x.time)
-
-
-    def __assign_arrival_times_by_bfs2(self):
-        otypes = self.otypes
-        arrival_times_distributions = self.arrivalTimesDistributions
-        running_timestamps = {otype: 0 for otype in otypes}
-        open_objects = set()
-        for otype in self.otypes:
-            open_objects.update(self.generatedObjects[otype])
-        first_obj = random.sample(open_objects, 1)[0]
-        open_objects.remove(first_obj)
-        buffer = [first_obj]
-        current_obj: ObjectInstance
-        assigned_objects = set()
-        while len(buffer) > 0:
-            current_obj = buffer[0]
-            current_otype = current_obj.otype
-            if current_obj not in assigned_objects:
-                arrival_time = running_timestamps[current_otype] + \
-                               round(arrival_times_distributions[current_otype].sample())
-                current_obj.set_timestamp(arrival_time)
-                assigned_objects.add(current_obj)
-                running_timestamps[current_otype] = arrival_time
-            open_local_model = [obj for otype in self.otypes for obj in
-                                current_obj.total_local_model[otype]
-                                if obj in open_objects]
-            if len(open_local_model) == 0:
-                buffer = buffer[1:]
-                if len(buffer) == 0 and len(open_objects) > 0:
-                    buffer = random.sample(open_objects, 1)
-                continue
-            open_objects = open_objects.difference(open_local_model)
-            buffer = buffer + open_local_model
-        min_time = min(map(lambda obj: obj.time, [obj for sl in self.generatedObjects.values() for obj in sl]))
-        for sl in self.generatedObjects.values():
-            for obj in sl:
-                obj.time = obj.time - min_time
-
 
     def __predict_neighbor(self, obj: ObjectInstance, neighbor_types, open_objects, oid: RunningId):
         supported_objs = {}
         new_objs = []
-        parent_types = neighbor_types["parents"]
-        child_types = neighbor_types["children"]
-        neighbor_types = parent_types + child_types
         neighbor_types = [nt for nt in neighbor_types if not obj.locally_closed_types[nt]]
         random.shuffle(neighbor_types)
         for neighbor_otype in neighbor_types:
@@ -343,10 +296,9 @@ class ObjectModelGenerator:
             # avoid bias towards specific objects
             random.shuffle(open_objects[neighbor_otype])
             open_neighbors = list(filter(lambda on:
-                                         # neighbor still open, but not connected to this object yet
-                                         on not in obj.direct_object_model[neighbor_otype] and on not in
-                                         obj.reverse_object_model[neighbor_otype],
-                                         open_neighbors))
+                # neighbor still open, but not connected to this object yet
+                on not in obj.objectModel[neighbor_otype], open_neighbors)
+            )
             open_neighbor: ObjectInstance
             for open_neighbor in open_neighbors:
                 global_support, direct_left_support, direct_right_support, merge_map = self.__compute_global_support(
@@ -369,11 +321,10 @@ class ObjectModelGenerator:
             merge_map = merge_maps[selected_neighbor]
             predicted_otype = selected_neighbor.otype
             mode = PredictionMode.NEW if selected_neighbor in new_objs else PredictionMode.APPEND
-            reverse = True if predicted_otype in parent_types else False
             if mode == PredictionMode.NEW:
                 oid.inc()
                 open_objects[predicted_otype].append(selected_neighbor)
-            prediction = ObjectLinkPrediction(predict=True, predicted_type=predicted_otype, mode=mode, reverse=reverse,
+            prediction = ObjectLinkPrediction(predict=True, predicted_type=predicted_otype, mode=mode,
                                               selected_neighbor=selected_neighbor, merge_map=merge_map)
             # logging.info(f"{obj.otype} {str(obj.oid)}: {str(prediction.pretty_print()}"))
             print(obj.otype + " " + str(obj.oid) + ": " + str(prediction.pretty_print()))
@@ -477,7 +428,7 @@ class ObjectModelGenerator:
                 left_border_objects = path_objects[0]
                 right_border_objects = path_objects[-1]
                 if left_border_objects:
-                    left_extensions = self.objectTypeGraph.get_neighbor_otypes(left_border_type)
+                    left_extensions = self.objectTypeGraph.get_neighbors(left_border_type)
                     for left_extension_type in left_extensions:
                         new_path = tuple([left_extension_type] + list(path))
                         new_paths.append((new_path, True, False, cut_index + 1))
@@ -491,7 +442,7 @@ class ObjectModelGenerator:
                             new_objs += [left_object]
                         level_objs[level + 1][new_path] = [list(set(new_objs))] + path_objects
                 if right_border_objects:
-                    right_extensions = self.objectTypeGraph.get_neighbor_otypes(right_border_type)
+                    right_extensions = self.objectTypeGraph.get_neighbors(right_border_type)
                     for right_extension_type in right_extensions:
                         new_path = tuple(list(path) + [right_extension_type])
                         new_paths.append((new_path, False, True, cut_index))
@@ -567,7 +518,6 @@ class ObjectModelGenerator:
         return support, support_events
 
 
-    # {}, x1, [[y1],[],[y2,y3,y4]] [a,b,c], [d,e,f]
     def __update_merge_map(self, merge_map, obj, other_side_objects, this_path_side, other_path_side):
         for i, otype in enumerate(other_path_side):
             depth = len(this_path_side) + i

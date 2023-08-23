@@ -40,9 +40,7 @@ class ObjectInstance:
         self.oid = oid
         self.otype = otype
         self.attributes = dict()
-        self.direct_object_model = {any_otype: set() for any_otype in self.otypes}
-        self.reverse_object_model = {any_otype: set() for any_otype in self.otypes}
-        self.total_local_model = {any_otype: set() for any_otype in self.otypes}
+        self.objectModel = {any_otype: set() for any_otype in self.otypes}
         self.locally_closed_types = {any_otype: False for any_otype in self.otypes}
         self.locally_closed = False
         self.globally_closed = False
@@ -68,10 +66,8 @@ class ObjectInstance:
 
     @classmethod
     def merge(cls, parent, child, merge_map):
-        parent.direct_object_model[child.otype].add(child)
-        parent.total_local_model[child.otype].add(child)
-        child.reverse_object_model[parent.otype].add(parent)
-        child.total_local_model[parent.otype].add(parent)
+        parent.objectModel[child.otype].add(child)
+        child.objectModel[parent.otype].add(parent)
         cls.update_global_models(merge_map)
 
     @classmethod
@@ -150,8 +146,7 @@ class SimulationObjectInstance:
     otype: str
     time: int
     tokens: list  # of Token
-    directObjectModel: dict # of SimulationObjectInstance
-    reverseObjectModel: dict
+    objectModel: dict # of SimulationObjectInstance
     active: bool # next activity is clear
     lastActivity: str
     nextActivity: ScheduledActivity
@@ -168,6 +163,5 @@ class SimulationObjectInstance:
         self.time = obj_instance.time
         self.tokens = tokens
         self.active = False
-        self.directObjectModel = dict()
-        self.reverseObjectModel = dict()
+        self.objectModel = dict()
         self.lastActivity = "START_" + obj_instance.otype

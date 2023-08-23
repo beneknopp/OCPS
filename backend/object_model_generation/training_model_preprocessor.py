@@ -25,6 +25,7 @@ class TrainingModelPreprocessor:
         return pickle.load(open(attribute_names_path, "rb"))
 
     otypes: []
+    objectModel: dict
     activityLeadingTypes: []
     activitySelectedTypes: []
     objectTypeGraph: ObjectTypeGraph
@@ -83,7 +84,7 @@ class TrainingModelPreprocessor:
 
     def __make_process_executions(self):
         self.__make_object_model()
-        object_model = self.totalObjectModel
+        object_model = self.objectModel
         otypes = self.otypes
         local_schemata = {
             otype: dict()
@@ -93,10 +94,20 @@ class TrainingModelPreprocessor:
             otype: dict()
             for otype in otypes
         }
-        process_executions = {otype: {depth: dict() for depth in range(self.executionModelEvaluationDepth + 1)} for otype in
-                              self.otypes}
-        global_schemata = {otype: {depth: dict() for depth in range(self.executionModelEvaluationDepth + 1)} for otype in
-                           self.otypes}
+        process_executions = {
+            otype: {
+                depth: dict()
+                for depth in range(self.executionModelEvaluationDepth + 1)
+            }
+            for otype in self.otypes
+        }
+        global_schemata = {
+            otype: {
+                depth: dict()
+                for depth in range(self.executionModelEvaluationDepth + 1)
+            }
+            for otype in self.otypes
+        }
         execution_model_paths = {otype: dict() for otype in self.otypes}
         for otype in self.otypes:
             current_depth = 0
@@ -109,17 +120,16 @@ class TrainingModelPreprocessor:
                     process_executions[otype][current_depth][path] = dict()
                     global_schemata[otype][current_depth][path] = dict()
                     last_otype = path[-1]
-                    next_otypes = self.objectTypeGraph.get_neighbor_otypes(last_otype)
+                    next_otypes = self.objectTypeGraph.get_neighbors(last_otype)
                     for next_otype in next_otypes:
                         paths.append(tuple(list(path) + [next_otype]))
                 current_depth = current_depth + 1
         self.executionModelPaths = execution_model_paths
-        total_object_model = self.totalObjectModel
         for otype, obj_models in object_model.items():
             for obj, obj_model in obj_models.items():
                 self.__make_global_schema(otype, obj, process_executions, global_schemata)
                 local_schemata[otype][obj] = {
-                    any_otype: len(total_object_model[otype][obj][any_otype])
+                    any_otype: len(object_model[otype][obj][any_otype])
                     for any_otype in self.otypes
                 }
         self.globalObjectModel = process_executions
@@ -127,11 +137,10 @@ class TrainingModelPreprocessor:
         self.localSchemata = local_schemata
 
     def __make_global_schema(self, otype, obj, process_executions, global_schemata):
-        total_object_model = self.totalObjectModel
+        object_model = self.objectModel
         # execution: depth -> otype-path -> set of objects
         execution = dict()
         schema = dict()
-        current_model = total_object_model[otype][obj]
         current_depth = 0
         path = tuple([otype])
         execution[current_depth] = {path: [obj]}
@@ -144,9 +153,9 @@ class TrainingModelPreprocessor:
             schema[current_depth + 1] = dict()
             for path, model_objs in current_model.items():
                 last_otype = path[-1]
-                next_otypes = self.objectTypeGraph.get_neighbor_otypes(last_otype)
+                next_otypes = self.objectTypeGraph.get_neighbors(last_otype)
                 for next_otype in next_otypes:
-                    new_execution_model = [total_object_model[last_otype][model_obj][next_otype]
+                    new_execution_model = [object_model[last_otype][model_obj][next_otype]
                                            for model_obj in model_objs]
                     new_execution_model = [model_obj for sl in new_execution_model
                                            for model_obj in sl]
@@ -157,11 +166,6 @@ class TrainingModelPreprocessor:
                     process_executions[otype][current_depth + 1][new_path][obj] = new_execution_model
                     global_schemata[otype][current_depth + 1][new_path][obj] = len(new_execution_model)
             current_depth = current_depth + 1
-
-    def __save_original_marking(self):
-        original_model = ObjectModel(self.sessionPath)
-        original_objects = {}
-
 
     def __make_schema_distributions(self):
         self.flatLocalSchemata = {
@@ -282,18 +286,14 @@ class TrainingModelPreprocessor:
 
     def __make_object_model(self):
         otypes = self.otypes
-        direct_object_model = {otype: dict() for otype in otypes}
-        reverse_object_model = {otype: dict() for otype in otypes}
-        total_object_model = {otype: dict() for otype in otypes}
+        object_model = {otype: dict() for otype in otypes}
         self.df.apply(
             lambda row: self.__update_object_model(
-                row, direct_object_model, reverse_object_model, total_object_model, otypes
+                row, object_model, otypes
             ), axis=1)
-        self.directObjectModel = direct_object_model
-        self.reverseObjectModel = reverse_object_model
-        self.totalObjectModel = total_object_model
+        self.objectModel = object_model
 
-    def __update_object_model(self, row, direct_object_model, reverse_object_model, total_object_model, otypes):
+    def __update_object_model(self, row, object_model, otypes):
         event_objects = []
         activity = row["ocel:activity"]
         leading_type = self.activityLeadingTypes[activity]
@@ -304,46 +304,26 @@ class TrainingModelPreprocessor:
         if not len(leading_objects) == 1:
             raise ValueError("Event does not have exactly one object of specified leading type")
         leading_object = leading_objects[0]
-        if leading_object not in direct_object_model[leading_type]:
-            direct_object_model[leading_type][leading_object] = {
+        if leading_object not in object_model[leading_type]:
+            object_model[leading_type][leading_object] = {
                 any_otype: set()
                 for any_otype in otypes
             }
-        if leading_object not in reverse_object_model[leading_type]:
-            reverse_object_model[leading_type][leading_object] = {
-                any_otype: set()
-                for any_otype in otypes
-            }
-        if leading_object not in total_object_model[leading_type]:
-            total_object_model[leading_type][leading_object] = {
-                any_otype: set()
-                for any_otype in otypes
-            }
-        for otype in [otype for otype in otypes if not otype == leading_type]:
+        for otype in otypes:
+            if otype == leading_type:
+                continue
             object_col = "ocel:type:" + otype
             otype_objects = row[object_col]
             if isinstance(otype_objects, list):
                 event_objects += [(oid, otype) for oid in otype_objects]
         for i, (event_object, otype) in enumerate(event_objects):
-            direct_object_model[leading_type][leading_object][otype].add(event_object)
-            total_object_model[leading_type][leading_object][otype].add(event_object)
-            if event_object not in direct_object_model[otype]:
-                direct_object_model[otype][event_object] = {
+            object_model[leading_type][leading_object][otype].add(event_object)
+            if event_object not in object_model[otype]:
+                object_model[otype][event_object] = {
                     any_otype: set()
                     for any_otype in otypes
                 }
-            if event_object not in reverse_object_model[otype]:
-                reverse_object_model[otype][event_object] = {
-                    any_otype: set()
-                    for any_otype in otypes
-                }
-            if event_object not in total_object_model[otype]:
-                total_object_model[otype][event_object] = {
-                    any_otype: set()
-                    for any_otype in otypes
-                }
-            reverse_object_model[otype][event_object][leading_type].add(leading_object)
-            total_object_model[otype][event_object][leading_type].add(leading_object)
+            object_model[otype][event_object][leading_type].add(leading_object)
 
     def __initialize_generator_parametrization(self):
         generator_parametrization = GeneratorParametrization(

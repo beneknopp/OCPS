@@ -18,7 +18,7 @@ from simulation.simulation_net import SimulationNet
 from object_model_generation.object_instance import SimulationObjectInstance, ScheduledActivity
 from utils.cumulative_distribution import CumulativeDistribution
 from eval.evaluators import ocel_to_ocel
-
+from ocpn_discovery.net_utils import OtypeMultiplicityConfig, ArcMultiplicity
 
 class Simulator:
 
@@ -43,6 +43,7 @@ class Simulator:
         self.sessionPath = session_path
         self.objectModelName = object_model_name
         self.processConfig = ProcessConfig.load(session_path)
+        self.otypeMultiplicityConfig = OtypeMultiplicityConfig.load(session_path)
         self.objectModel = ObjectModel.load(session_path, use_original_marking, object_model_name)
         self.totalNumberOfObjects = len(self.objectModel.objectsById)
         self.initializedObjects = set()
@@ -95,29 +96,12 @@ class Simulator:
         return delay
 
     def __predict_leading_activity(self, simulation_object: SimulationObjectInstance):
-        predicted_transition: Transition = self.__make_feature_based_leading_prediction(simulation_object)
-        if predicted_transition is None:
+        predicted_binding = self.__make_feature_based_leading_prediction(simulation_object)
+        if predicted_binding is None:
             return False
-        # the prediction is feature-based and does not respect the marking
-        # now, if the marking allows to realize the prediction, then schedule
-        # is this correct? TODO
+        execution_model, predicted_transition = predicted_binding
+        bound_simulation_objects = [obj for objs in execution_model.values() for obj in objs]
         next_activity = predicted_transition.label
-        bound_simulation_objects = [simulation_object]
-        if predicted_transition.transitionType == TransitionType.FINAL:
-            # only terminate if parent objects have terminated
-            if not self.__ready_for_termination(simulation_object):
-                return False
-        else:
-            direct_om = simulation_object.directObjectModel
-            reverse_om = simulation_object.reverseObjectModel
-            for any_otype in self.processConfig.otypes:
-                if any_otype in direct_om:
-                    bound_simulation_objects = list(set(bound_simulation_objects + direct_om[any_otype]))
-                # TODO prio 1: adapt framework.
-                #if simulation_object.otype == "items" and any_otype == "orders" and any_otype in reverse_om:
-                 #   bound_simulation_objects = list(set(bound_simulation_objects + reverse_om[any_otype]))
-                #if simulation_object.otype == "orders" and any_otype == "items" and any_otype in reverse_om:
-                 #   bound_simulation_objects = list(set(bound_simulation_objects + reverse_om[any_otype]))
         any_sim_obj: SimulationObjectInstance
         paths = dict()
         delays = {
@@ -136,31 +120,60 @@ class Simulator:
         simulation_object.nextActivity = scheduled_activity
         return True
 
+    def __get_execution_models(self, leading_obj: SimulationObjectInstance, act):
+        otype = leading_obj.otype
+        execution_models = [ { otype: [leading_obj] } ]
+        for any_otype in self.processConfig.otypes:
+            if any_otype == otype:
+                continue
+            arc_multiplicity: ArcMultiplicity = self.otypeMultiplicityConfig.get_config(act, any_otype)
+            if arc_multiplicity is ArcMultiplicity.NONE:
+                continue
+            if arc_multiplicity is ArcMultiplicity.VARIABLE:
+                new_execution_models = []
+                for execution_model in execution_models:
+                    new_execution_model = execution_model
+                    new_execution_model[any_otype] = list(leading_obj.objectModel[any_otype])
+                    new_execution_models.append(new_execution_model)
+                execution_models = new_execution_models
+            else:
+                new_execution_models = []
+                for execution_model in execution_models:
+                    related_objs = list(leading_obj.objectModel[any_otype])
+                    if len(related_objs) == 0:
+                        return []
+                    for any_obj in related_objs:
+                        new_execution_model = dict(execution_model)
+                        new_execution_model[any_otype] = [any_obj]
+                        new_execution_models.append(new_execution_model)
+                execution_models = new_execution_models
+        return execution_models
+
+
     def __get_execution_probability(self, candidate_activity, bound_objects):
         obj: ObjectInstance
         p = 0
         # p = 1
         n = 0
         obj: ObjectInstance
-        for obj in bound_objects:
-            otype = obj.otype
-            # if otype in self.processConfig.nonEmittingTypes :
-            #   continue
-            n = n + 1
-            features_by_object = self.objectFeatures[otype][obj.oid]
-            numerical_features = tuple(
-                list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
-            next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if numerical_features in next_act_predictor:
-                if candidate_activity in next_act_predictor[numerical_features]:
-                    probability = next_act_predictor[numerical_features][candidate_activity]
+        for otype, objs in bound_objects.items():
+            for obj in objs:
+                otype = obj.otype
+                n = n + 1
+                features_by_object = self.objectFeatures[otype][obj.oid]
+                numerical_features = tuple(
+                    list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
+                next_act_predictor = self.predictors.next_activity_predictors[otype]
+                if numerical_features in next_act_predictor:
+                    if candidate_activity in next_act_predictor[numerical_features]:
+                        probability = next_act_predictor[numerical_features][candidate_activity]
+                    else:
+                        probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
+                                                                             candidate_activity)
                 else:
                     probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
                                                                          candidate_activity)
-            else:
-                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
-                                                                     candidate_activity)
-            p += probability
+                p += probability
         if n == 0:
             return 0
         return float(p) / float(n)
@@ -231,7 +244,6 @@ class Simulator:
     def __make_feature_based_leading_prediction(self, simulation_object: SimulationObjectInstance):
         oid = simulation_object.oid
         otype = simulation_object.otype
-        obj = simulation_object.objectInstance
         features_by_object = self.objectFeatures[otype][oid]
         object_features = tuple(list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames)))
         next_act_predictor = self.predictors.next_activity_predictors[otype]
@@ -242,48 +254,47 @@ class Simulator:
                 "END_" + otype]
             for act in acts:
                 prob = self.__get_nearest_activity_prediction(next_act_predictor, object_features, act)
-                predictions[act] = prob
+                if prob > 0:
+                    predictions[act] = prob
         else:
             predictions = next_act_predictor[object_features]
         execution_probabilities = dict()
-        if predictions:
+        if len(predictions) > 0:
             max_prob = 0
             activity_leading_types = self.processConfig.activityLeadingTypes
+            bindings = {}
+            i = 0
             for candidate_activity, p in predictions.items():
                 if candidate_activity[:4] == "END_":
-                    execution_probabilities[candidate_activity] = p
+                    execution_probabilities[i] = p
+                    bindings[i] = ({otype: [simulation_object]}, candidate_activity)
                     max_prob = max(p, max_prob)
+                    i = i + 1
                 else:
                     leading_type = activity_leading_types[candidate_activity]
                     try:
-                        leading_obj = obj if leading_type == otype else \
-                            list(obj.reverse_object_model[leading_type])[0]
+                        leading_obj = simulation_object if leading_type == otype else \
+                            list(simulation_object.objectModel[leading_type])[0]
                     except:
                         continue
-                    execution_model = [leading_obj]
-                    # execution_model += [any_obj for sl in leading_obj.direct_object_model.values() for any_obj in sl]
-                    execution_model = execution_model + [any_obj for sl in leading_obj.direct_object_model.values() for
-                                                         any_obj in sl]
-                    execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
-                    execution_probabilities[candidate_activity] = execution_probability
-                    max_prob = max(max_prob, execution_probability)
-            if otype == "packages":
-                print(execution_probabilities)
-            if otype == "orders":
-                print(execution_probabilities)
-            total_prob = sum(list(execution_probabilities.values()))
-            inact = 1 - total_prob
+                    execution_models = self.__get_execution_models(leading_obj, candidate_activity)
+                    for execution_model in execution_models:
+                        execution_probability = self.__get_execution_probability(candidate_activity, execution_model)
+                        max_prob = max(max_prob, execution_probability)
+                        execution_probabilities[i] = execution_probability
+                        bindings[i] = (execution_model, candidate_activity)
+                        i = i + 1
+            inact = 1 - max_prob
             if inact > 0:
-                execution_probabilities["INACT"] = inact
-            if total_prob > 0:
+                execution_probabilities[-1] = inact
+            if max_prob > 0:
                 cum_dist = CumulativeDistribution(execution_probabilities)
-                prediction: str = cum_dist.sample()
-                if otype == "packages" and prediction == "failed delivery":
-                    print(prediction)
-                if prediction != "INACT":
-                    transition = self.__get_transition(prediction)
-                    if transition.transitionType == TransitionType.FINAL or activity_leading_types[prediction] == otype:
-                        return transition
+                prediction: int = cum_dist.sample()
+                if prediction != -1:
+                    execution_model, candidate_activity = bindings[prediction]
+                    transition = self.__get_transition(candidate_activity)
+                    if transition.transitionType == TransitionType.FINAL or activity_leading_types[candidate_activity] == otype:
+                        return execution_model, transition
 
     def schedule_next_activity(self):
         active_simulation_objects = self.simulationNet.get_all_active_simulation_objects()
@@ -312,7 +323,7 @@ class Simulator:
             rescheduled_objects.add(sim_obj)
             total_om = []
             for otype in self.processConfig.otypes:
-                total_om += list(obj_instance.total_local_model[otype])
+                total_om += list(obj_instance.objectModel[otype])
             for any_obj in total_om:
                 if any_obj in self.terminatedObjects:
                     continue
@@ -423,9 +434,9 @@ class Simulator:
         return False
 
     def __ready_for_termination(self, sim_obj: SimulationObjectInstance):
-        obj = sim_obj.objectInstance
-        reverse_object_model = [any_obj.oid for subset in obj.reverse_object_model.values() for any_obj in subset]
-        return all(x in self.simulationNet.terminatingObjects for x in reverse_object_model)
+        #obj = sim_obj.objectInstance
+        #reverse_object_model = [any_obj.oid for subset in obj.objectModel.values() for any_obj in subset]
+        return True#all(x in self.simulationNet.terminatingObjects for x in reverse_object_model)
 
     def __get_all_paths(self, obj, next_activity):
         # return all paths for all other objects beside obj needed to perform next_activity
@@ -437,7 +448,7 @@ class Simulator:
             lead_objs = list(obj.reverse_object_model[lead_type])
             lead_objs.sort(key=lambda obj: obj.time)
             lead_obj = lead_objs[0]
-        direct_obj_model = [objs for any_otype, objs in lead_obj.direct_object_model.items()]
+        direct_obj_model = [objs for any_otype, objs in lead_obj.objectModel.items()]
         direct_obj_model = [lead_obj] + [model_obj for objs in direct_obj_model for model_obj in objs]
         paths_by_obj = {}
         for model_obj in direct_obj_model:

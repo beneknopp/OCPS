@@ -145,3 +145,45 @@ class NetProjections:
         projected_nets_path = os.path.join(session_path, "projected_nets.pkl")
         with open(projected_nets_path, "wb") as write_file:
             pickle.dump(self, write_file)
+
+
+class ArcMultiplicity(Enum):
+    NONE = "NONE"
+    SINGLE = "SINGLE"
+    VARIABLE = "ALL"
+
+class OtypeMultiplicityConfig:
+
+    _otypeMultConfig: dict
+    sessionPath: str
+
+    def __init__(self, session_path):
+        self._otypeMultConfig = {}
+        self.sessionPath = session_path
+
+    def save(self):
+        path = os.path.join(self.sessionPath, "otypeMultiplicityConfig.pkl")
+        with open(path, "wb") as write_file:
+            pickle.dump(self, write_file)
+
+    @classmethod
+    def load(cls, session_path):
+        path = os.path.join(session_path, "otypeMultiplicityConfig.pkl")
+        return pickle.load(open(path, "rb"))
+
+    def add_none_config(self, act, otype):
+        self.add_config(act, otype, ArcMultiplicity.NONE)
+
+    def add_single_config(self, act, otype):
+        self.add_config(act, otype, ArcMultiplicity.SINGLE)
+
+    def add_variable_config(self, act, otype):
+        self.add_config(act, otype, ArcMultiplicity.VARIABLE)
+
+    def add_config(self, act, otype, arc_multiplicity: ArcMultiplicity):
+        if act not in self._otypeMultConfig:
+            self._otypeMultConfig[act] = {}
+        self._otypeMultConfig[act][otype] = arc_multiplicity
+
+    def get_config(self, act, otype):
+        return self._otypeMultConfig[act][otype]

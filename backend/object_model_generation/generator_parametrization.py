@@ -4,8 +4,7 @@ import pickle
 from enum import Enum
 
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.optimize import curve_fit
+from scipy import stats
 from scipy.stats import norm, poisson
 
 from utils.cumulative_distribution import CumulativeDistribution
@@ -53,11 +52,10 @@ class Predictor:
         self.mu = mu
         self.std = std
 
-    def init_exponential(self, lamb, scale, M):
+    def init_exponential(self, scale, loc):
         self.modelType = ModelType.EXPONENTIAL
-        self.lamb = lamb
         self.scale = scale
-        self.M = M
+        self.loc = loc
 
     def sample(self):
         if self.modelType == ModelType.CUSTOM:
@@ -75,19 +73,9 @@ class Predictor:
                     raise ValueError("Timeout in sampling from distribution.")
             return s
         if self.modelType == ModelType.EXPONENTIAL:
-            s = -1
-            i = 0
-            while s < -1:
-                s = np.random.exponential(self.lamb, 1)[0]
-                if self.dataType != DataType.INTEGER:
-                    break
-                i += 1
-                if i > 100000:
-                    raise ValueError("Timeout in sampling from distribution.")
-            return s*self.scale*self.M
-
-def exponential_fit_function(x, lamb, scale):
-    return lamb * np.exp(-lamb * scale * x)
+            distr = stats.expon(self.scale, self.loc)
+            s = distr.rsv(size=1)[0]
+            return s
 
 class Modeler():
 
@@ -164,22 +152,11 @@ class Modeler():
         self.parameters = "mu: " + str(mu) + "; std: " + str(std)
 
     def __fit_exponential(self, data):
-        data_set = sorted(data)
-        minvalue = min(data_set)
-        maxvalue = max(data_set)
-        w = math.ceil((maxvalue - minvalue) / 50)
-        bins = np.array([(minvalue + k * w) - 0.5 for k in range(50)])
-        data_set = np.array(data_set) / maxvalue
-        bins = bins / maxvalue
-        entries, bin_edges, patches = plt.hist(data_set, bins=bins, density=False, label='Data')
-        middles_bins = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-        entries = entries / sum(entries)
-        fitted = curve_fit(exponential_fit_function, middles_bins, entries)
-        parameters, cov_matrix = fitted
-        lamb, s = parameters
+        params = stats.expon.fit(data)
+        scale, loc = params
         self.predictor = Predictor(self.dataType)
-        self.predictor.init_exponential(lamb, s, maxvalue)
-        self.parameters = "lambda=" + str(lamb) + "; scale=" + str(s) + "; M=" + str(maxvalue)
+        self.predictor.init_exponential(scale, loc)
+        self.parameters = "scale: " + str(scale) + "; loc: " + str(loc)
 
     def map_axis(self, ticks=None):
         if self.modelType == ModelType.CUSTOM:
@@ -225,17 +202,13 @@ class Modeler():
         return mapped_ticks
 
     def __map_exponential(self, ticks):
-        sorted_ticks = sorted(ticks)
-        if len(sorted_ticks) < 2 or any(x < 0 for x in ticks):
-            raise AttributeError("Invalid arguments for Poisson distribution")
-        width = sorted_ticks[1] - sorted_ticks[0]
-        mapped_ticks = []
-        parameters = self.parameters.split(";")
-        lamb, scale, M = map(lambda x: float(x.split("=")[1]), parameters)
-        cdf = lambda x: 1 - (1/scale)*np.exp(-lamb*scale*x/M)
-        for tick in sorted_ticks:
-            val = cdf(tick + width / 2) - cdf(tick - width / 2)
-            mapped_ticks.append(val)
+        w = ticks[1] - ticks[0]
+        bin_edges = [tick - w/2 for tick in ticks]
+        bin_edges += [ticks[-1] + w/2]
+        scale, loc = [float(param.split(": ")[1]) for param in self.parameters.split(";")]
+        exponential_dist = stats.expon(scale, loc)
+        cdfs = exponential_dist.cdf(bin_edges)
+        mapped_ticks = [cdfs[i+1] - cdfs[i] for i in range(len(ticks))]
         return mapped_ticks
 
     def draw(self):
@@ -301,7 +274,7 @@ class AttributeParameterization():
         if self.dataType is DataType.CATEGORICAL:
             x_axis = list(set(data))
         elif self.dataType is DataType.CONTINUOUS:
-            x_axis = self.modeler.defaultAxis
+            x_axis = self.__make_x_axis_continuous(data)
         else:
             min_val = math.floor(min(data))
             max_val = math.ceil(max(data)) + 1
@@ -312,16 +285,51 @@ class AttributeParameterization():
         self.__set_model_chart_data()
 
     def __set_log_based_chart_data(self):
-        vals = set(self.data)
-        total = len(self.data)
-        freqs = {val: self.data.count(val) for val in vals}
-        mapped_x_axis = []
-        for tick in self.xAxis:
-            if tick in vals:
-                mapped_x_axis.append(float(freqs[tick]) / total)
-            else:
-                mapped_x_axis.append(0)
+        if self.dataType is DataType.CONTINUOUS:
+            mapped_x_axis = self.__map_x_axis_continuous()
+        else:
+            vals = set(self.data)
+            total = len(self.data)
+            mapped_x_axis = []
+            if not self.dataType == DataType.CONTINUOUS:
+                freqs = {val: self.data.count(val) for val in vals}
+                for tick in self.xAxis:
+                    if tick in vals:
+                        mapped_x_axis.append(float(freqs[tick]) / total)
+                    else:
+                        mapped_x_axis.append(0.0)
         self.yAxes[ParameterMode.LOG_BASED] = mapped_x_axis
+
+    def __make_x_axis_continuous(self, data):
+        min_val = math.floor(min(data))
+        max_val = math.ceil(max(data))
+        W = max_val - min_val
+        w = W / 20
+        self.xAxisTickWidth = w
+        ticks = [round(100*(min_val + (2*k+1)*w/2))/100 for k in range(20) ]
+        return ticks
+
+    def __map_x_axis_continuous(self):
+        vals = self.data
+        ticks = self.xAxis
+        nof_ticks = len(ticks)
+        nof_vals = len(vals)
+        bin_counts = [0 for i in ticks]
+        for val in vals:
+            i = 0
+            while i < nof_ticks and ticks[i] < val:
+                i = i + 1
+            if i == 0:
+                bin_counts[i] = bin_counts[i] + 1
+            elif i == nof_ticks:
+                bin_counts[-1] = bin_counts[-1] + 1
+            else:
+                if abs(val - ticks[i-1]) < abs(val - ticks[i]):
+                    bin_counts[i-1] = bin_counts[i-1] + 1
+                else:
+                    bin_counts[i] = bin_counts[i] + 1
+        mapped_x_axis = [float(x) / nof_vals for x in bin_counts]
+        return mapped_x_axis
 
     def __set_model_chart_data(self):
         mapped_x_axis = self.modeler.map_axis(self.xAxis)

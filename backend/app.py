@@ -76,7 +76,7 @@ def ocel_config():
     config_dto = json.loads(config_bytes)
     process_config = ProcessConfig(config_dto, session_path)
     postprocessor = InputOCELPostprocessor(session_path, process_config)
-    postprocessed_ocel = postprocessor.postprocess()
+    postprocessor.postprocess()
     clock_offset = postprocessor.get_clock_offset()
     process_config.clockOffset = clock_offset
     process_config.save()
