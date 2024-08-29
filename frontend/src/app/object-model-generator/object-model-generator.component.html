@@ -63,7 +63,7 @@
                     [disabled]="!generatorInitialized || !objectModelInfo.selectedSeedType">
             </div>
         </div>
-        <div *ngIf="omgResponse">
+        <!--<div *ngIf="omgResponse">
             <br>
             <h4>Number of Generated Objects:</h4>
             <div *ngFor="let otype of objectModelInfo.otypes">
@@ -76,7 +76,7 @@
                 <br>
                 {{depth}}: {{getObjectEMC(depth)}}
             </div>            
-        </div>
+        </div>-->
     </div>
     <div class="">
         <h4>Object Model Statistics</h4>
@@ -113,6 +113,13 @@
                                 (change)="onSelectForTraining(attribute)">
                             Use in Generator Training
                         </label>
+                        <div *ngIf="selectedParameterType == 'Timing Information'">
+                            <label>
+                                <input type="checkbox" style="margin-left: 0" [(ngModel)]="batchArrivalMap[attribute]"
+                                    (change)="onMarkAsBatchArrival(attribute)">
+                                Mark as Batch Arrival
+                            </label>
+                        </div>
                     </div>
                     <div class="object-model-form-field" style="display: inline-block; vertical-align: top;">
                         <label>Fitting Model</label>

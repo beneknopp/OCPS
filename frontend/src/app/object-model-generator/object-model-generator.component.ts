@@ -27,6 +27,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
   cachedselectedParameterType: string | undefined
   statsTypes = ["Cardinalities", "Object Attributes", "Timing Information"]
   trainingSelectionMap: { [attribute: string]: boolean } = {}
+  batchArrivalMap: { [attribute: string]: boolean } = {}
   trainingModelMap: { [attribute: string]: string } = {}
   touchedParameters: { [attribute: string]: boolean } = {}
   attributeModelCandidates: { [attribute: string]: string[] } = {}
@@ -249,6 +250,9 @@ export class ObjectModelGeneratorComponent implements OnInit {
           this.attributes = this.attributes.concat(attribute)
           this.touchedParameters[attribute] = false
           this.trainingSelectionMap[attribute] = include_modeled
+          if(parameter_type == 'Timing Information') {
+            this.batchArrivalMap[attribute] = false
+          }
           this.trainingModelMap[attribute] = include_modeled ? fitting_model : "---"
           // TODO
           this.attributeModelCandidates[attribute] = ["Custom", "Normal", "Exponential"]
@@ -358,6 +362,25 @@ export class ObjectModelGeneratorComponent implements OnInit {
     })
   }
 
+  onMarkAsBatchArrival(attribute: string) {
+    if (!this.sessionKey) {
+      return
+    }
+    if (this.trainingModelMap[attribute] == "---") {
+      this.trainingModelMap[attribute] = this.attributeModelCandidates[attribute][0]
+    }
+    let parameter_type = this.getSelectedParameterType()
+    if(parameter_type != 'TIMING') {
+      throw(attribute + " is not a Timing Information")
+    }
+    let object_type = this.getSelectedObjectType()
+    let selected = this.batchArrivalMap[attribute]
+    this.appService.markAsBatchArrival(this.sessionKey, object_type, attribute, selected).subscribe((_: {
+      "err": any,
+      "resp": AttributeParametrizationResponse,
+    }) => {})
+  }
+
   onChangeFittingModel(attribute: string) {
     if (!this.sessionKey) {
       return
@@ -448,7 +471,13 @@ export class ObjectModelGeneratorComponent implements OnInit {
     if (selected_stats_type == "Cardinalities") {
       return chart_label
     }
-    return "Related " + chart_label + " arriving relative to " + selected_plot_type
+    if (selected_stats_type == "Timing Information") {
+      return selected_plot_type + " arriving relative to " + chart_label
+    }
+    if (selected_stats_type == "Object Attributes") {
+      return "Distribution of " + chart_label
+    }
+    return chart_label 
   }
 
 }

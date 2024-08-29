@@ -4,12 +4,12 @@
         <div class="simulation-controls" style="margin-bottom: 15px;">
             <div style="display: inline-block; margin-bottom: -15px;">
                 <div><label> <input type="checkbox" [(ngModel)]="useOriginalMarking"
-                            [disabled]="!domService.objectModelValid || initialized"
+                            [disabled]="(!domService.objectModelValid || initialized) && false"
                             (change)="onClickUseOriginalMarking()">
                         Use Original Marking
                     </label></div>
                 <div><label> <input type="checkbox" [(ngModel)]="useGeneratedMarking"
-                            [disabled]="!domService.objectModelValid || initialized"
+                            [disabled]="(!domService.objectModelValid || initialized) && false"
                             (change)="onClickUseGeneratedMarking()">
                         Use Generated Marking
                     </label></div>

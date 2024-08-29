@@ -9,7 +9,7 @@ import pm4py
 from input_ocel_processing.process_config import ProcessConfig
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from pm4py.statistics.variants.log import get as variants_module
-from pm4py.algo.evaluation.earth_mover_distance import algorithm as emd_evaluator
+#from pm4py.algo.evaluation.earth_mover_distance import algorithm as emd_evaluator
 
 
 class SimulationRunEvaluation:
