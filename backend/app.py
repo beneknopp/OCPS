@@ -2,15 +2,15 @@ import json
 import logging
 import os
 import pickle
-import sys
 
 import numpy as np
 import pm4py
-from flask import Flask, flash, request, send_from_directory, current_app
+from flask import Flask, flash, request, send_from_directory
 from flask_cors import cross_origin
 
 from dtos.response import Response
 from eval.simulation_evaluator import SimulationEvaluator
+from ocel_processing.load_ocel import load_ocel, load_postprocessed_input_ocel
 from ocel_processing.ocel_file_format import OcelFileFormat
 from ocel_processing.postprocessor import InputOCELPostprocessor
 from ocel_processing.preprocessor import InputOCELPreprocessor
@@ -19,14 +19,16 @@ from object_model_generation.generator_parametrization import GeneratorParametri
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
-# TODO
-#from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
+from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
 from simulation.simulator import Simulator
 from utils.request_params_parser import RequestParamsParser
 
 RUNTIME_RESOURCE_FOLDER = os.path.abspath('runtime_resources')
-ALLOWED_EXTENSIONS = {'jsonocel', 'xml'}
+ALLOWED_EXTENSIONS = {'jsonocel', 'xml', 'sqlite'}
+DEFAULT_OCEL_FILE_NAME = "order-management-small"
+DEFAULT_FILE_FORMAT = "sqlite"
+DEFAULT_OCEL_PATH = os.path.join(os.path.abspath("logs"), DEFAULT_OCEL_FILE_NAME + "." + DEFAULT_FILE_FORMAT)
 
 app = Flask(__name__)
 app.config['RUNTIME_RESOURCE_FOLDER'] = RUNTIME_RESOURCE_FOLDER
@@ -48,12 +50,14 @@ def upload_ocel():
     if file and allowed_file(file.filename):
         clear_state()
         session_key, session_path = make_session()
-
         xml = OcelFileFormat.XML
         jsonocel = OcelFileFormat.JSONOCEL
-        file_format = xml if file.filename.endswith('xml') else jsonocel
-        file_name = "input.jsonocel" if file_format == jsonocel else "input.xml"
-        ocel_preprocessor = InputOCELPreprocessor(session_path, file_name, file)
+        sqlite = OcelFileFormat.SQLITE
+        file_format = xml if file.filename.endswith('xml') else jsonocel if file.filename.endswith(".jsonocel") else sqlite
+        file_name = "input.jsonocel" if file_format == jsonocel else "input.xml" if file_format == xml else "input.sqlite"
+        ocel_preprocessor = InputOCELPreprocessor(session_path)
+        file_path = ocel_preprocessor.store_file(file_format, file_name, file)
+        ocel_preprocessor.load_ocel(file_path)
         ocel_preprocessor.preprocess()
         ocel_preprocessor.write_state()
         return {
@@ -66,22 +70,44 @@ def upload_ocel():
         }
     return Response.get(False)
 
+@app.route('/load-default-ocel', methods=['GET', 'POST'])
+@cross_origin()
+def load_default_ocel():
+    clear_state()
+    session_key, session_path = make_session()
+    ocel_preprocessor = InputOCELPreprocessor(session_path)
+    ocel_preprocessor.store_file_format(DEFAULT_FILE_FORMAT)
+    ocel_preprocessor.load_ocel(DEFAULT_OCEL_PATH)
+    ocel_preprocessor.preprocess()
+    ocel_preprocessor.write_state()
+    ProcessConfig.update_raw_ocel_path(
+        session_path,
+        DEFAULT_OCEL_PATH
+    )
+    return {
+        "sessionKey": session_key,
+        "otypes": ocel_preprocessor.get_otypes(),
+        "acts": ocel_preprocessor.get_acts(),
+        "activity_allowed_types": ocel_preprocessor.get_activity_allowed_otypes(),
+        "activity_leading_type_candidates": ocel_preprocessor.get_activity_leading_otype_candidates(),
+        "activity_leading_type_groups": ocel_preprocessor.get_activity_leading_type_groups()
+    }
+
 @app.route('/ocel-config', methods=['GET', 'POST'])
 @cross_origin()
 def ocel_config():
     if not request.method == 'POST':
         return Response.get(True)
     session_path = get_session_path(request)
-    start_logging(session_path)
     config_bytes = request.files["ocelInfo"].read()
     config_dto = json.loads(config_bytes)
-    process_config = ProcessConfig(config_dto, session_path)
+    process_config = ProcessConfig.load(session_path)
+    process_config.init_config(config_dto)
     postprocessor = InputOCELPostprocessor(session_path, process_config)
     postprocessor.postprocess()
     clock_offset = postprocessor.get_clock_offset()
     process_config.clockOffset = clock_offset
     process_config.save()
-    #OriginalMarkingMaker(postprocessed_ocel, process_config)
     return Response.get(True)
 
 @app.route('/object-model-names', methods=['GET'])
@@ -95,10 +121,8 @@ def objectModelNames():
 @app.route('/initialize-object-generator', methods=['POST'])
 @cross_origin()
 def initialize_object_generator():
-    args = request.args
     session_path = get_session_path(request)
-    file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
-    ocel = pm4py.read_ocel(file_path)
+    ocel = load_postprocessed_input_ocel(session_path)
     ProcessConfig.update_non_emitting_types(session_path, request.form['nonEmittingTypes'])
     object_model_parameters = ObjectModelParameters(request.form)
     logging.info("Preprocessing Training Data...")
@@ -136,6 +160,22 @@ def select_for_training():
     training_model_preprocessor.save()
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
+
+
+@app.route('/mark-as-batch-arrival', methods=['GET'])
+@cross_origin()
+def mark_as_batch_arrival():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
+    attribute = args["attribute"]
+    selected = True if args["selected"] == "True" else False
+    training_model_preprocessor: TrainingModelPreprocessor = TrainingModelPreprocessor.load(session_path)
+    generator_parametrization: GeneratorParametrization = training_model_preprocessor.generatorParametrization
+    generator_parametrization.mark_as_batch_arrival(otype, attribute, selected)
+    training_model_preprocessor.save()
+    return Response.get(True)
 
 @app.route('/switch-model', methods=['GET'])
 @cross_origin()
@@ -178,8 +218,7 @@ def generate_object_model():
         return True
     session_path = get_session_path(request)
     start_logging(session_path)
-    file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
-    ocel = pm4py.read_ocel(file_path)
+    ocel = load_postprocessed_input_ocel(session_path)
     ProcessConfig.update_non_emitting_types(session_path, request.form['nonEmittingTypes'])
     object_model_parameters = ObjectModelParameters(request.form)
     logging.info("Preprocessing Training Data...")
@@ -208,12 +247,12 @@ def discover_ocpn():
     session_path = get_session_path(request)
     start_logging(session_path)
     form = request.form
-    #ocpn_discoverer = OCPN_Discoverer(session_path)
+    ocpn_discoverer = OCPN_Discoverer(session_path)
     activity_selected_types = RequestParamsParser.parse_activity_selected_types(form)
-    #ocpn_discoverer.discover(activity_selected_types)
-    #ocpn_discoverer.save()
-    #ocpn_dto = ocpn_discoverer.export()
-    return None#ocpn_dto
+    ocpn_discoverer.discover(activity_selected_types)
+    ocpn_discoverer.save()
+    ocpn_dto = ocpn_discoverer.export()
+    return ocpn_dto
 
 @app.route('/simulation-state', methods=['GET'])
 @cross_origin()
@@ -363,10 +402,12 @@ def make_session():
     except FileNotFoundError:
         os.mkdir(app.config['RUNTIME_RESOURCE_FOLDER'])
         os.mkdir(session_path)
+    start_logging(session_path)
     os.mkdir(os.path.join(session_path, "objects"))
     os.mkdir(os.path.join(session_path, "simulated_logs"))
     os.mkdir(os.path.join(session_path, "evaluation"))
-    start_logging(session_path)
+    process_config = ProcessConfig(session_path)
+    process_config.save()
     return session_key, session_path
 
 def start_logging(session_path):
@@ -389,4 +430,4 @@ def clear_state():
 
 if __name__ == '__main__':
     app.debug = True
-    app.run()
+    app.run(use_reloader=False)
