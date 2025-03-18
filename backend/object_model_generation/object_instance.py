@@ -133,10 +133,9 @@ class ScheduledActivity:
     paths: dict  # object id -> firing sequence
     delays: dict
     time: int  # time of execution as maximal time of involvedObjects
-    def __init__(self, transition, paths, delays, time):
+    def __init__(self, transition, paths, time):
         self.transition = transition
         self.paths = paths
-        self.delays = delays
         self.time = time
 
 

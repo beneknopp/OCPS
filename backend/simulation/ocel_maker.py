@@ -7,7 +7,7 @@ import pm4py
 # from pm4py import filter_ocel_object_types
 from pm4py.ocel import ocel_flattening
 
-from input_ocel_processing.process_config import ProcessConfig
+from ocel_processing.process_config import ProcessConfig
 
 
 class OcelMaker:

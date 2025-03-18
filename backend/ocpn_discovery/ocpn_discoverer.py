@@ -4,12 +4,10 @@ import os
 import pm4py
 from pm4py.objects.ocel.obj import OCEL
 
+from ocel_processing.load_ocel import load_ocel, load_postprocessed_input_ocel
+from ocel_processing.process_config import ProcessConfig
 from .net_utils import Place, Transition, TransitionType, Arc, NetProjections, OtypeMultiplicityConfig
 
-from ocpa.objects.log.importer.ocel import factory as ocel_import_factory
-from ocpa.visualization.oc_petri_net import factory as ocpn_vis_factory
-from eval.evaluators import ocpn_to_ocel
-from ocpa.algo.discovery.ocpn import algorithm as ocpn_discovery_factory
 
 class OCPN_DTO:
 
@@ -24,8 +22,7 @@ class OCPN_Discoverer:
 
     def __init__(self, session_path):
         self.sessionPath = session_path
-        self.file_path = os.path.join(session_path, "postprocessed_input.jsonocel")
-        self.ocel = pm4py.read_ocel(self.file_path)
+        self.ocel = load_postprocessed_input_ocel(self.sessionPath)
 
     def discover(self, activity_selected_types):
         otypes = list(set([otype for otype_list in activity_selected_types.values() for otype in otype_list]))
@@ -34,29 +31,15 @@ class OCPN_Discoverer:
             otype: [act for act in activity_selected_types if otype in activity_selected_types[act]] + ["END_" + otype]
             for otype in otypes
         }
-        #ocel = pm4py.filter_ocel_object_types_allowed_activities(ocel, types_selected_activity)
-        ocel: OCEL = ocel_import_factory.apply(file_path=self.file_path)
-        ocpn = ocpn_discovery_factory.apply(ocel, parameters={"debug": False})
-        #ocpn_dict = pm4py.discover_oc_petri_net(ocel)
-        self.ocpn_dict = ocpn
+        ocel = load_postprocessed_input_ocel(self.sessionPath)
+        ocel = pm4py.filter_ocel_object_types_allowed_activities(ocel, types_selected_activity)
+        ocpn_dict = pm4py.discover_oc_petri_net(ocel)
+        self.ocpn_dict = ocpn_dict
         self.ocel = ocel
-        self.__extract_net(ocpn)
+        self.__extract_net(ocpn_dict)
         self.__identify_variable_arcs()
         self.__extend_with_start_and_end()
         self.__make_projections()
-
-    def evaluate(self):
-        original_file_path = os.path.join(self.sessionPath, "input.jsonocel")
-        original_ocel = ocel_import_factory.apply(file_path=original_file_path)
-        # TODO: proper projection of padded net (self.ocpn) to original types (non "LEAD_...")
-        # here we boldly assume that the application of the same discovery method to the original ocel yields the same result
-        projected_ocpn = ocpn_discovery_factory.apply(original_ocel)
-        precision, fitness = ocpn_to_ocel(ocel=original_ocel, ocpn=projected_ocpn)
-        eval_path = os.path.join(self.sessionPath, "ocpn_eval.txt")
-        with open(eval_path, "w") as wf:
-            wf.write("precision=" + str(precision) + ";fitness=" + str(fitness))
-        self.precision = precision
-        self.fitness = fitness
 
     def save(self):
         self.__save_projections()
@@ -70,7 +53,7 @@ class OCPN_Discoverer:
         self.arcs = dict()
         arc_id = 1
         for i, otype in enumerate(self.otypes):
-            net = ocpn_dict.nets[otype][0]
+            net = ocpn_dict["petri_nets"][otype][0]
             places_ = net.places
             transitions_ = net.transitions
             arcs_ = net.arcs
@@ -117,30 +100,27 @@ class OCPN_Discoverer:
             otype: []
             for otype in self.otypes
         }
-        df = ocel.log.log
-        #df = ocel.get_extended_table()
+        df = ocel.events[["ocel:eid", "ocel:activity"]].drop_duplicates()
+        e2o = ocel.relations
         for otype in self.otypes:
-            #val_col = "ocel:type:" + otype
-            count_col = otype + ":count"
-            #df[count_col] = df[val_col].apply(lambda val: self.__list_length(val))
-            df[count_col] = df[otype].apply(lambda val: self.__list_length(val))
-        #unique_otype_occurrences_at_acts = df.groupby("ocel:activity", as_index=False) \
-        unique_otype_occurrences_at_acts = df.groupby("event_activity", as_index=False) \
+            ot_count_col = otype + ":count"
+            ot_count_df = e2o.groupby("ocel:eid").apply(lambda grp: (grp["ocel:type"] == otype).sum()).reset_index(
+                name=ot_count_col
+            )
+            df = df.merge(ot_count_df, on="ocel:eid")
+        unique_otype_occurrences_at_acts = df.groupby("ocel:activity", as_index=False) \
             .agg(self.__count_unique_otype_occurrences)
-        #any_otype_occurrences_at_acts = df.groupby("ocel:activity", as_index=False) \
-        any_otype_occurrences_at_acts = df.groupby("event_activity", as_index=False) \
+        any_otype_occurrences_at_acts = df.groupby("ocel:activity", as_index=False) \
             .agg(self.__count_any_otype_occurrences)
         for otype in self.otypes:
             candidate_var_acts = unique_otype_occurrences_at_acts[
-                unique_otype_occurrences_at_acts[otype + ":count"] < 0.99
-                ]["event_activity"].values
-                #]["ocel:activity"].values
+                    unique_otype_occurrences_at_acts[otype + ":count"] < 0.99
+                ]["ocel:activity"].values
             candidate_var_acts = [
                 act for act in candidate_var_acts if act in
                                                      any_otype_occurrences_at_acts[
                                                          any_otype_occurrences_at_acts[otype + ":count"] > 0.01
-                                                        ]["event_activity"].values
-                                                         #]["ocel:activity"].values
+                                                        ]["ocel:activity"].values
             ]
             for act in candidate_var_acts:
                 variable_acts_per_type[otype].append(act)

@@ -11,10 +11,10 @@ from flask_cors import cross_origin
 
 from dtos.response import Response
 from eval.simulation_evaluator import SimulationEvaluator
-from input_ocel_processing.ocel_file_format import OcelFileFormat
-from input_ocel_processing.postprocessor import InputOCELPostprocessor
-from input_ocel_processing.preprocessor import InputOCELPreprocessor
-from input_ocel_processing.process_config import ProcessConfig
+from ocel_processing.ocel_file_format import OcelFileFormat
+from ocel_processing.postprocessor import InputOCELPostprocessor
+from ocel_processing.preprocessor import InputOCELPreprocessor
+from ocel_processing.process_config import ProcessConfig
 from object_model_generation.generator_parametrization import GeneratorParametrization
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters

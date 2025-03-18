@@ -2,18 +2,31 @@ import os
 
 import pm4py
 
+from ocel_processing.load_ocel import load_ocel
+
 
 class InputOCELPreprocessor:
     session_path: str
 
-    def __init__(self, session_path, file_name, file):
-        file_path = os.path.join(session_path, file_name)
-        file.save(file_path)
+    def __init__(self, session_path):
         self.sessionPath = session_path
-        self.ocel = pm4py.read_ocel(file_path)
+
+    def store_file(self, file_format, file_name, file):
+        file_path = os.path.join(self.sessionPath, file_name)
+        file.save(file_path)
+        self.store_file_format(file_format)
+        return file_path
+
+    def store_file_format(self, file_format):
+        file_format_path = os.path.join(self.sessionPath, "file_format")
+        with open(file_format_path, "w") as wf:
+            wf.write(file_format)
+
+    def load_ocel(self, file_path):
+        self.ocel = load_ocel(file_path)
         self.df = self.ocel.get_extended_table()
-        self.otypes = self.ocel.globals["ocel:global-log"]["ocel:object-types"]
-        self.acts = list(self.df["ocel:activity"].unique())
+        self.otypes = list(self.ocel.objects["ocel:type"].unique())
+        self.acts   = list(self.ocel.events["ocel:activity"].unique())
 
     def preprocess(self):
         self.__make_activity_otype_info()
@@ -148,6 +161,7 @@ class InputOCELPreprocessor:
             return float(len(series[series > 0])) / count
         except:
             return 0
+
     def __count_unique_otype_occurrences(self, series):
         count = series.count()
         try:

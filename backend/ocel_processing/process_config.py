@@ -19,8 +19,19 @@ class ProcessConfig:
         process_config_path = os.path.join(session_path, "process_config.pkl")
         return pickle.load(open(process_config_path, "rb"))
 
-    def __init__(self, config_dto, session_path):
-        self.session_path = session_path
+    def __init__(self, session_path):
+        self.sessionPath = session_path
+        self.raw_ocel_path = None
+        self.acts = None
+        self.clockOffset = None
+        self.simulCount = None
+        self.nonEmittingTypes = None
+        self.activitySelectedTypes = None
+        self.activityLeadingTypes = None
+        self.otypeLeadingActivities = None
+        self.otypes = None
+
+    def init_config(self, config_dto):
         self.acts = config_dto["acts"]
         self.nonEmittingTypes = config_dto["non_emitting_types"]
         self.activitySelectedTypes = config_dto["activity_selected_types"]
@@ -40,7 +51,7 @@ class ProcessConfig:
         self.useOriginalMarking = True
 
     def save(self):
-        process_config_path = os.path.join(self.session_path, "process_config.pkl")
+        process_config_path = os.path.join(self.sessionPath, "process_config.pkl")
         with open(process_config_path, "wb") as write_file:
             pickle.dump(self, write_file)
 
@@ -48,6 +59,18 @@ class ProcessConfig:
     def update_use_original_marking(cls, session_path, use_original_marking):
         process_config = cls.load(session_path)
         process_config.useOriginalMarking = use_original_marking
+        process_config.save()
+
+    @classmethod
+    def update_raw_ocel_path(cls, session_path, raw_ocel_path):
+        process_config = cls.load(session_path)
+        process_config.raw_ocel_path = raw_ocel_path
+        process_config.save()
+
+    @classmethod
+    def update_object_types(cls, session_path, otypes: list[str]):
+        process_config: ProcessConfig = cls.load(session_path)
+        process_config.otypes = otypes
         process_config.save()
 
     @classmethod
@@ -74,3 +97,9 @@ class ProcessConfig:
         process_config: ProcessConfig = cls.load(session_path)
         count = process_config.simulCount
         return count
+
+    @classmethod
+    def get_raw_ocel_path(cls, session_path):
+        process_config: ProcessConfig = cls.load(session_path)
+        raw_ocel_path = process_config.raw_ocel_path
+        return raw_ocel_path

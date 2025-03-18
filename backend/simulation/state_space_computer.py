@@ -1,6 +1,6 @@
 import numpy as np
 
-from input_ocel_processing.process_config import ProcessConfig
+from ocel_processing.process_config import ProcessConfig
 from object_model_generation.object_instance import ObjectInstance
 from ocpn_discovery.net_utils import Place, Transition, Arc, NetProjections, TransitionType
 from simulation.sim_utils import Marking

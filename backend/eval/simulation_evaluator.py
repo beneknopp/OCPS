@@ -1,4 +1,3 @@
-import math
 import os
 import pickle
 from datetime import timedelta
@@ -6,7 +5,8 @@ from datetime import timedelta
 import numpy as np
 import pm4py
 
-from input_ocel_processing.process_config import ProcessConfig
+from ocel_processing.load_ocel import load_ocel, load_postprocessed_input_ocel
+from ocel_processing.process_config import ProcessConfig
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
 from pm4py.statistics.variants.log import get as variants_module
 from pm4py.algo.evaluation.earth_mover_distance import algorithm as emd_evaluator
@@ -175,9 +175,9 @@ class SimulationEvaluator:
         path = os.path.join(self.sessionPath, "simulated_logs")
         for model in self.selectedObjectModels:
             if not (model == "ORIGINAL"):
-                path = os.path.join(path, model)
-            path = os.path.join(path, "simulated_ocel.jsonocel")
-            log = pm4py.read_ocel(path)
+                ocel_path = os.path.join(path, model)
+            ocel_path = os.path.join(path, "simulated_ocel.jsonocel")
+            log = load_ocel(ocel_path)
             frame = log.get_extended_table()
             max_step = max(map(lambda step: int(step), frame["STEPS"].values))
             # TODO
@@ -216,8 +216,7 @@ class SimulationEvaluator:
         return flog, frame
 
     def __load_original_data(self):
-        original_ocel_path = os.path.join(self.sessionPath, "postprocessed_input.jsonocel")
-        self.originalOcel = pm4py.read_ocel(original_ocel_path)
+        self.originalOcel = load_postprocessed_input_ocel(self.sessionPath)
         original_flat_logs = {}
         original_flat_frames = {}
         original_languages = {}

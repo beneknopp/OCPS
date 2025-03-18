@@ -8,7 +8,7 @@ from datetime import datetime
 import numpy as np
 import pm4py
 
-from input_ocel_processing.process_config import ProcessConfig
+from ocel_processing.process_config import ProcessConfig
 from object_model_generation.object_instance import ObjectInstance
 from object_model_generation.object_model import ObjectModel
 from ocpn_discovery.net_utils import Transition, TransitionType
@@ -17,6 +17,7 @@ from simulation.sim_utils import Token, Predictors, SimulationStateExport, NextA
 from simulation.simulation_net import SimulationNet
 from object_model_generation.object_instance import SimulationObjectInstance, ScheduledActivity
 from utils.cumulative_distribution import CumulativeDistribution
+#from eval.evaluators import ocel_to_ocel
 from ocpn_discovery.net_utils import OtypeMultiplicityConfig, ArcMultiplicity
 
 class Simulator:
@@ -42,6 +43,10 @@ class Simulator:
         self.sessionPath = session_path
         self.objectModelName = object_model_name
         self.processConfig = ProcessConfig.load(session_path)
+        batch_arrivals = ["Sales Order Item: Create"]
+        self.__batch_activities = [act for act in self.processConfig.acts if act not in batch_arrivals]
+        self.__batch_sizes = {act: 0 for act in self.__batch_activities}
+        self.__batch_activities_execution_times = {}
         self.otypeMultiplicityConfig = OtypeMultiplicityConfig.load(session_path)
         self.objectModel = ObjectModel.load(session_path, use_original_marking, object_model_name)
         self.totalNumberOfObjects = len(self.objectModel.objectsById)
@@ -59,9 +64,6 @@ class Simulator:
 
     def run_steps(self, steps):
         step_count = 0
-        #self.__initialize_predictions()
-        #if step_count == 0:
-        #    return
         while step_count != steps:
             terminated = self.__execute_step()
             step_count = step_count + 1
@@ -71,26 +73,17 @@ class Simulator:
                 self.__write_ocel()
         self.__write_ocel()
 
+    def __get_joint_delay_prediction(self, simulation_objects, next_activity: str):
+        execution_time = self.predictors.get_joint_delay(simulation_objects, next_activity)
+        return execution_time
+
     def __get_delay_prediction(self, sim_obj: SimulationObjectInstance, next_activity: str):
         otype = sim_obj.otype
-        # TODO (after 1st paper maybe): use act_to_act delays for more precise timing
-        predictor = self.predictors.mean_delays_act_to_act[otype]
-        #predictor = self.predictors.mean_delays_act[otype]
-        numerical_features = self.objectFeatures[otype][sim_obj.oid]
-        numerical_features_vector = [numerical_features[ofen] for ofen in self.objectFeatureNames]
-        target_features_vector = [sim_obj.lastActivity, next_activity]
-        features_vector = tuple(numerical_features_vector + target_features_vector)
-        if features_vector not in predictor:
-            delay = self.__get_nearest_delay_prediction(otype, numerical_features_vector, target_features_vector,
-                                                        next_activity)
-        else:
-            delay = predictor[features_vector]
-        # hotfix for nicer timing behavior? TODO
         key = tuple([sim_obj.lastActivity, next_activity])
         try:
-            delay = self.predictors.mean_delays_act_to_act_independent[otype][key]
+            delay = self.predictors.get_delay_a2a(otype, key)
         except:
-            delay = self.predictors.mean_delays_independent[otype][next_activity]
+            delay = self.predictors.get_delay_a(otype, next_activity)
         sim_obj.nextDelay = delay
         return delay
 
@@ -99,25 +92,43 @@ class Simulator:
         if predicted_binding is None:
             return False
         execution_model, predicted_transition = predicted_binding
-        bound_simulation_objects = [obj for objs in execution_model.values() for obj in objs]
         next_activity = predicted_transition.label
+        bound_simulation_objects = [obj for objs in execution_model.values() for obj in objs]
         any_sim_obj: SimulationObjectInstance
         paths = dict()
-        delays = {
-            any_sim_obj: self.__get_delay_prediction(any_sim_obj, next_activity)
-            for any_sim_obj in bound_simulation_objects
-        }
-        execution_time = max(map(lambda any_sim_obj: delays[any_sim_obj] + any_sim_obj.time, bound_simulation_objects))
+        execution_time = self.__get_joint_delay_prediction(bound_simulation_objects, next_activity)
         for any_sim_obj in bound_simulation_objects:
             obj_instance: ObjectInstance = any_sim_obj.objectInstance
             path_from_obj = self.simulationNet.compute_path(obj_instance, next_activity)
             if path_from_obj is None:
                 return False
             paths[obj_instance] = path_from_obj
-        scheduled_activity = ScheduledActivity(predicted_transition, paths, delays, execution_time)
-        simulation_object.active = True
+        scheduled_activity = ScheduledActivity(predicted_transition, paths, execution_time)
+        if next_activity in self.__batch_activities:
+            batch_size = self.__get_activity_batch_size(next_activity)
+            if batch_size == 0:
+                batch_size = self.predictors.get_batch_size_prediction(next_activity)
+            else:
+                execution_time = self.__get_activity_batch_execution_time(next_activity)
+                scheduled_activity.time = execution_time
+            batch_size = batch_size - 1
+            self.__set_activity_batch_size(next_activity, batch_size)
+            self.__set_activity_batch_execution_time(next_activity, execution_time)
         simulation_object.nextActivity = scheduled_activity
+        simulation_object.active = True
         return True
+
+    def __get_activity_batch_execution_time(self, act):
+        return self.__batch_activities_execution_times[act]
+
+    def __get_activity_batch_size(self, act):
+        return self.__batch_sizes[act]
+
+    def __set_activity_batch_execution_time(self, act, time):
+        self.__batch_activities_execution_times[act] = time
+
+    def __set_activity_batch_size(self, act, size):
+        self.__batch_sizes[act] = size
 
     def __get_execution_models(self, leading_obj: SimulationObjectInstance, act):
         otype = leading_obj.otype
@@ -148,7 +159,6 @@ class Simulator:
                 execution_models = new_execution_models
         return execution_models
 
-
     def __get_execution_probability(self, candidate_activity, bound_objects):
         obj: ObjectInstance
         p = 0
@@ -177,31 +187,6 @@ class Simulator:
             return 0
         return float(p) / float(n)
 
-    def __ALT_get_execution_probability(self, candidate_activity, bound_objects):
-        obj: ObjectInstance
-        # p = 0
-        p = 1
-        n = 0
-        for obj in bound_objects:
-            otype = obj.otype
-            if otype in self.processConfig.nonEmittingTypes:
-                continue
-            n = n + 1
-            features_by_object = self.objectFeatures[otype][obj.oid]
-            numerical_features = list(map(lambda feature: int(features_by_object[feature]), self.objectFeatureNames))
-            next_act_predictor = self.predictors.next_activity_predictors[otype]
-            if numerical_features in next_act_predictor and candidate_activity in next_act_predictor[
-                numerical_features]:
-                probability = next_act_predictor[numerical_features][candidate_activity]
-            else:
-                # return 0
-                probability = self.__get_nearest_activity_prediction(next_act_predictor, numerical_features,
-                                                                     candidate_activity)
-            p = min(probability, p)
-        if n == 0:
-            return 0
-        return float(p)  # /float(n)
-
     def __get_nearest_activity_prediction(self, predictor, features, candidate):
         domain = list(predictor.keys())
         domain_with_distances = list(map(lambda x: (x, np.linalg.norm(np.array(x) - np.array(features))), domain))
@@ -215,7 +200,7 @@ class Simulator:
         return total_probability / float(len(nearest_neighbors))
 
     def __get_nearest_delay_prediction(self, otype, numerical_features, previous_act, candidate_next_act):
-        predictor = self.predictors.mean_delays_act_to_act[otype]
+        predictor = self.predictors.exp_delays_act_to_act[otype]
         target_features = [previous_act, candidate_next_act]
         domain = list(predictor.keys())
         domain_support = list(filter(lambda key: list(key)[-2:] == target_features, domain))
@@ -382,6 +367,7 @@ class Simulator:
 
     def __load_predictors(self):
         self.predictors = Predictors.load(self.sessionPath, self.objectModelName)
+
 
     def __execute_step(self):
         self.steps += 1
