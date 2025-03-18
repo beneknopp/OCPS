@@ -17,7 +17,6 @@ from simulation.sim_utils import Token, Predictors, SimulationStateExport, NextA
 from simulation.simulation_net import SimulationNet
 from object_model_generation.object_instance import SimulationObjectInstance, ScheduledActivity
 from utils.cumulative_distribution import CumulativeDistribution
-from eval.evaluators import ocel_to_ocel
 from ocpn_discovery.net_utils import OtypeMultiplicityConfig, ArcMultiplicity
 
 class Simulator:

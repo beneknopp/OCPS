@@ -102,7 +102,34 @@ class ObjectModelGenerator:
                 simulated_data = self.simulatedSchemaFrequencies[otype][path]
                 card_param : AttributeParameterization
                 card_param.update_simulated_data(simulated_data)
+            arrival_params = self.generatorParametrization.get_parameters(otype, ParameterType.TIMING.value)
+            simulated_data = self.__get_absolute_arrival_rates(generated_model, otype)
+            arrival_param: AttributeParameterization = arrival_params["Arrival Rates (independent)"]
+            arrival_param.update_simulated_data_continuous(simulated_data)
+            for any_otype in self.otypes:
+                key = "Arrival Rates (relative to '" + any_otype + "')"
+                if key in arrival_params:
+                    arrival_param: AttributeParameterization = arrival_params[key]
+                    simulated_data = self.__get_relative_arrival_times(generated_model, otype, any_otype)
+                    arrival_param.update_simulated_data_continuous(simulated_data)
 
+    def __get_absolute_arrival_rates(self, generated_model, otype):
+        objects = generated_model.objectsByType[otype].keys()
+        arrival_times = [obj.time for obj in objects]
+        arrival_times = sorted(arrival_times)
+        arrival_rates = [arrival_times[i+1] - arrival_times[i] for i in range(len(arrival_times) - 1)]
+        return arrival_rates
+    def __get_relative_arrival_times(self, generated_model, otype, any_otype):
+        objects = generated_model.objectsByType[otype].keys()
+        arrival_times = []
+        obj: ObjectInstance
+        any_obj: ObjectInstance
+        for obj in objects:
+            at = obj.time
+            for any_obj in obj.objectModel[any_otype]:
+                rel_at = any_obj.time
+                arrival_times.append(at - rel_at)
+        return arrival_times
     def save(self):
         self.originalModel.save_without_global_model(True)
         self.generatedModel.save_without_global_model(False)

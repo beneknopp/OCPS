@@ -74,7 +74,7 @@ class Predictor:
             return s
         if self.modelType == ModelType.EXPONENTIAL:
             distr = stats.expon(self.scale, self.loc)
-            s = distr.rsv(size=1)[0]
+            s = distr.rvs(size=1)[0]
             return s
 
 class Modeler():
@@ -286,7 +286,7 @@ class AttributeParameterization():
 
     def __set_log_based_chart_data(self):
         if self.dataType is DataType.CONTINUOUS:
-            mapped_x_axis = self.__map_x_axis_continuous()
+            mapped_x_axis = self.__map_x_axis_continuous(self.data)
         else:
             vals = set(self.data)
             total = len(self.data)
@@ -309,8 +309,7 @@ class AttributeParameterization():
         ticks = [round(100*(min_val + (2*k+1)*w/2))/100 for k in range(20) ]
         return ticks
 
-    def __map_x_axis_continuous(self):
-        vals = self.data
+    def __map_x_axis_continuous(self, vals):
         ticks = self.xAxis
         nof_ticks = len(ticks)
         nof_vals = len(vals)
@@ -382,6 +381,11 @@ class AttributeParameterization():
         self.xAxis = range(min_tick, max_tick+1)
         self.__set_log_based_chart_data()
         self.__set_model_chart_data()
+
+    def update_simulated_data_continuous(self, simulated_data):
+        mapped_x_axis = self.__map_x_axis_continuous(simulated_data)
+        self.yAxes[ParameterMode.SIMULATED] = mapped_x_axis
+        self.includeSimulated = True
 
     def update_simulated_data(self, simulated_data):
         values = list(simulated_data.keys())

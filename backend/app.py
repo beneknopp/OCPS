@@ -19,7 +19,8 @@ from object_model_generation.generator_parametrization import GeneratorParametri
 from object_model_generation.object_model_generator import ObjectModelGenerator
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
-from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
+# TODO
+#from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
 from simulation.simulator import Simulator
 from utils.request_params_parser import RequestParamsParser
@@ -207,12 +208,12 @@ def discover_ocpn():
     session_path = get_session_path(request)
     start_logging(session_path)
     form = request.form
-    ocpn_discoverer = OCPN_Discoverer(session_path)
+    #ocpn_discoverer = OCPN_Discoverer(session_path)
     activity_selected_types = RequestParamsParser.parse_activity_selected_types(form)
-    ocpn_discoverer.discover(activity_selected_types)
-    ocpn_discoverer.save()
-    ocpn_dto = ocpn_discoverer.export()
-    return ocpn_dto
+    #ocpn_discoverer.discover(activity_selected_types)
+    #ocpn_discoverer.save()
+    #ocpn_dto = ocpn_discoverer.export()
+    return None#ocpn_dto
 
 @app.route('/simulation-state', methods=['GET'])
 @cross_origin()

@@ -448,7 +448,7 @@ export class ObjectModelGeneratorComponent implements OnInit {
     if (selected_stats_type == "Cardinalities") {
       return chart_label
     }
-    return "Related " + chart_label + " arriving relative to " + selected_plot_type
+    return chart_label
   }
 
 }
