@@ -79,6 +79,17 @@ export class LogUploadComponent implements OnInit {
     this.domService.addOcelInfo(this.ocelInfo)
   }
 
+  onLoadDefaultOCEL() {
+    const upload$ = this.appService.loadDefaultOCEL().subscribe((resp: OCELInfoDTO) => {
+      let sessionKey = resp.sessionKey
+      this.domService.setSessionKey(sessionKey)
+      let ocelInfo = new OCELInfo(resp)
+      this.ocelInfo = ocelInfo
+      this.filename = "order-management-default"
+      this.onUpdateOCELInfo()
+    });
+    }
+
   onFileSelected(event: any) {
     const file: File = event.target.files[0];
     if (file) {

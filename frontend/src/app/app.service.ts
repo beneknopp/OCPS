@@ -9,7 +9,7 @@ import { MessageService } from './message.service';
   providedIn: 'root'
 })
 export class AppService {
-
+  
   private backendUrl = 'http://localhost:5000/';
   httpOptions = {
     headers: new HttpHeaders({
@@ -26,6 +26,13 @@ export class AppService {
     return this.http.get<String>(this.backendUrl, { headers: new HttpHeaders({ 'responseType': 'json' }) }).pipe(
       tap(_ => this.log('pinged')),
       catchError(this.handleError<String>('getPing', ""))
+    )
+  }
+
+  loadDefaultOCEL() {
+    return this.http.get<any>(this.backendUrl + 'load-default-ocel').pipe(
+      tap(_ => this.log('ocel posted')),
+      catchError(this.handleError<String>('postOCEL', ""))
     )
   }
 

@@ -9,6 +9,11 @@
                 </button>
             </div>
             <div>
+                <button class="card card-small" (click)="onLoadDefaultOCEL()" tabindex="0">
+                    <span>Load Default OCEL</span>
+                </button>
+            </div>            
+            <div>
                 <button [disabled]="!configValid && false" class="card card-small" (click)="onConfirm()" tabindex="0">
                     <span>Confirm</span>
                 </button>

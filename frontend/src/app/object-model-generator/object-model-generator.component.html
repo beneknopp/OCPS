@@ -35,7 +35,9 @@
     <div class="generator-config-box">
         <h4>Initial Parameters</h4>
         <div class="object-model-form-field">
-            <label>Execution Model Depth</label><br>
+            <label>Execution Model Depth </label> <button class="tooltip-btn">?
+                <span class="tooltip-text">respects transitive type dependencies, e.g., "2" means that paths of length two can be considered, e.g., "number of orders per items per packages".</span>
+              </button> <br> 
             <div style="margin-top: 20px">
                 <input type="number" placeholder="1" [(ngModel)]="objectModelInfo.executionModelDepth">
             </div>
