@@ -97,6 +97,18 @@ export class AppService {
     )
   }
 
+  markAsBatchArrival(session_key: string, otype: string, attribute: string, selected: boolean) {
+    let request_parameters = 'sessionKey=' + session_key + "&"
+      + 'otype=' + otype + "&"
+      + 'attribute=' + attribute + "&"      
+      + 'selected=' + (selected ? "True" : "False")
+    return this.http.get<any>(this.backendUrl + 'mark-as-batch-arrival?' + request_parameters
+    ).pipe(
+      tap(_ => this.log(attribute + ' marked as batch arrival')),
+      catchError(this.handleError<String>('markAsBatchArrival', ""))
+    )    
+  }
+
   switchModel(session_key: string, otype: string, parameter_type: string, attribute: string, fitting_model: string) {
     let request_parameters = 'sessionKey=' + session_key + "&"
       + 'parameterType=' + parameter_type + "&"

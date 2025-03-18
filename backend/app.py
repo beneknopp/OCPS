@@ -26,7 +26,7 @@ from simulation.simulator import Simulator
 from utils.request_params_parser import RequestParamsParser
 
 RUNTIME_RESOURCE_FOLDER = os.path.abspath('runtime_resources')
-ALLOWED_EXTENSIONS = {'jsonocel', 'xml'}
+ALLOWED_EXTENSIONS = {'jsonocel', 'xml', 'sqlite'}
 
 app = Flask(__name__)
 app.config['RUNTIME_RESOURCE_FOLDER'] = RUNTIME_RESOURCE_FOLDER
@@ -48,12 +48,12 @@ def upload_ocel():
     if file and allowed_file(file.filename):
         clear_state()
         session_key, session_path = make_session()
-
         xml = OcelFileFormat.XML
         jsonocel = OcelFileFormat.JSONOCEL
-        file_format = xml if file.filename.endswith('xml') else jsonocel
-        file_name = "input.jsonocel" if file_format == jsonocel else "input.xml"
-        ocel_preprocessor = InputOCELPreprocessor(session_path, file_name, file)
+        sqlite = OcelFileFormat.SQLITE
+        file_format = xml if file.filename.endswith('xml') else jsonocel if file.filename.endswith(".jsonocel") else "sqlite"
+        file_name = "input.jsonocel" if file_format == jsonocel else "input.xml" if file_format == xml else "input.sqlite"
+        ocel_preprocessor = InputOCELPreprocessor(session_path, file_format, file_name, file)
         ocel_preprocessor.preprocess()
         ocel_preprocessor.write_state()
         return {
@@ -136,6 +136,22 @@ def select_for_training():
     training_model_preprocessor.save()
     parameter_export = generator_parametrization.export_parameters(otype, parameter_type, attribute)
     return Response.get(parameter_export)
+
+
+@app.route('/mark-as-batch-arrival', methods=['GET'])
+@cross_origin()
+def mark_as_batch_arrival():
+    session_path = get_session_path(request)
+    start_logging(session_path)
+    args = request.args
+    otype = args["otype"]
+    attribute = args["attribute"]
+    selected = True if args["selected"] == "True" else False
+    training_model_preprocessor: TrainingModelPreprocessor = TrainingModelPreprocessor.load(session_path)
+    generator_parametrization: GeneratorParametrization = training_model_preprocessor.generatorParametrization
+    generator_parametrization.mark_as_batch_arrival(otype, attribute, selected)
+    training_model_preprocessor.save()
+    return Response.get(True)
 
 @app.route('/switch-model', methods=['GET'])
 @cross_origin()
@@ -389,4 +405,4 @@ def clear_state():
 
 if __name__ == '__main__':
     app.debug = True
-    app.run()
+    app.run(use_reloader=False)
