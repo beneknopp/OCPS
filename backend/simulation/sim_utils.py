@@ -5,11 +5,9 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 
 from input_ocel_processing.process_config import ProcessConfig
-from object_model_generation.generator_parametrization import Modeler, ModelType, DataType
-from object_model_generation.object_instance import ObjectInstance, SimulationObjectInstance
+from object_model_generation.object_instance import ObjectInstance
 from ocpn_discovery.net_utils import Place, Transition, TransitionType
 
 
@@ -175,140 +173,24 @@ class Predictors:
     def get_mean_act_delay(self, otype, next_act):
         return self.mean_delays_independent[otype][next_act]
 
-    def __fit_delays(self, otype, group, keys, modelers, model_types):
-        assert len(model_types) == len(modelers)
-        modeler_name = []
-        for key in keys:
-            modeler_name += [list(group[key])[0]]
-        modeler_name = tuple(modeler_name)
-        data = list(group["delay_to"])
-        for i in range(len(modelers)):
-            model_type = model_types[i]
-            modeler = Modeler(model_type, DataType.CONTINUOUS)
-            modeler.fit_data(data[:])
-            modelers[i][otype][modeler_name] = modeler
-
-    def get_batch_size_prediction(self, act):
-        return self.batch_size_predictors[act].draw()
-
-    def make_service_densities(self):
-        pass
-
-    def __reg_fit_joint_delays(self, data, dic, act_from=None, act_to=None):
-        NUMBER_OF_BINS = 50
-        if act_to is None:
-            raise AttributeError()
-        if act_from is not None:
-            d = dic[act_from]
-        else:
-            d = dic
-        number_of_bins = min(data["sync_time"].nunique(), NUMBER_OF_BINS)
-        _, bins = (pd.qcut(data["sync_time"], q=number_of_bins, retbins=True, duplicates='drop'))
-        data_ = data[["sync_time", "delay_to"]].sort_values(by="sync_time")
-        bin_to_modeler = {}
-        j = 1
-        bins[0] = -1
-        bins[-1] = float("inf")
-        for i in range(len(bins)-1):
-            left = bins[i]
-            right = bins[i+1]
-            in_bin = (data_["sync_time"] > left)
-            in_bin = in_bin & (data_["sync_time"] <= right)
-            bin_content = data_[in_bin]
-            if not len(bin_content):
-                continue
-            modeler = Modeler(ModelType.CUSTOM, DataType.CONTINUOUS)
-            modeler.fit_data(bin_content["delay_to"])
-            bin_to_modeler[j] = modeler
-            j = j + 1
-        bin_to_modeler[0] = bin_to_modeler[1]
-        bin_to_modeler[j] = bin_to_modeler[j-1]
-        d[act_to] = {}
-        d[act_to]["bins"] = bins
-        d[act_to]["bin_to_modeler"] = bin_to_modeler
-
-    def initialize_joint_delay_prediction_function(self):
-        training_frames = []
-        for otype in self.otypes:
-            training_data = self.trainingData[otype]
-            training_frames.append(training_data[["ocel:eid", "case:concept:name", "concept:name", "last_act", "delay_to", "int:timestamp", "time:timestamp"]])
-        joint_training_frame = pd.concat(training_frames)
-        joint_delays_independent = {}
-        joint_delays_a2a = {}
-        acts_from = sorted(list(joint_training_frame["last_act"].unique()))
-        acts_to   = sorted(list(joint_training_frame["concept:name"].unique()))
-        for act_from in acts_from:
-            joint_delays_a2a[act_from] = {}
-        for act_to in acts_to:
-            joint_delays_independent[act_to] = {}
-            act_joint_tf = joint_training_frame[joint_training_frame["concept:name"] == act_to]
-            act_joint_tf["last_act:int:timestamp"] = act_joint_tf["int:timestamp"] - act_joint_tf["delay_to"]
-            max_times = act_joint_tf.groupby(["ocel:eid"])["last_act:int:timestamp"].max()
-            min_times = act_joint_tf.groupby(["ocel:eid"])["last_act:int:timestamp"].min()
-            sync_times = (max_times - min_times).reset_index(name="sync_time")
-            # for each event, the last preceding event for any involved object
-            last_last_events = act_joint_tf.sort_values(by=["ocel:eid", "last_act:int:timestamp"]).groupby(["ocel:eid"]).last().reset_index()
-            last_last_events = last_last_events.merge(sync_times, on="ocel:eid")
-            self.__reg_fit_joint_delays(
-                last_last_events, joint_delays_independent, act_from=None, act_to=act_to
-            )
-            last_last_events.groupby("last_act").apply(
-                lambda grp: self.__reg_fit_joint_delays(
-                    grp, joint_delays_a2a, act_from=grp.name, act_to=act_to
-                )
-            )
-        self.joint_delays_independent = joint_delays_independent
-        self.joint_delays_a2a = joint_delays_a2a
-
     def initialize_delay_prediction_function(self):
         mean_delays_act_to_act = {}
         mean_delays_act = {}
         mean_delays_independent = {}
         mean_delays_act_to_act_independent = {}
-        custom_delays_independent = {}
-        custom_delays_act_to_act_independent = {}
-        exp_delays_independent = {}
-        exp_delays_act_to_act_independent = {}
         for otype in self.otypes:
-            custom_delays_independent[otype] = {}
-            exp_delays_independent[otype] = {}
-            custom_delays_act_to_act_independent[otype] = {}
-            exp_delays_act_to_act_independent[otype] = {}
             training_data = self.trainingData[otype]
-            delays_a_independent = training_data[
-                ["concept:name"] + ["delay_to"]
-            ]
-            delays_a2a_independent = training_data[
-                ["concept:name"] + ["delay_to"] + ["last_act"]
-            ]
-            delays_by_features_a = training_data[
-                self.object_feature_names + ["concept:name"] + ["delay_to"]
-            ]
             delays_by_features_a2a = training_data[
-                self.object_feature_names + ["concept:name"] + ["delay_to"] + ["last_act"]
-            ]
-            delays_a_independent.groupby("concept:name").apply(
-                lambda grp: self.__fit_delays(
-                    otype=otype,
-                    group=grp,
-                    keys=["concept:name"],
-                    modelers=[exp_delays_independent, custom_delays_independent],
-                    model_types=[ModelType.EXPONENTIAL, ModelType.CUSTOM]
-                )
-            )
-            delays_a2a_independent.groupby(["last_act", "concept:name"]).apply(
-                lambda grp: self.__fit_delays(
-                    otype=otype,
-                    group=grp,
-                    keys=["last_act", "concept:name"],
-                    modelers=[exp_delays_act_to_act_independent, custom_delays_act_to_act_independent],
-                    model_types=[ModelType.EXPONENTIAL, ModelType.CUSTOM]
-                )
-            )
+                self.object_feature_names + ["concept:name"] + ["delay_to"] + ["last_act"]]
+            delays_by_features_a2a_independent = training_data[
+                ["concept:name"] + ["delay_to"] + ["last_act"]]
+            delays_by_features_a = training_data[
+                self.object_feature_names + ["concept:name"] + ["delay_to"]]
+            delays_independent = training_data[["concept:name"] + ["delay_to"]]
             stats_a2a = delays_by_features_a2a.groupby(self.object_feature_names + ["last_act", "concept:name"]).mean()
-            stats_a2a_independent = delays_a2a_independent.groupby(["last_act", "concept:name"]).mean()
+            stats_a2a_independent = delays_by_features_a2a_independent.groupby(["last_act", "concept:name"]).mean()
             stats_a = delays_by_features_a.groupby(self.object_feature_names + ["concept:name"]).mean()
-            stats_indie = delays_a_independent.groupby(["concept:name"]).mean()
+            stats_indie = delays_independent.groupby(["concept:name"]).mean()
             stats_dict_a2a = dict(stats_a2a.to_dict()["delay_to"])
             stats_dict_a2a_independent = dict(stats_a2a_independent["delay_to"])
             stats_dict_a = dict(stats_a.to_dict()["delay_to"])
@@ -337,64 +219,6 @@ class Predictors:
         self.mean_delays_act = mean_delays_act
         self.mean_delays_independent = mean_delays_independent
         self.mean_delays_act_to_act_independent = mean_delays_act_to_act_independent
-        self.custom_delays_independent = custom_delays_independent
-        self.custom_delays_act_to_act_independent = custom_delays_act_to_act_independent
-        self.exp_delays_act_to_act_independent = exp_delays_act_to_act_independent
-        self.exp_delays_independent = exp_delays_independent
-
-    def initialize_batch_size_predictor(self):
-        BATCH_WINDOW_SECONDS = 120
-        self.batch_size_predictors = {}
-        for act, leading_type in self.processConfig.activityLeadingTypes.items():
-            training_frame = self.trainingData[leading_type]
-            tfa = training_frame[training_frame["concept:name"] == act][["time:timestamp"]]
-            tfa.sort_values(by="time:timestamp", inplace=True)
-            tfa["time:timestamp"] = pd.to_datetime(tfa["time:timestamp"])
-            tfa["time:timestamp:previous"] = tfa["time:timestamp"].shift(1)
-            tfa["time:timestamp:next"] = tfa["time:timestamp"].shift(-1)
-            tfa = tfa[1:-1]
-            tfa["is_batch"] = (tfa["time:timestamp:next"] - tfa["time:timestamp:previous"])\
-                                  .apply(lambda x: x.seconds) < BATCH_WINDOW_SECONDS
-            self.group_id = 1
-            def __make_batch_group(is_batch):
-                if not is_batch:
-                    self.group_id = self.group_id + 1
-                return self.group_id
-            tfa["batch_group"] = tfa["is_batch"].apply(__make_batch_group)
-            batch_sizes = list(tfa.groupby("batch_group").size())
-            modeler = Modeler(ModelType.CUSTOM, DataType.CONTINUOUS)
-            modeler.fit_data(batch_sizes)
-            self.batch_size_predictors[act] = modeler
-
-    def get_delay_a2a(self, otype, key):
-        return self.custom_delays_act_to_act_independent[otype][key].draw()
-        #return self.exp_delays_act_to_act_independent[otype][key].draw()
-
-    def get_joint_delay(self, simulation_objects, next_act):
-        times = list(map(lambda so: so.time, simulation_objects))
-        min_time = min(times)
-        max_time = max(times)
-        sync_time = max_time - min_time
-        latest_so: SimulationObjectInstance
-        latest_so = list(filter(lambda so: so.time == max_time, simulation_objects))[0]
-        last_act = latest_so.lastActivity
-        if next_act == "Delivery: Post Goods Issue":
-            print(1)
-        try:
-            delay_dict = self.joint_delays_a2a[last_act][next_act]
-        except:
-            delay_dict = self.joint_delays_independent[next_act]
-        bins = delay_dict["bins"]
-        bin_to_modeler = delay_dict["bin_to_modeler"]
-        bin_ix = np.digitize(sync_time, bins, right=True)
-        modeler: Modeler = bin_to_modeler[bin_ix]
-        joint_delay = modeler.draw()
-        execution_time = max_time + joint_delay
-        return execution_time
-
-    def get_delay_a(self, otype, next_act):
-        return self.custom_delays_independent[otype][tuple([next_act])].draw()
-        #return self.exp_delays_independent[otype][tuple([next_act])].draw()
 
     def save(self):
         predictors_path = os.path.join(self.session_path, "predictors_" + self.objectModelName + ".pkl")

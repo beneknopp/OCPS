@@ -27,7 +27,7 @@
       <fa-icon [ngClass]="domService.netConfigValid ? 'fa-3x fa-arrows-enabled' : 'fa-3x fa-arrows-disabled'"
       [icon]="doubleRightArrowsIcon"></fa-icon>
     </div>
-    <button class="card card-small" routerLink="/simulate_process" [disabled]="!domService.netConfigValid && false"
+    <button class="card card-small" routerLink="/simulate_process" [disabled]="!domService.netConfigValid"
     [ngClass]="router.url === '/simulate_process' ? 'active-card' : ''">
       <span>Simulate Process</span>
     </button>

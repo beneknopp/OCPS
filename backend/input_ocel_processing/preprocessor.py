@@ -1,25 +1,19 @@
 import os
 
 import pm4py
-from input_ocel_processing.load_ocel20 import load_ocel
+
 
 class InputOCELPreprocessor:
     session_path: str
 
-    def __init__(self, session_path, file_format, file_name, file):
+    def __init__(self, session_path, file_name, file):
         file_path = os.path.join(session_path, file_name)
         file.save(file_path)
-        file_format_path = os.path.join(session_path, "file_format")
-        with open(file_format_path, "w") as wf:
-            wf.write(file_format)
         self.sessionPath = session_path
-        if file_format == "sqlite":
-            self.ocel = load_ocel(file_path)
-        else:
-            self.ocel = pm4py.read_ocel(file_path)
+        self.ocel = pm4py.read_ocel(file_path)
         self.df = self.ocel.get_extended_table()
-        self.otypes = list(self.ocel.objects["ocel:type"].unique())
-        self.acts   = list(self.ocel.events["ocel:activity"].unique())
+        self.otypes = self.ocel.globals["ocel:global-log"]["ocel:object-types"]
+        self.acts = list(self.df["ocel:activity"].unique())
 
     def preprocess(self):
         self.__make_activity_otype_info()

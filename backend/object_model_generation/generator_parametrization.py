@@ -64,17 +64,17 @@ class Predictor:
         if self.modelType == ModelType.NORMAL:
             s = -1
             i = 0
-            while s < 0:
-                if i > 100000:
-                    raise ValueError("Timeout in sampling from distribution.")
+            while s < -1:
                 s = np.random.normal(self.mu, self.std, 1)[0]
                 if self.dataType != DataType.INTEGER:
                     break
                 i += 1
+                if i > 100000:
+                    raise ValueError("Timeout in sampling from distribution.")
             return s
         if self.modelType == ModelType.EXPONENTIAL:
             distr = stats.expon(self.scale, self.loc)
-            s = distr.rvs(size=1)[0]
+            s = distr.rsv(size=1)[0]
             return s
 
 class Modeler():
@@ -114,18 +114,15 @@ class Modeler():
             minvalue = min(data)
             i = 0
             j = 0
-            try:
-                w = (float(maxvalue) - float(minvalue)) / bins
-            except:
-                print("")
-            binmax = float(minvalue) + w
+            w = float(maxvalue - minvalue) / bins
+            binmax = minvalue + w
             weighted_vals = {
-                float(minvalue) + round((k+1)*w*100)/100 : 0
+                minvalue + round((k+1)*w*100)/100 : 0
                 for k in range(bins)
             }
             bin_centers = sorted(list(weighted_vals.keys()))
             while i < n:
-                current_value = float(data[i])
+                current_value = data[i]
                 while binmax < current_value - 0.001:
                     binmax += w
                     j += 1
@@ -135,7 +132,7 @@ class Modeler():
             for val, freq in weighted_vals.items():
                 ratio = float(freq)/n
                 rounded_ratio = round(ratio * 100) / 100
-                parameters += str(float(val)) + ": " + str(rounded_ratio) + "; "
+                parameters += str(val) + ": " + str(rounded_ratio) + "; "
         else:
             weighted_vals = {}
             for val in sorted_vals:
@@ -145,10 +142,7 @@ class Modeler():
                 weighted_vals[val] = ratio
         self.defaultAxis = sorted(list(weighted_vals.keys()))
         self.predictor = Predictor(self.dataType)
-        from collections import Counter
-        self.predictor.init_custom(
-            Counter(sorted(data))
-        )
+        self.predictor.init_custom(weighted_vals)
         self.parameters = parameters[:-2]
 
     def __fit_normal(self, data):
@@ -230,22 +224,17 @@ class AttributeParameterization():
     includeModeled: bool
     includeSimulated: bool
     fittingModel: str = "---"
-    # only for arrival rates
-    markedAsBatchArrival: bool
     # log_based statistics & model curve (if included) & simulated curve (if included)
     xAxis: []
     yAxes: dict
     data: []
 
-    def __init__(self, label, data, parameter_type: ParameterType, include_modeled=False, include_simulated=False,
-                 data_type: DataType = None, marked_as_batch_arrival=None):
+    def __init__(self, label, data, parameter_type: ParameterType, include_modeled=False, include_simulated=False, data_type: DataType = None):
         self.data = data
         self.label = label
         self.parameterType = parameter_type
         self.includeModeled = include_modeled
         self.includeSimulated = include_simulated
-        if marked_as_batch_arrival is not None:
-            self.markedAsBatchArrival = marked_as_batch_arrival
         self.__initialize_modeler(data_type)
         self.__initialize_chart_data()
 
@@ -312,8 +301,8 @@ class AttributeParameterization():
         self.yAxes[ParameterMode.LOG_BASED] = mapped_x_axis
 
     def __make_x_axis_continuous(self, data):
-        min_val = math.floor(float(min(data)))
-        max_val = math.ceil(float(max(data)))
+        min_val = math.floor(min(data))
+        max_val = math.ceil(max(data))
         W = max_val - min_val
         w = W / 20
         self.xAxisTickWidth = w
@@ -325,8 +314,7 @@ class AttributeParameterization():
         nof_ticks = len(ticks)
         nof_vals = len(vals)
         bin_counts = [0 for i in ticks]
-        for val_ in vals:
-            val = float(val_)
+        for val in vals:
             i = 0
             while i < nof_ticks and ticks[i] < val:
                 i = i + 1
@@ -456,23 +444,19 @@ class GeneratorParametrization():
             for path_to_cards in cardinality_dists[otype].items():
                 path, data = path_to_cards
                 include_modeled = len(path.split(",")) < 3
-                attr_par = AttributeParameterization(
-                    label=path, data=data, parameter_type=cardinality_type, include_modeled=include_modeled,
-                    data_type = DataType.INTEGER)
+                attr_par = AttributeParameterization(label=path, data=data, parameter_type=cardinality_type, include_modeled=include_modeled,
+                                                         data_type = DataType.INTEGER)
                 parameters[otype][cardinality_type][path] = attr_par
             for attr_data in object_attribute_dists[otype].items():
                     attr, data = attr_data
                     include_modeled = True
-                    attr_par = AttributeParameterization(
-                        label=attr, data=data, parameter_type=object_attribute_type, include_modeled=include_modeled
-                    )
+                    attr_par = AttributeParameterization(label=attr, data=data, parameter_type=object_attribute_type, include_modeled=include_modeled)
                     parameters[otype][object_attribute_type][attr] = attr_par
             for timing_data in timing_dists[otype].items():
                     attr, data = timing_data
                     include_modeled = attr == "Arrival Rates (independent)"
-                    attr_par = AttributeParameterization(
-                        label=attr, data=data, parameter_type=timing_type, include_modeled=include_modeled,
-                        data_type=DataType.CONTINUOUS, marked_as_batch_arrival=False)
+                    attr_par = AttributeParameterization(label=attr, data=data, parameter_type=timing_type, include_modeled=include_modeled,
+                                                            data_type=DataType.CONTINUOUS)
                     parameters[otype][timing_type][attr] = attr_par
         self.parameters = parameters
 
@@ -502,11 +486,6 @@ class GeneratorParametrization():
         parameter_type = ParameterType(parameter_type_str)
         attr_par: AttributeParameterization = self.parameters[otype][parameter_type][attribute]
         attr_par.includeModeled = selected
-
-    def mark_as_batch_arrival(self, otype:str, attribute: str, selected: bool):
-        parameter_type = ParameterType.TIMING
-        attr_par: AttributeParameterization = self.parameters[otype][parameter_type][attribute]
-        attr_par.markedAsBatchArrival = selected
 
     def switch_fitting_model(self, otype: str, parameter_type_str: str, attribute: str, fitting_model_str: str):
         parameter_type = ParameterType(parameter_type_str)

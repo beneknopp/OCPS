@@ -35,7 +35,6 @@ class SimulationInitializer:
         self.__load_object_model(self.objectModelName)
 
     def initialize(self):
-        self.__set_timestamp_offset()
         self.__make_initial_marking()
         self.__make_simulation_net()
         self.__make_initial_features()
@@ -56,10 +55,6 @@ class SimulationInitializer:
         self.simulationNet.save()
         self.predictors.save()
         self.ocelMaker.save()
-
-    def __set_timestamp_offset(self):
-        df = self.ocel.get_extended_table()
-        self.timestampOffset =  min(df["ocel:timestamp"]).timestamp()
 
     def __make_initial_features(self):
         obj: ObjectInstance
@@ -138,9 +133,8 @@ class SimulationInitializer:
     def __load_training_data(self):
         otypes = self.otypes
         flattened_logs = {
-            otype: pm4py\
-                .ocel_flattening(self.ocel, otype)\
-                .sort_values(['case:concept:name', 'time:timestamp'], ascending=[True, True])
+            otype: pm4py.ocel_flattening(self.ocel, otype)
+            .sort_values(['case:concept:name', 'time:timestamp'], ascending=[True, True])
             for otype in otypes
         }
         self.flattened_logs = flattened_logs
@@ -167,7 +161,7 @@ class SimulationInitializer:
         index, line = next(iterator, None)
         lastline, lastindex = line, index
         nextline = next(iterator, None)
-        max_eid = max([str(eid) for eid in log_frame["ocel:eid"].unique()])
+        max_eid = max([round(float(eid)) for eid in log_frame["ocel:eid"].unique()])
         max_index = max(log_frame.index)
         count = 1
         end_events = []
@@ -184,7 +178,7 @@ class SimulationInitializer:
                 log_frame.at[index, "act:" + act] = log_frame.at[index, "act:" + act] + 1
             else:
                 # Add artificial End Event
-                eid = max_eid + "_" + str(count)
+                eid = max_eid + count
                 new_index = max_index + count
                 count = count + 1
                 end_event = self.__create_end_event(otype, new_index, eid, log_frame.loc[lastindex],
@@ -192,11 +186,13 @@ class SimulationInitializer:
                 end_events.append(end_event)
             lastline, lastindex = line, index
             nextline = next(iterator, None)
-        eid = max_eid + "_" + str(count)
+        eid = max_eid + count
         new_index = max_index + count
         end_event = self.__create_end_event(otype, new_index, eid, log_frame.loc[lastindex], inherited_attributes)
         end_events.append(end_event)
-        log_frame = pd.concat([log_frame, pd.DataFrame(end_events)])
+        log_frame = log_frame[all_attributes]
+        for row in end_events:
+            log_frame.loc[len(log_frame)] = row
         log_frame = log_frame.sort_values(['case:concept:name', 'time:timestamp'], ascending=[True, True])
         self.training_data[otype] = log_frame
 
@@ -246,16 +242,13 @@ class SimulationInitializer:
         predictors = Predictors(self.otypes, self.objectFeatureNames, self.sessionPath, self.objectModelName)
         predictors.initialize_activity_prediction_function()
         logging.info("Initializing Delay Prediction Function...")
-        predictors.make_service_densities()
         predictors.initialize_delay_prediction_function()
-        predictors.initialize_joint_delay_prediction_function()
-        predictors.initialize_batch_size_predictor()
         self.predictors = predictors
 
     def __initialize_ocel(self):
         objects = {}
         df = self.ocel.get_extended_table()
-        timestamp_offset = self.timestampOffset
+        timestamp_offset = min(df["ocel:timestamp"]).timestamp()
         for oid, obj in self.objectModel.objectsById.items():
             objects[oid] = {"ocel:type": obj.otype, "ocel:ovmap": {}}
         self.ocelMaker = OcelMaker(self.sessionPath, self.objectModelName, self.useOriginalMarking, objects, {},

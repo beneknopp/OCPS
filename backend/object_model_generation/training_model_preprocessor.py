@@ -1,7 +1,6 @@
 import os
 import pickle
 
-import pandas as pd
 import pm4py
 
 from object_model_generation.generator_parametrization import GeneratorParametrization, ParameterType
@@ -73,9 +72,7 @@ class TrainingModelPreprocessor:
         otg_edges = {}
         for act in self.activitySelectedTypes:
             leading_type = self.activityLeadingTypes[act]
-            other_selected_types = [
-                type for type in self.activitySelectedTypes[act] if not type == leading_type
-            ]
+            other_selected_types = [type for type in self.activitySelectedTypes[act] if not type == leading_type]
             if leading_type not in otg_edges:
                 otg_edges[leading_type] = set()
             otg_edges[leading_type].update(other_selected_types)
@@ -203,8 +200,7 @@ class TrainingModelPreprocessor:
         for otype in self.otypes:
             oav_dists[otype] = {}
             for attr in attribute_names:
-                otype_attr_support = objects_df[objects_df["ocel:type"] == otype]
-                otype_attr_support = otype_attr_support[otype_attr_support[attr].notnull()]
+                otype_attr_support = objects_df[objects_df["ocel:type"] == otype][objects_df[attr].notnull()]
                 if len(otype_attr_support) == 0:
                     continue
                 oav_dists[otype][attr] = []
@@ -219,9 +215,7 @@ class TrainingModelPreprocessor:
             for otype in self.otypes
         }
         self.__make_prior_arrival_times_distributions()
-        #self.__identify_batch_arrivals()
         self.__make_relative_arrival_times_distributions()
-
 
     def __make_prior_arrival_times_distributions(self):
         self.flattenedLogs = dict()
@@ -237,16 +231,6 @@ class TrainingModelPreprocessor:
             arrival_rates = arrival_times.diff()[1:].values
             attr = "Arrival Rates (independent)"
             self.timingDistributions[otype][attr] = list(arrival_rates)
-
-    def __identify_batch_arrivals(self):
-        otg = self.objectTypeGraph
-        e2o = self.ocel.relations.sort_values(by="ocel:timestamp")
-        start_events = e2o.groupby("ocel:oid").first()
-        for ot1 in self.otypes:
-            start_events_ot1 = start_events[start_events["ocel:type"] == ot1]
-            #start_events_ot1["time:next"] =
-
-
 
     def __make_relative_arrival_times_distributions(self):
         log_based_relative_arrival_times = {
@@ -308,25 +292,6 @@ class TrainingModelPreprocessor:
                 row, object_model, otypes
             ), axis=1)
         self.objectModel = object_model
-        o2o_src = []
-        o2o_src_type = []
-        o2o_trg = []
-        o2o_trg_type = []
-        for ot1, oms in object_model.items():
-            for o1, om in oms.items():
-                for ot2, os in om.items():
-                    for o2 in os:
-                        o2o_src.append(o1)
-                        o2o_src_type.append(ot1)
-                        o2o_trg.append(o2)
-                        o2o_trg_type.append(ot2)
-        o2o = pd.DataFrame({
-            "ocel_source_id": o2o_src,
-            "ocel_source_type": o2o_src_type,
-            "ocel_target_id": o2o_trg,
-            "ocel_target_type": o2o_trg_type
-        })
-        self.o2o = o2o
 
     def __update_object_model(self, row, object_model, otypes):
         event_objects = []

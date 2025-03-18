@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 import pm4py
-#from pyemd import emd
+from pyemd import emd
 
 from object_model_generation.generator_parametrization import ParameterType, AttributeParameterization, ParameterMode
 from object_model_generation.initial_seed_maker import InitialSeedMaker
@@ -39,8 +39,7 @@ class ObjectModelGenerator:
         self.__initialize_object_instance_class()
         self.__run_generation()
         self.__assign_object_attributes()
-        #self.__reindex_generated_objects()
-        self.__make_generated_o2o()
+        self.__reindex_generated_objects()
         self.__make_arrival_times()
 
     def make_model_and_stats(self):
@@ -155,7 +154,6 @@ class ObjectModelGenerator:
         object_model_parameters = self.objectModelParameters
         object_type_graph = self.objectTypeGraph
         seed_type = object_model_parameters.seedType
-        self.__make_type_hierarchy(seed_type)
         number_of_objects = object_model_parameters.numberOfObjects
         self.nonEmittingTypes = object_model_parameters.nonEmittingTypes
         oid = RunningId()
@@ -173,8 +171,7 @@ class ObjectModelGenerator:
             neighbor_types = object_type_graph.get_neighbors(current_otype)
             if current_otype not in self.nonEmittingTypes:
                 prediction: ObjectLinkPrediction = self.__predict_neighbor(
-                    current_obj, neighbor_types, open_objects, oid
-                )
+                    current_obj, neighbor_types, open_objects, oid)
                 if prediction.predict:
                     selected_neighbor = prediction.selected_neighbor
                     if prediction.mode == PredictionMode.NEW:
@@ -185,10 +182,8 @@ class ObjectModelGenerator:
                     if selected_neighbor not in total_objects[predicted_type]:
                         total_objects[predicted_type].append(selected_neighbor)
                     if selected_neighbor not in buffer:
-                        buffer = buffer + [selected_neighbor]
-                        #buffer.insert(random.randrange(len(buffer) + 1), selected_neighbor)
-                    #buffer.insert(random.randrange(len(buffer) + 1), current_obj)
-                    buffer = [current_obj] + buffer
+                        buffer.insert(random.randrange(len(buffer) + 1), selected_neighbor)
+                    buffer.insert(random.randrange(len(buffer) + 1), current_obj)
                 else:
                     open_objects[current_otype] = list(
                         set([x for x in open_objects[current_otype] if not x == current_obj]))
@@ -198,13 +193,7 @@ class ObjectModelGenerator:
                 break
             if (len(buffer) == 0 and len(closed_objects[seed_type]) < number_of_objects):
                 buffer = [InitialSeedMaker.create_obj(seed_type, oid, open_objects, total_objects)]
-        self.generatedObjects     = total_objects
-        self.generatedObjectsById = {}
-        for ot_objs in total_objects.values():
-            for obj in ot_objs:
-                oid = obj.oid
-                self.generatedObjectsById[oid] = obj
-
+        self.generatedObjects = total_objects
 
     def __evaluate_local_closure(self, obj_a, obj_b):
         ot_a = obj_a.otype
@@ -223,25 +212,6 @@ class ObjectModelGenerator:
     def __sort_buffer(self, buffer):
         obj: ObjectInstance
         buffer.sort(key=lambda obj: self.otypes.index(obj.otype))
-
-    def __make_type_hierarchy(self, seed_type):
-        otg = self.objectTypeGraph
-        level = 0
-        th = {seed_type: level}
-        buffer =  [edge.source.name for node in otg.nodes for edge in node.incoming_edges if node.name == seed_type]
-        buffer += [edge.target.name for node in otg.nodes for edge in node.outgoing_edges if node.name == seed_type]
-        handled = {seed_type}
-        while len(buffer):
-            otypes = buffer[:]
-            buffer = []
-            level = level + 1
-            for otype in otypes:
-                handled.add(otype)
-                th[otype] = level
-                buffer += [edge.source.name for node in otg.nodes for edge in node.incoming_edges if node.name == otype]
-                buffer += [edge.target.name for node in otg.nodes for edge in node.outgoing_edges if node.name == otype]
-                buffer = [otype for otype in buffer if otype not in handled]
-        self.typeHierarchy = th
 
     def __assign_object_attributes(self):
         obj: ObjectInstance
@@ -280,43 +250,18 @@ class ObjectModelGenerator:
             arrival_times_distributions[otype] = dist
         self.arrivalTimesDistributions = arrival_times_distributions
 
-    def __make_generated_o2o(self):
-        o2o_src = []
-        o2o_src_type = []
-        o2o_trg = []
-        o2o_trg_type = []
-        for ot1, objs1 in self.generatedObjects.items():
-            for o1 in objs1:
-                o1: ObjectInstance
-                for ot2, objs2 in o1.objectModel.items():
-                    for o2 in objs2:
-                        o2: ObjectInstance
-                        o2o_src.append(o1.oid)
-                        o2o_src_type.append(ot1)
-                        o2o_trg.append(o2.oid)
-                        o2o_trg_type.append(ot2)
-        o2o = pd.DataFrame({
-            "ocel_source_id": o2o_src,
-            "ocel_source_type": o2o_src_type,
-            "ocel_target_id": o2o_trg,
-            "ocel_target_type": o2o_trg_type
-        })
-        self.o2o = o2o
-
     def __make_arrival_times(self):
         logging.info("Assigning Arrival Times...")
         seed_type = self.objectModelParameters.seedType
         seed_objects = list(self.generatedObjects[seed_type])
-        # only for the seed type, all other arrive relative
-        running_timestamp = 0
+        running_timestamps = {otype: 0 for otype in self.otypes}
         buffer = list(seed_objects)
         all_objects = [obj for sl in self.generatedObjects.values() for obj in sl]
         handled_objs = set()
         current_obj: ObjectInstance
         related_obj: ObjectInstance
         seed_type_time_dist = self.trainingModelPreprocessor.generatorParametrization.get_parameters(
-                    seed_type, ParameterType.TIMING.value, "Arrival Rates (independent)"
-        )
+                    seed_type, ParameterType.TIMING.value, "Arrival Rates (independent)")
         related_time_dists = {}
         # TODO: make this more safe (assumption that all relative arrival rate distributions for neighboring types exist)
         for otype in self.otypes:
@@ -332,56 +277,44 @@ class ObjectModelGenerator:
             buffer = buffer[1:]
             current_otype = current_obj.otype
             if current_otype == seed_type:
-                current_obj.time = running_timestamp
+                current_obj.time = running_timestamps[current_otype]
                 handled_objs.add(current_obj)
                 time = round(seed_type_time_dist.draw())
-                running_timestamp = running_timestamp + time
-            open_local_model = list({
+                running_timestamps[current_otype] = running_timestamps[current_otype] + time
+            open_local_model = {
                 obj for sl in current_obj.objectModel.values()
                 for obj in sl
                 if obj not in handled_objs
-            })
-            while len(open_local_model):
-                related_obj = open_local_model[0]
-                open_local_model = open_local_model[1:]
+            }
+            for related_obj in open_local_model:
                 related_type = related_obj.otype
-                attr_par: AttributeParameterization = related_time_dists[related_type][current_otype]
-                is_batch_arrival = attr_par.markedAsBatchArrival
                 if related_type != seed_type:
-                    relative_arrival_time = round(attr_par.draw())
-                    if is_batch_arrival:
-                        o2o = self.o2o
-                        sibling_obj_ids = list(o2o[
-                            (o2o["ocel_source_id"] == current_obj.oid) &
-                            (o2o["ocel_target_type"] == related_type)
-                        ]["ocel_target_id"].unique())
-                        related_objs = [self.generatedObjectsById[oid] for oid in sibling_obj_ids]
-                        open_local_model = [x for x in open_local_model if x.oid not in sibling_obj_ids]
-                    else:
-                        related_objs = [related_obj]
-                    for related_obj_ in related_objs:
-                        related_obj_.time = current_obj.time + relative_arrival_time
-                        handled_objs.add(related_obj_)
-                        if related_obj_ not in buffer:
-                            buffer = buffer + [related_obj_]
+                    relative_arrival_time = round(related_time_dists[related_type][current_otype].draw())
+                    related_obj.time = current_obj.time + relative_arrival_time
+                    #related_obj.time = running_timestamps[related_type] + relative_arrival_time
+                    #running_timestamps[related_type] = running_timestamps[related_type] + relative_arrival_time
+                handled_objs.add(related_obj)
+                buffer = buffer + [related_obj]
+            if len(buffer) == 0 and len(handled_objs) != len(all_objects):
+                new_seed_obj = [x for x in all_objects if x not in handled_objs][0]
+                new_seed_obj.time = round(self.arrivalTimesDistributions[new_seed_obj.otype].sample())
+                buffer = [new_seed_obj]
         if len(handled_objs) != len(all_objects):
             raise ValueError("Not all objects have been assigned an arrival time")
-        min_time = min(map(lambda obj: obj.time, handled_objs))
-        for obj in handled_objs:
+        min_time = min(map(lambda obj: obj.time, all_objects))
+        for obj in all_objects:
             obj.time = obj.time - min_time
         seed_objects.sort(key=lambda x: x.time)
 
-    def __predict_neighbor(self, obj: ObjectInstance, neighbor_types, open_objects, rOID: RunningId):
+    def __predict_neighbor(self, obj: ObjectInstance, neighbor_types, open_objects, oid: RunningId):
         supported_objs = {}
         new_objs = []
         neighbor_types = [nt for nt in neighbor_types if not obj.locally_closed_types[nt]]
         random.shuffle(neighbor_types)
         for neighbor_otype in neighbor_types:
-            if self.typeHierarchy[neighbor_otype] < self.typeHierarchy[obj.otype]:
-                continue
             # try new instance for that otype
             supported_objs[neighbor_otype] = []
-            new_obj = ObjectInstance(neighbor_otype, rOID.get())
+            new_obj = ObjectInstance(neighbor_otype, oid.get())
             local_support, dls, rls, merge_map = self.__compute_global_support(obj, new_obj)
             max_support = local_support
             new_objs.append(new_obj)
@@ -416,12 +349,10 @@ class ObjectModelGenerator:
             predicted_otype = selected_neighbor.otype
             mode = PredictionMode.NEW if selected_neighbor in new_objs else PredictionMode.APPEND
             if mode == PredictionMode.NEW:
-                rOID.inc()
+                oid.inc()
                 open_objects[predicted_otype].append(selected_neighbor)
-            prediction = ObjectLinkPrediction(
-                predict=True, predicted_type=predicted_otype, mode=mode,
-                selected_neighbor=selected_neighbor, merge_map=merge_map
-            )
+            prediction = ObjectLinkPrediction(predict=True, predicted_type=predicted_otype, mode=mode,
+                                              selected_neighbor=selected_neighbor, merge_map=merge_map)
             # logging.info(f"{obj.otype} {str(obj.oid)}: {str(prediction.pretty_print()}"))
             print(obj.otype + " " + str(obj.oid) + ": " + str(prediction.pretty_print()))
             return prediction
@@ -691,11 +622,11 @@ class ObjectModelGenerator:
         for ot in self.otypes:
             generated_objects = self.generatedObjects[ot]
             response_dict["numberOfObjects"][ot] = len(generated_objects)
-        #response_dict["earthMoversConformance"] = {}
+        response_dict["earthMoversConformance"] = {}
         # TODO
-        #for depth in range(1, 4):
-            #object_graph_emc = self.__get_object_graph_emc(depth)
-            #response_dict["earthMoversConformance"][depth] = object_graph_emc
+        for depth in range(1, 4):
+            object_graph_emc = self.__get_object_graph_emc(depth)
+            response_dict["earthMoversConformance"][depth] = object_graph_emc
         return response_dict
 
     def __get_relation_mean_stdev(self, objs, otype):

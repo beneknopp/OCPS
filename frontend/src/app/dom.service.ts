@@ -92,7 +92,6 @@ export class DOMService {
   }
 
   getSessionKey() {
-    //return "430"
     return this.sessionKey
   }
 
