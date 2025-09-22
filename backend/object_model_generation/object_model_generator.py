@@ -17,9 +17,8 @@ from object_model_generation.object_model import ObjectModel
 from object_model_generation.object_model_parameters import ObjectModelParameters
 from object_model_generation.object_type_graph import ObjectTypeGraph
 from object_model_generation.training_model_preprocessor import TrainingModelPreprocessor
-from utils.arrival_time_distribution import ArrivalTimeDistribution
-from utils.cumulative_distribution import CumulativeDistribution
-from utils.running_id import RunningId
+from sim_utils.cumulative_distribution import CumulativeDistribution
+from sim_utils.running_id import RunningId
 
 
 class ObjectModelGenerator:

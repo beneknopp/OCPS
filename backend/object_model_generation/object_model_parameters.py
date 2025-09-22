@@ -1,4 +1,4 @@
-from utils.request_params_parser import RequestParamsParser
+from sim_utils.request_params_parser import RequestParamsParser
 
 
 class ObjectModelParameters:

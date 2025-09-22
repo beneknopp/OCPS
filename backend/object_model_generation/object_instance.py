@@ -1,7 +1,7 @@
 import logging
 
 from ocpn_discovery.net_utils import Transition
-from utils.support_distribution import SupportDistribution
+from sim_utils.support_distribution import SupportDistribution
 from object_model_generation.generator_parametrization import AttributeParameterization
 
 class ObjectInstance:

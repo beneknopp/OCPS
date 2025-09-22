@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from utils.graph import Graph, DirectedEdge
+from sim_utils.graph import Graph, DirectedEdge
 
 
 class ObjectTypeGraph(Graph):

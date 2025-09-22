@@ -7,7 +7,7 @@ import numpy as np
 from scipy import stats
 from scipy.stats import norm, poisson
 
-from utils.cumulative_distribution import CumulativeDistribution
+from sim_utils.cumulative_distribution import CumulativeDistribution
 
 
 class ParameterMode(Enum):

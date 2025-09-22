@@ -4,7 +4,6 @@ import os
 import pickle
 
 import numpy as np
-import pm4py
 from flask import Flask, flash, request, send_from_directory
 from flask_cors import cross_origin
 
@@ -22,7 +21,7 @@ from object_model_generation.training_model_preprocessor import TrainingModelPre
 from ocpn_discovery.ocpn_discoverer import OCPN_Discoverer
 from simulation.initializer import SimulationInitializer
 from simulation.simulator import Simulator
-from utils.request_params_parser import RequestParamsParser
+from sim_utils.request_params_parser import RequestParamsParser
 
 RUNTIME_RESOURCE_FOLDER = os.path.abspath('runtime_resources')
 ALLOWED_EXTENSIONS = {'jsonocel', 'xml', 'sqlite'}

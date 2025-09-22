@@ -1,10 +1,8 @@
 import math
 
-import numpy as np
-from scipy import integrate
 from scipy import stats
 
-from utils.cumulative_distribution import CumulativeDistribution
+from sim_utils.cumulative_distribution import CumulativeDistribution
 
 
 class ArrivalTimeDistribution:
